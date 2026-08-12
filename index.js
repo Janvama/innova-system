@@ -80,15 +80,21 @@ app.get('/api/tickets', async (req, res) => {
     const r = await pool.query(c); res.json(r.rows);
 });
 
-// EDITAR DATOS BÁSICOS DE FR E ACCESORIOS INCLUIDOS
+// EDITAR DATOS BÁSICOS DE FR E ACCESORIOS INCLUIDOS (Editar FR)
 app.put('/api/tickets/:id/basico', async (req, res) => {
+    const { id } = req.params;
+    // Ahora recibimos la fecha_ingreso desde el frontend
+    const { marca, modelo, numero_serie, problema_reportado, accesorios_incluidos, fecha_ingreso } = req.body;
     try {
-        const { marca, modelo, numero_serie, problema_reportado, accesorios_incluidos } = req.body;
-        const tk = await pool.query('SELECT id_equipo FROM tickets_servicio WHERE id_ticket=$1', [req.params.id]);
-        await pool.query('UPDATE equipos SET marca=$1, modelo=$2, numero_serie=$3 WHERE id_equipo=$4', [marca, modelo, numero_serie, tk.rows[0].id_equipo]);
-        await pool.query('UPDATE tickets_servicio SET problema_reportado=$1, accesorios_incluidos=$2 WHERE id_ticket=$3', [problema_reportado, accesorios_incluidos, req.params.id]);
-        res.json({success: true});
-    } catch (e) { res.status(500).send(e.message); }
+        await pool.query(
+            'UPDATE tickets SET marca = $1, modelo = $2, numero_serie = $3, problema_reportado = $4, accesorios_incluidos = $5, fecha_ingreso = $6 WHERE id_ticket = $7',
+            [marca, modelo, numero_serie, problema_reportado, accesorios_incluidos, fecha_ingreso, id]
+        );
+        res.json({ message: 'FR actualizada correctamente' });
+    } catch (err) {
+        console.error(err.message);
+        res.status(500).json({ error: 'Error del servidor al actualizar FR' });
+    }
 });
 
 app.delete('/api/tickets/:id', async (req, res) => { await pool.query('DELETE FROM tickets_servicio WHERE id_ticket = $1', [req.params.id]); res.json({ success: true }); });
