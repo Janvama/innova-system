@@ -417,6 +417,22 @@
         const API_URL = '/api'; 
         let usuarioActual = null; 
 
+        // ================= SOLUCIÓN DEFINITIVA DE ZONAS HORARIAS =================
+        function formatoInputFecha(fechaISO) {
+            if (!fechaISO) return '';
+            const d = new Date(fechaISO);
+            if (isNaN(d.getTime())) return '';
+            const pad = n => n.toString().padStart(2, '0');
+            // Extrae la hora exacta calculada por JS para cargarla en el input
+            return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+        }
+        
+        function formatoSalidaFecha(fechaLocalString) {
+            if (!fechaLocalString) return null;
+            // Al agregar '-05:00', obligamos a la base de datos a reconocer que es la hora exacta de Perú, sin importar dónde esté el servidor.
+            return fechaLocalString + ':00-05:00'; 
+        }
+
         document.addEventListener("DOMContentLoaded", () => {
             const userGuardado = sessionStorage.getItem('innova_user');
             if(userGuardado) { usuarioActual = JSON.parse(userGuardado); iniciarAplicacion(); }
@@ -488,13 +504,7 @@
             } else if(tipo === 'ticket') {
                 const t = ticketsCargados.find(x => x.id_ticket === payload);
                 
-                // Formatear fecha para el input datetime-local
-                let fIngreso = '';
-                if(t.fecha_ingreso) {
-                    const d = new Date(t.fecha_ingreso);
-                    d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
-                    fIngreso = d.toISOString().slice(0,16);
-                }
+                let fIngreso = formatoInputFecha(t.fecha_ingreso);
 
                 document.getElementById('editTitle').innerText = '✏️ Editar Ficha de Recepción (FR)';
                 document.getElementById('editFields').innerHTML = `
@@ -535,7 +545,7 @@
             } else if(tipo === 'ticket') {
                 url = `${API_URL}/tickets/${id}/basico`;
                 body = { 
-                    fecha_ingreso: document.getElementById('editTkFecha').value,
+                    fecha_ingreso: formatoSalidaFecha(document.getElementById('editTkFecha').value),
                     marca: document.getElementById('editTkMarca').value, 
                     modelo: document.getElementById('editTkModelo').value, 
                     numero_serie: document.getElementById('editTkSerie').value, 
@@ -632,7 +642,7 @@
             return l.length ? l.join('\n') : 'Sin accesorios reportados'; 
         }
 
-        // ================= VISTA Y RENDER DE TICKETS CON NUEVA COLUMNA TRAZABILIDAD =================
+        // ================= VISTA Y RENDER DE TICKETS =================
         async function cargarTickets() {
             const res = await fetch(`${API_URL}/tickets`); 
             ticketsCargados = await res.json(); renderTablaTickets();
@@ -684,22 +694,20 @@
 
                 let fallaInfo = `<div style="font-size: 0.75rem; color: #7f1d1d; background: #fef2f2; padding: 5px; border-radius: 4px; border: 1px solid #fecaca; max-height: 70px; overflow-y: auto;"><i>${t.problema_reportado || 'No registrado'}</i></div>`;
 
-                // LOGICA DE COLUMNA DE TRAZABILIDAD (NUEVO)
                 const fStr = (iso) => iso ? new Date(iso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : '';
                 
                 let historialHTML = `<div style="font-size: 0.75rem; line-height: 1.4; text-align: left;">`;
-                // Siempre hay FR
                 historialHTML += `<div><strong style="color:#3b82f6;">FR:</strong> 👤 ${t.empleado_receptor || '-'}<br><span style="color:#64748b;">📅 ${fStr(t.fecha_ingreso)}</span></div>`;
-                // Validar OTM
+                
                 if (t.otm_data && t.otm_data.fecha_inicio) {
                     historialHTML += `<div style="margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:6px;"><strong style="color:#10b981;">OTM:</strong> 👤 ${t.otm_data.tecnico || '-'}<br><span style="color:#64748b;">📅 ${fStr(t.otm_data.fecha_inicio)}</span></div>`;
                 }
-                // Validar FE
+                
                 if (t.entrega_data && (t.entrega_data.fecha_entrega || t.entrega_data.usuario_entrega)) {
                     let dFe = t.entrega_data.fecha_entrega ? fStr(t.entrega_data.fecha_entrega) : 'Sin fecha';
                     historialHTML += `<div style="margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:6px;"><strong style="color:#d97706;">FE:</strong> 👤 ${t.entrega_data.usuario_entrega || '-'}<br><span style="color:#64748b;">📅 ${dFe}</span></div>`;
                 }
-                // Validar FP (Solo ve Administrador)
+                
                 if (t.fp_data && (t.fp_data.fecha_fp || t.fp_data.usuario_fp) && usuarioActual.rol === 'Administración') {
                     let dFp = t.fp_data.fecha_fp ? fStr(t.fp_data.fecha_fp) : 'Sin fecha';
                     historialHTML += `<div style="margin-top:6px; border-top:1px dashed #cbd5e1; padding-top:6px;"><strong style="color:#7c3aed;">FP:</strong> 👤 ${t.fp_data.usuario_fp || '-'}<br><span style="color:#64748b;">📅 ${dFp}</span></div>`;
@@ -784,9 +792,8 @@
             document.getElementById('fpRep').innerText = otm.repuestos || 'Ningún repuesto reportado'; 
             document.getElementById('fpRes').innerText = otm.resultado || 'Sin estado final registrado'; 
             
-            // Asignar fecha FP (si existe la usa, si no, usa la fecha/hora actual)
-            let fpFechaStr = fp.fecha_fp || '';
-            if(!fpFechaStr) { const ahora = new Date(); ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset()); fpFechaStr = ahora.toISOString().slice(0,16); }
+            let fpFechaStr = formatoInputFecha(fp.fecha_fp);
+            if(!fpFechaStr) { fpFechaStr = formatoInputFecha(new Date().toISOString()); }
             document.getElementById('fpFecha').value = fpFechaStr;
             
             document.getElementById('fpResumenTareas').value = fp.resumen_tareas || ''; document.getElementById('fpCostoReparacion').value = fp.costo_reparacion || ''; document.getElementById('fpCostoRepuestos').value = fp.costo_repuestos || ''; document.getElementById('fpMoneda').value = fp.moneda || 'PEN'; document.getElementById('fpTC').value = fp.tc || ''; document.getElementById('fpIGV').value = fp.igv !== undefined ? fp.igv : 18; document.getElementById('fpDescuento').value = fp.descuento || 0; document.getElementById('fpPagado').checked = (t.estado_pago === 'Pagado'); 
@@ -797,8 +804,8 @@
         
         async function guardarFP() { 
             const fpData = { 
-                fecha_fp: document.getElementById('fpFecha').value, // NUEVA FECHA
-                usuario_fp: usuarioActual.nombre_completo, // NUEVO USUARIO
+                fecha_fp: formatoSalidaFecha(document.getElementById('fpFecha').value), 
+                usuario_fp: usuarioActual.nombre_completo,
                 resumen_tareas: document.getElementById('fpResumenTareas').value.trim(), 
                 costo_reparacion: document.getElementById('fpCostoReparacion').value, 
                 costo_repuestos: document.getElementById('fpCostoRepuestos').value, 
@@ -829,8 +836,10 @@
             otmActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
             document.getElementById('otmHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} | <strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo} <br><strong style="color:red">Falla:</strong> ${t.problema_reportado}`; 
             const otm = t.otm_data || {}; 
-            document.getElementById('otmFechaInicio').value = otm.fecha_inicio || ''; 
-            document.getElementById('otmFechaTermino').value = otm.fecha_termino || ''; 
+            
+            document.getElementById('otmFechaInicio').value = formatoInputFecha(otm.fecha_inicio); 
+            document.getElementById('otmFechaTermino').value = formatoInputFecha(otm.fecha_termino); 
+            
             document.getElementById('otmTecnico').value = otm.tecnico || ''; 
             document.getElementById('otmDiagnostico').value = otm.diagnostico || ''; 
             document.getElementById('otmRepuestos').value = otm.repuestos || ''; 
@@ -846,7 +855,21 @@
         function agregarFotoOTM() { const archivo = document.getElementById('otmFotoFile').files[0]; const desc = document.getElementById('otmFotoDesc').value.trim(); if(!archivo || !desc) return alert("Falta foto o descripción."); const lector = new FileReader(); lector.onload = function(e) { fotosGlobal.push({ url: e.target.result, descripcion: desc }); document.getElementById('otmFotoFile').value = ''; document.getElementById('otmFotoDesc').value = ''; renderFotosOTM(); }; lector.readAsDataURL(archivo); }
         function eliminarFotoOTM(index) { if(confirm("¿Eliminar foto?")) { fotosGlobal.splice(index, 1); renderFotosOTM(); } }
         function renderFotosOTM() { document.getElementById('galeriaFotosOTM').innerHTML = fotosGlobal.length ? fotosGlobal.map((f, i) => `<div class="foto-item"><button type="button" class="btn-eliminar-foto" onclick="eliminarFotoOTM(${i})">✕</button><img src="${f.url}"><p>${f.descripcion}</p></div>`).join('') : '<p style="color:gray; font-size:0.8rem;">Sin fotos.</p>'; }
-        async function guardarOTM() { const otmData = { fecha_inicio: document.getElementById('otmFechaInicio').value, fecha_termino: document.getElementById('otmFechaTermino').value, tecnico: document.getElementById('otmTecnico').value, diagnostico: document.getElementById('otmDiagnostico').value, repuestos: document.getElementById('otmRepuestos').value, resultado: document.getElementById('otmResultado').value, actividades: actividadesGlobal, fotos: fotosGlobal }; await fetch(`${API_URL}/tickets/${otmActualId}/otm`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(otmData) }); alert('¡OTM guardada/actualizada exitosamente!'); cerrarModalOTM(); cargarTickets(); }
+        
+        async function guardarOTM() { 
+            const otmData = { 
+                fecha_inicio: formatoSalidaFecha(document.getElementById('otmFechaInicio').value), 
+                fecha_termino: formatoSalidaFecha(document.getElementById('otmFechaTermino').value), 
+                tecnico: document.getElementById('otmTecnico').value, 
+                diagnostico: document.getElementById('otmDiagnostico').value, 
+                repuestos: document.getElementById('otmRepuestos').value, 
+                resultado: document.getElementById('otmResultado').value, 
+                actividades: actividadesGlobal, 
+                fotos: fotosGlobal 
+            }; 
+            await fetch(`${API_URL}/tickets/${otmActualId}/otm`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(otmData) }); 
+            alert('¡OTM guardada/actualizada exitosamente!'); cerrarModalOTM(); cargarTickets(); 
+        }
         
         function generarReporteOTM(idTicket) { const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return; const otm = t.otm_data || {}; if (!otm.tecnico && !otm.diagnostico && (!otm.actividades || otm.actividades.length === 0)) return alert("Aún no hay datos técnicos en la OTM."); const f = (iso) => iso ? new Date(iso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'; let acts = '<p>Sin actividades.</p>'; if (otm.actividades && otm.actividades.length) acts = otm.actividades.map(a => `<div style="border-bottom:1px solid #eee; padding:5px 0;"><b>${a.fecha}</b>: ${a.texto}</div>`).join(''); let fotos = '<p>Sin fotos.</p>'; if (otm.fotos && otm.fotos.length) fotos = '<div style="display:flex; gap:10px; flex-wrap:wrap;">' + otm.fotos.map(fot => `<div style="border:1px solid #ccc; padding:5px; text-align:center; width:200px;"><img src="${fot.url}" style="width:100%; max-height:150px; object-fit:contain;"><br><small>${fot.descripcion}</small></div>`).join('') + '</div>'; const v = window.open('', '_blank'); v.document.write(`<!DOCTYPE html><html><head><title>OTM - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} .btn-print{background:#0284c7; color:white; padding:10px; cursor:pointer; border:none; margin-bottom:20px;} @media print{.btn-print{display:none;}} .box{border:1px solid #ccc; margin-bottom:10px;} .tit{background:#e2e8f0; font-weight:bold; padding:5px;} .cont{padding:10px;}</style></head><body><button class="btn-print" onclick="window.print()">🖨️ IMPRIMIR OTM</button>${encabezadoEmpresaHTML}<h2 style="text-align:center; margin-top:0;">REPORTE DE ORDEN TÉCNICA (OTM) - FR N° ${t.numero_fr}</h2><div class="box"><div class="tit">Datos Principales</div><div class="cont">Cliente: ${t.cliente} | Equipo: ${t.marca} ${t.modelo}<br>Técnico Responsable: ${otm.tecnico || '-'} | Inicio: ${f(otm.fecha_inicio)} | Fin: ${f(otm.fecha_termino)}</div></div><div class="box"><div class="tit">Falla Original Reportada</div><div class="cont"><i>${t.problema_reportado}</i></div></div><div class="box"><div class="tit">Diagnóstico Técnico Especializado</div><div class="cont">${otm.diagnostico || '-'}</div></div><div class="box"><div class="tit">Bitácora de Actividades Operativas</div><div class="cont">${acts}</div></div><div class="box"><div class="tit">Resultado Final y Repuestos</div><div class="cont">Repuestos Utilizados: ${otm.repuestos || '-'}<br>Estado / Resultado Final: <b>${otm.resultado || '-'}</b></div></div><div class="box"><div class="tit">Evidencias Fotográficas</div><div class="cont">${fotos}</div></div></body></html>`); v.document.close(); }
 
@@ -854,8 +877,10 @@
             entregaActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
             document.getElementById('entregaHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} <br><strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo}`; 
             const entrega = t.entrega_data || {}; 
-            let fechaSugerida = entrega.fecha_entrega || ''; 
-            if(!fechaSugerida) { const ahora = new Date(); ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset()); fechaSugerida = ahora.toISOString().slice(0,16); } 
+            
+            let fechaSugerida = formatoInputFecha(entrega.fecha_entrega); 
+            if(!fechaSugerida) { fechaSugerida = formatoInputFecha(new Date().toISOString()); } 
+            
             document.getElementById('entregaFecha').value = fechaSugerida; 
             document.getElementById('entregaObservaciones').value = entrega.observaciones || ''; 
             document.getElementById('modalEntrega').style.display = 'flex'; 
@@ -863,13 +888,12 @@
         function cerrarModalEntrega() { document.getElementById('modalEntrega').style.display = 'none'; }
         
         async function guardarEntrega() { 
-            const fecha_entrega = document.getElementById('entregaFecha').value; 
+            const fecha_entrega = formatoSalidaFecha(document.getElementById('entregaFecha').value); 
             const observaciones = document.getElementById('entregaObservaciones').value.trim(); 
             if(!fecha_entrega) return alert('Fecha obligatoria.'); 
             await fetch(`${API_URL}/tickets/${entregaActualId}/entrega`, { 
                 method: 'PUT', 
                 headers: { 'Content-Type': 'application/json' }, 
-                // NUEVO: Agregamos el usuario actual
                 body: JSON.stringify({ fecha_entrega, observaciones, usuario_entrega: usuarioActual.nombre_completo }) 
             }); 
             alert('¡Ficha de Entrega guardada/actualizada exitosamente!'); cerrarModalEntrega(); cargarTickets(); 

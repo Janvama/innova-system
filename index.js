@@ -81,18 +81,37 @@ app.get('/api/tickets', async (req, res) => {
 });
 
 // EDITAR DATOS BÁSICOS DE FR E ACCESORIOS INCLUIDOS (Editar FR)
+// Ruta de actualización básica (Editar FR)
 app.put('/api/tickets/:id/basico', async (req, res) => {
     const { id } = req.params;
-    // Ahora recibimos la fecha_ingreso desde el frontend
     const { marca, modelo, numero_serie, problema_reportado, accesorios_incluidos, fecha_ingreso } = req.body;
+    
+    console.log(`[AVISO] Intentando actualizar FR ID: ${id} con la nueva fecha:`, fecha_ingreso);
+
     try {
+        // 1. Primero, averiguamos qué equipo (id_equipo) pertenece a esta FR
+        const ticketResult = await pool.query('SELECT id_equipo FROM tickets_servicio WHERE id_ticket = $1', [id]);
+        
+        if (ticketResult.rows.length === 0) {
+            return res.status(404).json({ error: 'Ticket no encontrado' });
+        }
+        const idEquipo = ticketResult.rows[0].id_equipo;
+
+        // 2. Actualizamos los datos técnicos en la tabla "equipos"
         await pool.query(
-            'UPDATE tickets SET marca = $1, modelo = $2, numero_serie = $3, problema_reportado = $4, accesorios_incluidos = $5, fecha_ingreso = $6 WHERE id_ticket = $7',
-            [marca, modelo, numero_serie, problema_reportado, accesorios_incluidos, fecha_ingreso, id]
+            'UPDATE equipos SET marca = $1, modelo = $2, numero_serie = $3 WHERE id_equipo = $4',
+            [marca, modelo, numero_serie, idEquipo]
         );
-        res.json({ message: 'FR actualizada correctamente' });
+
+        // 3. Actualizamos la fecha, problema y accesorios en la tabla "tickets_servicio"
+        await pool.query(
+            'UPDATE tickets_servicio SET problema_reportado = $1, accesorios_incluidos = $2, fecha_ingreso = $3 WHERE id_ticket = $4',
+            [problema_reportado, accesorios_incluidos, fecha_ingreso, id]
+        );
+
+        res.json({ message: 'FR y Equipo actualizados correctamente' });
     } catch (err) {
-        console.error(err.message);
+        console.error("Error al actualizar en DB:", err.message);
         res.status(500).json({ error: 'Error del servidor al actualizar FR' });
     }
 });
