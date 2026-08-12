@@ -24,7 +24,7 @@
         .user-info { display: flex; align-items: center; gap: 15px; }
         .btn-logout { background: #ef4444; color: white; border: none; padding: 8px 15px; border-radius: 4px; cursor: pointer; font-weight: bold; }
         
-        .grid-container { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        .grid-container { display: grid; grid-template-columns: 1fr 2.5fr; gap: 20px; }
         .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
         h2 { margin-bottom: 15px; color: #0f172a; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; }
         form { display: flex; flex-direction: column; gap: 8px; }
@@ -34,14 +34,17 @@
         button:hover { background-color: #1d4ed8; }
         
         .btn-success { background-color: #10b981; } .btn-success:hover { background-color: #059669; }
-        .btn-danger { background-color: #ef4444; font-size: 0.8rem; padding: 5px 8px; border-radius: 4px; width: auto; color: white; cursor: pointer; border: none; }
-        .btn-print { background-color: #3b82f6; font-size: 0.8rem; padding: 5px 8px; border-radius: 4px; width: auto; color: white; cursor: pointer; border: none; }
-        .btn-otm-report { background-color: #0284c7; font-size: 0.8rem; padding: 5px 8px; border-radius: 4px; width: auto; color: white; border: none; cursor: pointer;}
-        .btn-entrega { background-color: #f59e0b; font-size: 0.8rem; padding: 5px 8px; border-radius: 4px; width: auto; color: white; cursor: pointer; border: none; }
-        .btn-fp { background-color: #8b5cf6; font-size: 0.8rem; padding: 5px 8px; border-radius: 4px; width: auto; color: white; cursor: pointer; border: none; }
-        .btn-fp:hover { background-color: #7c3aed; }
+        .btn-danger { background-color: #ef4444; color: white; border: none; cursor: pointer; }
+        .btn-print { background-color: #3b82f6; color: white; border: none; cursor: pointer; }
         .btn-secondary { background-color: #64748b; font-size: 0.8rem; padding: 5px 10px; margin-top: 5px; width: auto; }
         
+        .btn-accion { padding: 6px 12px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; color: white; margin: 2px; font-size: 0.85rem; transition: background-color 0.2s; }
+        .btn-fr { background-color: #3b82f6; } .btn-fr:hover { background-color: #2563eb; }
+        .btn-otm { background-color: #10b981; } .btn-otm:hover { background-color: #059669; }
+        .btn-fe { background-color: #f59e0b; } .btn-fe:hover { background-color: #d97706; }
+        .btn-fp { background-color: #8b5cf6; } .btn-fp:hover { background-color: #7c3aed; }
+        .btn-disabled { background-color: #cbd5e1; cursor: not-allowed; color: #64748b; }
+
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; font-size: 0.8rem; vertical-align: middle; }
         th { background-color: #f1f5f9; }
@@ -59,11 +62,13 @@
         
         .lista-maestros { list-style: none; padding: 0; margin-top: 8px; max-height: 140px; overflow-y: auto; border-top: 1px dashed #cbd5e1; }
         .lista-maestros li { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid #e2e8f0; font-size: 0.8rem; }
+        
+        .btn-edit-mini { background-color: #eab308; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.7rem; cursor: pointer; margin-right: 5px;}
         .btn-mini-danger { background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 3px 6px; font-size: 0.7rem; cursor: pointer; }
 
         .obs-highlight { background-color: #fef08a; color: #854d0e; padding: 2px 6px; border-radius: 4px; font-weight: bold; font-size: 0.75rem; display: inline-block; border: 1px solid #fde047; }
         .reception-info { font-size: 0.75rem; color: #475569; margin-top: 4px; }
-        .acciones-td { display: flex; gap: 5px; flex-wrap: wrap; }
+        .acciones-td { display: flex; gap: 5px; flex-wrap: wrap; align-items: center; justify-content: center; }
 
         .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index: 1000; justify-content:center; align-items:flex-start; padding-top: 20px; overflow-y: auto; }
         .modal-content { background: white; width: 95%; max-width: 900px; padding: 25px; border-radius: 8px; position: relative; margin-bottom: 40px; box-shadow: 0 10px 25px rgba(0,0,0,0.3); }
@@ -130,17 +135,20 @@
                             <button type="submit" class="btn-success" style="flex: 1; margin: 0;">Guardar</button>
                         </div>
                     </form>
-                    <details><summary>Ver / Eliminar Trabajadores</summary><ul id="listaEmpleadosUI" class="lista-maestros"></ul></details>
+                    <details><summary>Ver / Gestionar Trabajadores</summary><ul id="listaEmpleadosUI" class="lista-maestros"></ul></details>
                 </div>
 
                 <div class="card">
                     <h2>1. Registrar Nuevo Cliente</h2>
                     <form id="formCliente">
                         <input type="text" id="nombreCliente" placeholder="Nombre / Empresa" required>
-                        <input type="text" id="telefonoCliente" placeholder="Teléfono">
+                        <div style="display: flex; gap: 10px;">
+                            <input type="text" id="telefonoCliente" placeholder="Teléfono" style="flex: 1;">
+                            <input type="text" id="rucCliente" placeholder="RUC (Opcional)" style="flex: 1;">
+                        </div>
                         <button type="submit">Guardar Cliente</button>
                     </form>
-                    <details id="detallesAdminClientes"><summary>Ver / Eliminar Clientes</summary><ul id="listaClientesUI" class="lista-maestros"></ul></details>
+                    <details id="detallesAdminClientes"><summary>Ver / Gestionar Clientes</summary><ul id="listaClientesUI" class="lista-maestros"></ul></details>
                 </div>
 
                 <div class="card">
@@ -193,7 +201,7 @@
                         <textarea id="listaAccesoriosNuevos" rows="3" placeholder="Lista de accesorios (Uno por línea)" required></textarea>
                         <button type="submit" class="btn-secondary">Guardar Plantilla</button>
                     </form>
-                    <details><summary>Ver / Eliminar Plantillas</summary><ul id="listaPlantillasUI" class="lista-maestros"></ul></details>
+                    <details><summary>Ver / Gestionar Plantillas</summary><ul id="listaPlantillasUI" class="lista-maestros"></ul></details>
                 </div>
             </div>
 
@@ -235,10 +243,11 @@
                                 <th>FR</th>
                                 <th>Cliente</th>
                                 <th>Equipo</th>
-                                <th style="width: 20%;">Accesorios</th>
+                                <th style="width: 15%;">Falla / Problema</th>
+                                <th style="width: 15%;">Accesorios</th>
                                 <th>Recepción</th>
                                 <th>Estado</th>
-                                <th>Acciones</th>
+                                <th style="width: 220px; text-align: center;">Acciones</th>
                             </tr>
                         </thead>
                         <tbody id="tablaTickets"></tbody>
@@ -248,27 +257,106 @@
         </div>
     </div>
 
-    <div id="modalOTM" class="modal-overlay"><div class="modal-content"><span class="close-modal" onclick="cerrarModalOTM()">×</span><h2 style="margin-bottom: 20px; color: #1e3a8a;">🛠️ Orden de Trabajo y Mantenimiento (OTM)</h2><div class="otm-header-info" id="otmHeader"></div><div class="otm-grid"><div class="otm-box"><h3>1. Inicio y Diagnóstico</h3><label>Técnico Responsable:</label><select id="otmTecnico"></select><label>Fecha Inicio:</label><input type="datetime-local" id="otmFechaInicio"><label>Diagnóstico Técnico Inicial:</label><textarea id="otmDiagnostico" rows="4"></textarea></div><div class="otm-box"><h3>2. Cierre de Operación</h3><label>Repuestos Utilizados:</label><textarea id="otmRepuestos" rows="2"></textarea><label>Resultado Final:</label><textarea id="otmResultado" rows="2"></textarea><label>Fecha Término:</label><input type="datetime-local" id="otmFechaTermino"></div></div><div class="otm-box" style="margin-bottom: 20px;"><h3>3. Bitácora de Actividades</h3><div style="display: flex; gap: 10px; margin-bottom: 10px;"><input type="text" id="otmTxtActividad" placeholder="Actividad..." style="flex:1;"><button type="button" class="btn-secondary" onclick="agregarActividadOTM()" style="margin:0;">+ Añadir</button></div><div id="listaActividadesOTM" style="max-height: 180px; overflow-y: auto;"></div></div><div class="otm-box"><h3>4. Registro Fotográfico</h3><div style="display: flex; gap: 10px; align-items: center;"><input type="file" id="otmFotoFile" accept="image/*" style="width: 250px;"><input type="text" id="otmFotoDesc" placeholder="Descripción..." style="flex:1;"><button type="button" class="btn-secondary" onclick="agregarFotoOTM()" style="margin:0;">Subir Foto</button></div><div id="galeriaFotosOTM" class="foto-galeria"></div></div><div style="text-align: right; margin-top: 20px;"><button type="button" class="btn-success" onclick="guardarOTM()">💾 Guardar OTM</button></div></div></div>
-    <div id="modalEntrega" class="modal-overlay"><div class="modal-content" style="max-width: 600px;"><span class="close-modal" onclick="cerrarModalEntrega()">×</span><h2 style="color: #d97706; margin-bottom: 15px;">📦 Ficha de Entrega de Equipo</h2><div class="otm-header-info" id="entregaHeader" style="border-left-color: #f59e0b;"></div><form id="formEntrega"><label>Fecha Entrega:</label><input type="datetime-local" id="entregaFecha" required><label>Observaciones Finales:</label><textarea id="entregaObservaciones" rows="4" required></textarea><div style="display:flex; justify-content:space-between; margin-top:20px;"><button type="button" class="btn-print" onclick="imprimirFichaEntrega()">🖨️ Imprimir Ficha</button><button type="button" class="btn-success" onclick="guardarEntrega()">💾 Guardar Entrega</button></div></form></div></div>
+    <div id="modalVerFR" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="document.getElementById('modalVerFR').style.display='none'">×</span>
+            <h2 style="color:#0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom:10px;">👁️ Detalles de Ficha de Recepción</h2>
+            <div id="verFRContenido" style="margin-top:15px; font-size:0.9rem; line-height:1.6;"></div>
+            <div id="frBotonesAccion" style="display:flex; justify-content:flex-end; gap:10px; margin-top: 20px; border-top: 1px dashed #cbd5e1; padding-top: 15px;"></div>
+        </div>
+    </div>
+
+    <div id="modalEdit" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; border-top: 5px solid #eab308;">
+            <span class="close-modal" onclick="document.getElementById('modalEdit').style.display='none'">×</span>
+            <h2 id="editTitle" style="color:#854d0e; margin-bottom:15px;">✏️ Editar Registro</h2>
+            <form id="formEdit">
+                <div id="editFields" style="display: flex; flex-direction: column; gap: 10px;"></div>
+                <button type="submit" class="btn-success" style="margin-top: 20px; padding: 10px; border-radius: 4px;">💾 Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <div id="modalOTM" class="modal-overlay">
+        <div class="modal-content">
+            <span class="close-modal" onclick="cerrarModalOTM()">×</span>
+            <h2 style="margin-bottom: 20px; color: #1e3a8a;">🛠️ Orden de Trabajo y Mantenimiento (OTM)</h2>
+            <div class="otm-header-info" id="otmHeader"></div>
+            <div class="otm-grid">
+                <div class="otm-box">
+                    <h3>1. Inicio y Diagnóstico</h3>
+                    <label>Técnico Responsable:</label><select id="otmTecnico"></select>
+                    <label>Fecha Inicio:</label><input type="datetime-local" id="otmFechaInicio">
+                    <label>Diagnóstico Técnico Inicial:</label><textarea id="otmDiagnostico" rows="4"></textarea>
+                </div>
+                <div class="otm-box">
+                    <h3>2. Cierre de Operación</h3>
+                    <label>Repuestos Utilizados:</label><textarea id="otmRepuestos" rows="2"></textarea>
+                    <label>Resultado Final:</label><textarea id="otmResultado" rows="2"></textarea>
+                    <label>Fecha Término:</label><input type="datetime-local" id="otmFechaTermino">
+                </div>
+            </div>
+            <div class="otm-box" style="margin-bottom: 20px;">
+                <h3>3. Bitácora de Actividades</h3>
+                <div style="display: flex; gap: 10px; margin-bottom: 10px;">
+                    <input type="text" id="otmTxtActividad" placeholder="Actividad..." style="flex:1;">
+                    <button type="button" class="btn-secondary" onclick="agregarActividadOTM()" style="margin:0;">+ Añadir</button>
+                </div>
+                <div id="listaActividadesOTM" style="max-height: 180px; overflow-y: auto;"></div>
+            </div>
+            <div class="otm-box">
+                <h3>4. Registro Fotográfico</h3>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="file" id="otmFotoFile" accept="image/*" style="width: 250px;">
+                    <input type="text" id="otmFotoDesc" placeholder="Descripción...">
+                    <button type="button" class="btn-secondary" onclick="agregarFotoOTM()" style="margin:0;">Subir Foto</button>
+                </div>
+                <div id="galeriaFotosOTM" class="foto-galeria"></div>
+            </div>
+            
+            <div style="display:flex; justify-content:space-between; margin-top: 20px;">
+                <button type="button" class="btn-print" id="btnImprimirOTM" style="padding: 10px 15px; border-radius: 4px; font-weight: bold;">🖨️ Imprimir OTM</button>
+                <button type="button" class="btn-success" onclick="guardarOTM()" style="padding: 10px 15px; border-radius: 4px; font-weight: bold; color:white; border:none;">💾 Guardar / Actualizar OTM</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalEntrega" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px;">
+            <span class="close-modal" onclick="cerrarModalEntrega()">×</span>
+            <h2 style="color: #d97706; margin-bottom: 15px;">📦 Ficha de Entrega de Equipo (FE)</h2>
+            <div class="otm-header-info" id="entregaHeader" style="border-left-color: #f59e0b;"></div>
+            <form id="formEntrega">
+                <label>Fecha Entrega:</label>
+                <input type="datetime-local" id="entregaFecha" required>
+                <label>Observaciones Finales:</label>
+                <textarea id="entregaObservaciones" rows="4" required></textarea>
+                <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                    <button type="button" class="btn-print" onclick="imprimirFichaEntrega()" style="padding: 10px 15px; border-radius: 4px; font-weight: bold;">🖨️ Imprimir FE</button>
+                    <button type="button" class="btn-success" onclick="guardarEntrega()" style="padding: 10px 15px; border-radius: 4px; font-weight: bold; border: none; color: white;">💾 Guardar / Actualizar FE</button>
+                </div>
+            </form>
+        </div>
+    </div>
 
     <div id="modalFP" class="modal-overlay">
         <div class="modal-content" style="max-width: 750px;">
             <span class="close-modal" onclick="cerrarModalFP()">×</span>
-            <h2 style="color: #7c3aed; margin-bottom: 15px;">📄 Factura Proforma y Pagos</h2>
+            <h2 style="color: #7c3aed; margin-bottom: 15px;">📄 Factura Proforma y Pagos (FP)</h2>
             <div class="otm-header-info" id="fpHeader" style="border-left-color: #8b5cf6;"></div>
             
             <div class="otm-box" style="margin-bottom: 20px;">
                 <h3>Resumen Técnico Operativo</h3>
                 <p style="font-size: 0.85rem; margin-bottom: 6px;"><strong>Falla Origen:</strong> <span id="fpFalla" style="color:#475569;"></span></p>
                 <p style="font-size: 0.85rem; margin-bottom: 6px;"><strong>Diagnóstico:</strong> <span id="fpDiag" style="color:#475569;"></span></p>
-                <p style="font-size: 0.85rem; margin-bottom: 6px;"><strong>Repuestos Usados (Por el técnico):</strong> <span id="fpRep" style="color:#475569;"></span></p>
+                <p style="font-size: 0.85rem; margin-bottom: 6px;"><strong>Repuestos Usados:</strong> <span id="fpRep" style="color:#475569;"></span></p>
                 <p style="font-size: 0.85rem;"><strong>Estado Final:</strong> <span id="fpRes" style="color:#475569;"></span></p>
             </div>
 
             <form id="formFP">
                 <div style="margin-bottom: 15px;">
                     <label style="color: #0f172a; font-size: 0.85rem; font-weight: bold;">Resumen de Actividad Técnica (Visible en Proforma):</label>
-                    <textarea id="fpResumenTareas" rows="2" style="border-color: #8b5cf6;" placeholder="Ej: Mantenimiento correctivo, limpieza general y cambio de pantalla..."></textarea>
+                    <textarea id="fpResumenTareas" rows="2" style="border-color: #8b5cf6;" placeholder="Ej: Mantenimiento correctivo..."></textarea>
                 </div>
 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 15px;">
@@ -285,7 +373,7 @@
                             <input type="number" step="0.01" id="fpTC" placeholder="Ej: 3.80" style="border-color: #8b5cf6;">
                         </div>
                         <div style="flex:1;">
-                            <label style="color: #0f172a; font-size: 0.8rem;">Desc. en Servicio (%):</label>
+                            <label style="color: #0f172a; font-size: 0.8rem;">Desc. Servicio (%):</label>
                             <input type="number" step="0.01" id="fpDescuento" value="0" style="border-color: #8b5cf6;">
                         </div>
                         <div style="flex:1;">
@@ -296,11 +384,11 @@
                     
                     <div style="display:flex; gap:15px;">
                         <div style="flex:1;">
-                            <label style="color: #0f172a;">Costo de Reparación / Mano Obra:</label>
+                            <label style="color: #0f172a;">Costo Reparación / Mano Obra:</label>
                             <input type="number" step="0.01" id="fpCostoReparacion" placeholder="0.00" required style="border-color: #8b5cf6;">
                         </div>
                         <div style="flex:1;">
-                            <label style="color: #0f172a;">Costo de Repuestos (Opcional):</label>
+                            <label style="color: #0f172a;">Costo Repuestos (Opcional):</label>
                             <input type="number" step="0.01" id="fpCostoRepuestos" placeholder="0.00" style="border-color: #8b5cf6;">
                         </div>
                     </div>
@@ -312,18 +400,17 @@
                 </div>
 
                 <div style="display:flex; justify-content:space-between; margin-top:20px;">
-                    <button type="button" class="btn-print" onclick="imprimirFP()">🖨️ Imprimir Proforma</button>
-                    <button type="button" class="btn-success" onclick="guardarFP()" style="background-color: #8b5cf6;">💾 Guardar Registro</button>
+                    <button type="button" class="btn-print" onclick="imprimirFP()" style="padding: 10px 15px; border-radius: 4px; font-weight: bold;">🖨️ Imprimir FP</button>
+                    <button type="button" class="btn-success" onclick="guardarFP()" style="background-color: #8b5cf6; padding: 10px 15px; border-radius: 4px; font-weight: bold; border: none; color: white;">💾 Guardar / Actualizar FP</button>
                 </div>
             </form>
         </div>
     </div>
 
     <script>
-        const API_URL = '/api';
+        const API_URL = '/api'; 
         let usuarioActual = null; 
 
-        // ================= SISTEMA DE LOGIN =================
         document.addEventListener("DOMContentLoaded", () => {
             const userGuardado = sessionStorage.getItem('innova_user');
             if(userGuardado) { usuarioActual = JSON.parse(userGuardado); iniciarAplicacion(); }
@@ -353,303 +440,339 @@
             cargarEmpleados(); cargarClientes(); cargarPlantillas(); cargarTickets();
         }
 
-        // ================= DATA MAESTRA =================
-        let accesoriosCargadosTemporalmente = []; 
-        let ticketsCargados = []; 
-        let fotosFRGlobal = []; // Arreglo para fotos en la creación de FR
+        let accesoriosCargadosTemporalmente = []; let ticketsCargados = []; let fotosFRGlobal = []; 
         let otmActualId = null; let actividadesGlobal = []; let fotosGlobal = []; let entregaActualId = null; let fpActualId = null;
+        let editActionData = null; 
 
-        const encabezadoEmpresaHTML = `
-            <div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #0f172a; padding-bottom: 15px;">
-                <h1 style="margin: 0; font-size: 24px; color: #0f172a;">INNOVA Electronics SAC.</h1>
-                <p style="margin: 8px 0 0 0; font-size: 13px; color: #475569; line-height: 1.5;">
-                    <strong>RUC:</strong> 20522316556 &nbsp;|&nbsp; <strong>Teléfonos:</strong> 986629193 / 987740312<br>
-                    administracion@innovaelectronicsperu.com &nbsp;|&nbsp; gerencia@innovaelectronicsperu.com<br>
-                    Calle Andalucia Mz.E Lt.25 Urb. La Capilla. La Molina. Lima. &nbsp;|&nbsp; <strong>Código Postal:</strong> 15024
-                </p>
-            </div>
-        `;
+        const encabezadoEmpresaHTML = `<div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #0f172a; padding-bottom: 15px;"><h1 style="margin: 0; font-size: 24px; color: #0f172a;">INNOVA Electronics SAC.</h1><p style="margin: 8px 0 0 0; font-size: 13px; color: #475569; line-height: 1.5;"><strong>RUC:</strong> 20522316556 &nbsp;|&nbsp; <strong>Teléfonos:</strong> 986629193 / 987740312<br>administracion@innovaelectronicsperu.com &nbsp;|&nbsp; gerencia@innovaelectronicsperu.com<br>Calle Andalucia Mz.E Lt.25 Urb. La Capilla. La Molina. Lima. &nbsp;|&nbsp; <strong>Código Postal:</strong> 15024</p></div>`;
 
-        async function cargarClientes() { const res = await fetch(`${API_URL}/clientes`); const clientes = await res.json(); const select = document.getElementById('selectCliente'); const listaUI = document.getElementById('listaClientesUI'); select.innerHTML = '<option value="">-- Seleccione Cliente --</option>'; listaUI.innerHTML = ''; clientes.forEach(c => { select.innerHTML += `<option value="${c.id_cliente}">${c.nombre_completo}</option>`; listaUI.innerHTML += `<li><span>${c.nombre_completo} <small>(${c.telefono || 'Sin telf'})</small></span><button type="button" class="btn-mini-danger" onclick="eliminarCliente(${c.id_cliente})">✕</button></li>`; }); }
+        // ================= SISTEMA DE EDICIÓN COMPLETA (CRUD DE ACCESORIOS Y PLANTILLAS) =================
+        async function abrirModalEdit(tipo, payload) {
+            editActionData = { tipo, id: typeof payload === 'object' ? payload.id : payload };
+            document.getElementById('editFields').innerHTML = '<p style="color:#64748b;">Cargando datos...</p>';
+            document.getElementById('modalEdit').style.display = 'flex';
+            
+            if(tipo === 'empleado') {
+                document.getElementById('editTitle').innerText = '✏️ Editar Empleado';
+                document.getElementById('editFields').innerHTML = `
+                    <label>Nombre:</label><input type="text" id="editEmpNombre" value="${payload.nombre}" required>
+                    <label>Rol:</label><select id="editEmpRol"><option value="Técnico" ${payload.rol==='Técnico'?'selected':''}>Técnico</option><option value="Administración" ${payload.rol==='Administración'?'selected':''}>Administración</option></select>
+                    <label>Nueva Contraseña (Dejar vacío para mantener):</label><input type="password" id="editEmpPass" placeholder="***">
+                `;
+            } else if(tipo === 'cliente') {
+                document.getElementById('editTitle').innerText = '✏️ Editar Cliente';
+                document.getElementById('editFields').innerHTML = `
+                    <label>Empresa / Nombre:</label><input type="text" id="editCliNombre" value="${payload.nombre}" required>
+                    <label>RUC:</label><input type="text" id="editCliRuc" value="${payload.ruc || ''}">
+                    <label>Teléfono:</label><input type="text" id="editCliTel" value="${payload.telefono || ''}">
+                `;
+            } else if(tipo === 'plantilla') {
+                document.getElementById('editTitle').innerText = '✏️ Editar Plantilla y Accesorios';
+                const resAcc = await fetch(`${API_URL}/plantillas/${payload.id}/accesorios`);
+                const accs = await resAcc.json();
+                const accTexto = accs.map(a => a.nombre_accesorio).join('\n');
+                
+                document.getElementById('editFields').innerHTML = `
+                    <label>Nombre Plantilla:</label><input type="text" id="editPlaNombre" value="${payload.nombre}" required>
+                    <label>Marca por Defecto:</label><input type="text" id="editPlaMarca" value="${payload.marca || ''}">
+                    <label>Modelo por Defecto:</label><input type="text" id="editPlaModelo" value="${payload.modelo || ''}">
+                    <label>Lista de Accesorios (Uno por línea):</label>
+                    <textarea id="editPlaAccesorios" rows="5" placeholder="Un accesorio por línea...">${accTexto}</textarea>
+                `;
+            } else if(tipo === 'ticket') {
+                const t = ticketsCargados.find(x => x.id_ticket === payload);
+                document.getElementById('editTitle').innerText = '✏️ Editar Ficha de Recepción (FR)';
+                document.getElementById('editFields').innerHTML = `
+                    <label>Marca del Equipo:</label><input type="text" id="editTkMarca" value="${t.marca}" required>
+                    <label>Modelo del Equipo:</label><input type="text" id="editTkModelo" value="${t.modelo}" required>
+                    <label>N° de Serie (S/N):</label><input type="text" id="editTkSerie" value="${t.numero_serie || ''}">
+                    <label>Accesorios / Estado de Inspección:</label>
+                    <textarea id="editTkAccesorios" rows="4">${t.accesorios_incluidos || ''}</textarea>
+                    <label>Falla Reportada por el Cliente:</label>
+                    <textarea id="editTkFalla" rows="3" required>${t.problema_reportado || ''}</textarea>
+                `;
+            }
+        }
+
+        document.getElementById('formEdit').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const { tipo, id } = editActionData;
+            let url = '', body = {};
+
+            if(tipo === 'empleado') {
+                url = `${API_URL}/empleados/${id}`;
+                body = { nombre_completo: document.getElementById('editEmpNombre').value, rol: document.getElementById('editEmpRol').value, password: document.getElementById('editEmpPass').value };
+            } else if(tipo === 'cliente') {
+                url = `${API_URL}/clientes/${id}`;
+                body = { nombre_completo: document.getElementById('editCliNombre').value, ruc: document.getElementById('editCliRuc').value, telefono: document.getElementById('editCliTel').value };
+            } else if(tipo === 'plantilla') {
+                url = `${API_URL}/plantillas/${id}`;
+                const listaAcc = document.getElementById('editPlaAccesorios').value.split('\n');
+                body = { 
+                    nombre_plantilla: document.getElementById('editPlaNombre').value, 
+                    marca_defecto: document.getElementById('editPlaMarca').value, 
+                    modelo_defecto: document.getElementById('editPlaModelo').value,
+                    accesorios: listaAcc
+                };
+            } else if(tipo === 'ticket') {
+                url = `${API_URL}/tickets/${id}/basico`;
+                body = { 
+                    marca: document.getElementById('editTkMarca').value, 
+                    modelo: document.getElementById('editTkModelo').value, 
+                    numero_serie: document.getElementById('editTkSerie').value, 
+                    problema_reportado: document.getElementById('editTkFalla').value,
+                    accesorios_incluidos: document.getElementById('editTkAccesorios').value
+                };
+            }
+
+            await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            document.getElementById('modalEdit').style.display='none';
+            if(tipo==='empleado') cargarEmpleados(); if(tipo==='cliente') cargarClientes(); if(tipo==='plantilla') cargarPlantillas(); if(tipo==='ticket') cargarTickets();
+            alert('¡Cambios guardados con éxito!');
+        });
+
+        // ================= MAESTROS Y LISTAS =================
+        async function cargarClientes() { 
+            const res = await fetch(`${API_URL}/clientes`); const clientes = await res.json(); 
+            const select = document.getElementById('selectCliente'); const listaUI = document.getElementById('listaClientesUI'); 
+            select.innerHTML = '<option value="">-- Seleccione Cliente --</option>'; listaUI.innerHTML = ''; 
+            clientes.forEach(c => { 
+                const txtRuc = c.ruc ? ` [RUC: ${c.ruc}]` : '';
+                select.innerHTML += `<option value="${c.id_cliente}">${c.nombre_completo}${txtRuc}</option>`; 
+                let btnEdit = usuarioActual.rol === 'Administración' ? `<button type="button" class="btn-edit-mini" onclick='abrirModalEdit("cliente", {id: ${c.id_cliente}, nombre: "${c.nombre_completo}", ruc: "${c.ruc||''}", telefono: "${c.telefono||''}"})'>✏️</button>` : '';
+                listaUI.innerHTML += `<li><span>${c.nombre_completo}${txtRuc} <small>(${c.telefono || 'Sin telf'})</small></span><div>${btnEdit}<button type="button" class="btn-mini-danger" onclick="eliminarCliente(${c.id_cliente})">✕</button></div></li>`; 
+            }); 
+        }
         async function eliminarCliente(id) { if(confirm('¿Eliminar cliente?')) { await fetch(`${API_URL}/clientes/${id}`, { method: 'DELETE' }); cargarClientes(); } }
 
-        async function cargarEmpleados() { const res = await fetch(`${API_URL}/empleados`); const empleados = await res.json(); const selectFR = document.getElementById('selectEmpleado'); const selectOTM = document.getElementById('otmTecnico'); const listaUI = document.getElementById('listaEmpleadosUI'); selectFR.innerHTML = '<option value="">-- Seleccione Trabajador --</option>'; selectOTM.innerHTML = '<option value="">-- Asignar Técnico --</option>'; listaUI.innerHTML = ''; empleados.forEach(e => { selectFR.innerHTML += `<option value="${e.id_empleado}">${e.nombre_completo} (${e.rol})</option>`; if(e.rol === 'Técnico') selectOTM.innerHTML += `<option value="${e.nombre_completo}">${e.nombre_completo}</option>`; listaUI.innerHTML += `<li><span>${e.nombre_completo} <small>[${e.rol}]</small></span><button type="button" class="btn-mini-danger" onclick="eliminarEmpleado(${e.id_empleado})">✕</button></li>`; }); }
+        async function cargarEmpleados() { 
+            const res = await fetch(`${API_URL}/empleados`); const empleados = await res.json(); 
+            const selectFR = document.getElementById('selectEmpleado'); const selectOTM = document.getElementById('otmTecnico'); const listaUI = document.getElementById('listaEmpleadosUI'); 
+            selectFR.innerHTML = '<option value="">-- Seleccione Trabajador --</option>'; selectOTM.innerHTML = '<option value="">-- Asignar Técnico --</option>'; listaUI.innerHTML = ''; 
+            empleados.forEach(e => { 
+                selectFR.innerHTML += `<option value="${e.id_empleado}">${e.nombre_completo} (${e.rol})</option>`; 
+                if(e.rol === 'Técnico') selectOTM.innerHTML += `<option value="${e.nombre_completo}">${e.nombre_completo}</option>`; 
+                let btnEdit = usuarioActual.rol === 'Administración' ? `<button type="button" class="btn-edit-mini" onclick='abrirModalEdit("empleado", {id: ${e.id_empleado}, nombre: "${e.nombre_completo}", rol: "${e.rol}"})'>✏️</button>` : '';
+                listaUI.innerHTML += `<li><span>${e.nombre_completo} <small>[${e.rol}]</small></span><div>${btnEdit}<button type="button" class="btn-mini-danger" onclick="eliminarEmpleado(${e.id_empleado})">✕</button></div></li>`; 
+            }); 
+        }
         async function eliminarEmpleado(id) { if(confirm('¿Eliminar empleado?')) { await fetch(`${API_URL}/empleados/${id}`, { method: 'DELETE' }); cargarEmpleados(); } }
 
-        async function cargarPlantillas() { const res = await fetch(`${API_URL}/plantillas`); const plantillas = await res.json(); const select = document.getElementById('plantillaEquipo'); const listaUI = document.getElementById('listaPlantillasUI'); select.innerHTML = '<option value="generico">-- Genérico / Otro Equipo --</option>'; listaUI.innerHTML = ''; plantillas.forEach(p => { select.innerHTML += `<option value="${p.id_plantilla}" data-marca="${p.marca_defecto || ''}" data-modelo="${p.modelo_defecto || ''}">${p.nombre_plantilla}</option>`; listaUI.innerHTML += `<li><span>${p.nombre_plantilla}</span><button type="button" class="btn-mini-danger" onclick="eliminarPlantilla(${p.id_plantilla})">✕</button></li>`; }); cambiarPlantilla(); }
+        async function cargarPlantillas() { 
+            const res = await fetch(`${API_URL}/plantillas`); const plantillas = await res.json(); 
+            const select = document.getElementById('plantillaEquipo'); const listaUI = document.getElementById('listaPlantillasUI'); 
+            select.innerHTML = '<option value="generico">-- Genérico / Otro Equipo --</option>'; listaUI.innerHTML = ''; 
+            plantillas.forEach(p => { 
+                select.innerHTML += `<option value="${p.id_plantilla}" data-marca="${p.marca_defecto || ''}" data-modelo="${p.modelo_defecto || ''}">${p.nombre_plantilla}</option>`; 
+                let btnEdit = usuarioActual.rol === 'Administración' ? `<button type="button" class="btn-edit-mini" onclick='abrirModalEdit("plantilla", {id: ${p.id_plantilla}, nombre: "${p.nombre_plantilla}", marca: "${p.marca_defecto||''}", modelo: "${p.modelo_defecto||''}"})'>✏️</button>` : '';
+                listaUI.innerHTML += `<li><span>${p.nombre_plantilla}</span><div>${btnEdit}<button type="button" class="btn-mini-danger" onclick="eliminarPlantilla(${p.id_plantilla})">✕</button></div></li>`; 
+            }); 
+            cambiarPlantilla(); 
+        }
         async function eliminarPlantilla(id) { if(confirm('¿Eliminar plantilla?')) { await fetch(`${API_URL}/plantillas/${id}`, { method: 'DELETE' }); cargarPlantillas(); } }
 
-        // ================= BUSQUEDA Y RENDERIZADO DE TICKETS =================
+        // ================= GESTIÓN DE ACCESORIOS E HÍBRIDO (PLANTILLA + EXTRA) =================
+        async function cambiarPlantilla() { 
+            const sel = document.getElementById('plantillaEquipo'); const id = sel.value; const cont = document.getElementById('contenedorAccesorios'); 
+            document.getElementById('marcaEquipo').value = ""; document.getElementById('modeloEquipo').value = ""; 
+            cont.innerHTML = ''; accesoriosCargadosTemporalmente = []; 
+            
+            if (id === 'generico') { 
+                cont.innerHTML = `<div id="listaGenerica"></div><button type="button" class="btn-secondary" onclick="agregarLineaExtra()">＋ Añadir Accesorio</button>`; 
+                agregarLineaExtra(); 
+            } else { 
+                const opt = sel.options[sel.selectedIndex]; 
+                document.getElementById('marcaEquipo').value = opt.getAttribute('data-marca'); 
+                document.getElementById('modeloEquipo').value = opt.getAttribute('data-modelo'); 
+                
+                const res = await fetch(`${API_URL}/plantillas/${id}/accesorios`); 
+                const accs = await res.json(); accesoriosCargadosTemporalmente = accs; 
+                
+                let h = ''; 
+                accs.forEach((a, i) => { h += `<div class="item-accesorio"><input type="checkbox" id="chk_acc_${i}"><label for="chk_acc_${i}" style="flex:1;">${a.nombre_accesorio}</label><input type="text" id="obs_acc_${i}" placeholder="Estado (ej: Ok, Roto)" style="width:40%;"></div>`; }); 
+                h += `<div id="listaGenerica"></div><button type="button" class="btn-secondary" onclick="agregarLineaExtra()">＋ Accesorio Adicional (Extra)</button>`;
+                cont.innerHTML = h; 
+            } 
+        }
+        
+        function agregarLineaExtra() { 
+            const div = document.createElement('div'); div.className = 'item-accesorio'; 
+            div.innerHTML = `<input type="text" class="acc-gen-nombre" placeholder="Nombre accesorio"><input type="text" class="acc-gen-obs" placeholder="Estado"><button type="button" class="btn-mini-danger" onclick="this.parentElement.remove()">✕</button>`; 
+            document.getElementById('listaGenerica').appendChild(div); 
+        }
+        
+        function obtenerTextoAccesorios() { 
+            let l = []; 
+            if (document.getElementById('plantillaEquipo').value !== 'generico') { 
+                accesoriosCargadosTemporalmente.forEach((a, i) => { if (document.getElementById(`chk_acc_${i}`)?.checked) { const obs = document.getElementById(`obs_acc_${i}`).value.trim(); l.push(`✔ ${a.nombre_accesorio}${obs ? ` (${obs})` : ''}`); } }); 
+            }
+            document.querySelectorAll('.acc-gen-nombre').forEach((inp, i) => { 
+                const obs = document.querySelectorAll('.acc-gen-obs')[i].value.trim(); 
+                if(inp.value.trim()) l.push(`• ${inp.value.trim()}${obs ? ` (${obs})` : ''}`); 
+            }); 
+            return l.length ? l.join('\n') : 'Sin accesorios reportados'; 
+        }
+
+        // ================= VISTA Y RENDER DE TICKETS CON NUEVA COLUMNA DE FALLA =================
         async function cargarTickets() {
             const res = await fetch(`${API_URL}/tickets`); 
-            ticketsCargados = await res.json();
-            renderTablaTickets();
+            ticketsCargados = await res.json(); renderTablaTickets();
         }
 
         function renderTablaTickets() {
-            const tabla = document.getElementById('tablaTickets'); 
-            tabla.innerHTML = '';
-
-            // Obtener valores de los filtros
+            const tabla = document.getElementById('tablaTickets'); tabla.innerHTML = '';
             const filtroTexto = document.getElementById('filtroTexto').value.toLowerCase();
             const filtroEstado = document.getElementById('filtroEstado').value;
-            const filtroD = document.getElementById('filtroFechaD').value; // YYYY-MM-DD
-            const filtroH = document.getElementById('filtroFechaH').value; // YYYY-MM-DD
+            const filtroD = document.getElementById('filtroFechaD').value; const filtroH = document.getElementById('filtroFechaH').value;
 
-            // Filtrar el array en memoria
             const ticketsFiltrados = ticketsCargados.filter(t => {
-                // 1. Filtro de Texto (FR, Cliente, Equipo)
-                const textoCompleto = `${t.numero_fr} ${t.cliente} ${t.marca} ${t.modelo} ${t.numero_serie || ''}`.toLowerCase();
+                const textoCompleto = `${t.numero_fr} ${t.cliente} ${t.marca} ${t.modelo} ${t.numero_serie || ''} ${t.ruc_cliente||''}`.toLowerCase();
                 if (filtroTexto && !textoCompleto.includes(filtroTexto)) return false;
-
-                // 2. Filtro de Estado
                 if (filtroEstado && t.estado_equipo !== filtroEstado) return false;
-
-                // 3. Filtro de Fechas (Verificamos Ingreso o Entrega)
                 if (filtroD || filtroH) {
-                    const fechaIngresoStr = t.fecha_ingreso ? t.fecha_ingreso.split('T')[0] : null; // YYYY-MM-DD
+                    const fechaIngresoStr = t.fecha_ingreso ? t.fecha_ingreso.split('T')[0] : null; 
                     const fechaEntregaStr = (t.entrega_data && t.entrega_data.fecha_entrega) ? t.entrega_data.fecha_entrega.split('T')[0] : null;
-                    
-                    let pasaFiltroFecha = false;
-                    
-                    // Comprobamos si alguna fecha cae dentro del rango
-                    const fechasAComprobar = [fechaIngresoStr, fechaEntregaStr].filter(f => f !== null);
-                    
-                    for (let f of fechasAComprobar) {
-                        let ok = true;
-                        if (filtroD && f < filtroD) ok = false;
-                        if (filtroH && f > filtroH) ok = false;
-                        if (ok) { pasaFiltroFecha = true; break; }
-                    }
-                    
+                    let pasaFiltroFecha = false; const fechasAComprobar = [fechaIngresoStr, fechaEntregaStr].filter(f => f !== null);
+                    for (let f of fechasAComprobar) { let ok = true; if (filtroD && f < filtroD) ok = false; if (filtroH && f > filtroH) ok = false; if (ok) { pasaFiltroFecha = true; break; } }
                     if (!pasaFiltroFecha) return false;
                 }
-
                 return true;
             });
 
-            if(ticketsFiltrados.length === 0) {
-                tabla.innerHTML = `<tr><td colspan="7" style="text-align:center; color:#64748b;">No se encontraron registros que coincidan con la búsqueda.</td></tr>`;
-                return;
-            }
+            if(ticketsFiltrados.length === 0) return tabla.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#64748b;">No se encontraron registros.</td></tr>`;
 
             ticketsFiltrados.forEach(t => {
-                let accHTML = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') { accHTML = `<details><summary>Accesorios</summary><div class="text-preline">${t.accesorios_incluidos.replace(/\(([^)]+)\)/g, '<span class="obs-highlight">$1</span>')}</div></details>`; }
-                const fechaFormat = new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true });
+                let accHTML = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accHTML = `<details><summary>Accesorios</summary><div class="text-preline">${t.accesorios_incluidos.replace(/\(([^)]+)\)/g, '<span class="obs-highlight">$1</span>')}</div></details>`;
+                const fechaFormat = new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
                 
                 let estadoBadge = `<span class="badge" style="background-color: #e0f2fe; color: #0369a1;">${t.estado_equipo}</span>`;
                 if(t.estado_equipo === 'OTM en proceso') estadoBadge = `<span class="badge" style="background-color:#fef08a; color:#854d0e;">⏳ OTM en proceso</span>`;
                 else if(t.estado_equipo === 'OTM finalizado') estadoBadge = `<span class="badge" style="background-color:#bbf7d0; color:#166534;">✅ OTM finalizado</span>`;
                 else if(t.estado_equipo === 'Entregado') estadoBadge = `<span class="badge" style="background-color:#e9d5ff; color:#6b21a8;">📦 Equipo Entregado</span>`;
+                
+                let estadoPagoBadge = t.estado_pago === 'Pendiente de Pago' ? `<br><span class="badge" style="background-color:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; margin-top:5px; display:inline-block;">💰 Pendiente</span>` : t.estado_pago === 'Pagado' ? `<br><span class="badge" style="background-color:#dcfce3; color:#166534; border: 1px solid #86efac; margin-top:5px; display:inline-block;">✅ Pagado</span>` : '';
 
-                let estadoPagoBadge = '';
-                if(t.estado_pago === 'Pendiente de Pago') estadoPagoBadge = `<br><span class="badge" style="background-color:#fee2e2; color:#991b1b; border: 1px solid #fca5a5; margin-top:5px; display:inline-block;">💰 Pendiente</span>`;
-                else if(t.estado_pago === 'Pagado') estadoPagoBadge = `<br><span class="badge" style="background-color:#dcfce3; color:#166534; border: 1px solid #86efac; margin-top:5px; display:inline-block;">✅ Pagado</span>`;
+                // NUEVOS BOTONES DE ACCIONES
+                let btnFR = `<button class="btn-accion btn-fr" onclick="abrirVisorFR(${t.id_ticket})" title="Ficha de Recepción (Visualizar, Editar, Imprimir)">FR</button>`;
+                let btnOTM = `<button class="btn-accion btn-otm" onclick="abrirModalOTM(${t.id_ticket})" title="Orden de Trabajo y Mantenimiento">OTM</button>`;
+                
+                let btnFE = (t.estado_equipo === 'OTM finalizado' || t.estado_equipo === 'Entregado') 
+                    ? `<button class="btn-accion btn-fe" onclick="abrirModalEntrega(${t.id_ticket})" title="Ficha de Entrega">FE</button>`
+                    : `<button class="btn-accion btn-disabled" title="Ficha de Entrega (Se activa al finalizar la OTM)" disabled>FE</button>`;
+                
+                let btnFP = '';
+                if (usuarioActual.rol === 'Administración') {
+                    btnFP = (t.estado_equipo === 'OTM finalizado' || t.estado_equipo === 'Entregado') 
+                        ? `<button class="btn-accion btn-fp" onclick="abrirModalFP(${t.id_ticket})" title="Factura Proforma">FP</button>`
+                        : `<button class="btn-accion btn-disabled" title="Factura Proforma (Se activa al finalizar la OTM)" disabled>FP</button>`;
+                }
 
-                let btnEntrega = (t.estado_equipo === 'OTM finalizado' || t.estado_equipo === 'Entregado') ? `<button onclick="abrirModalEntrega(${t.id_ticket})" class="btn-entrega" title="Ficha de Entrega">📦</button>` : '';
-                let btnFP = (usuarioActual.rol === 'Administración' && (t.estado_equipo === 'OTM finalizado' || t.estado_equipo === 'Entregado')) ? `<button onclick="abrirModalFP(${t.id_ticket})" class="btn-fp" title="Factura Proforma">📄 FP</button>` : '';
-                let btnEliminar = (usuarioActual.rol === 'Administración') ? `<button onclick="eliminarTicket(${t.id_ticket})" class="btn-danger" title="Eliminar Registro">🗑️</button>` : '';
+                // Diseño para la columna de falla
+                let fallaInfo = `<div style="font-size: 0.75rem; color: #7f1d1d; background: #fef2f2; padding: 5px; border-radius: 4px; border: 1px solid #fecaca; max-height: 70px; overflow-y: auto;"><i>${t.problema_reportado || 'No registrado'}</i></div>`;
 
                 tabla.innerHTML += `
                     <tr>
                         <td><strong>${t.numero_fr}</strong></td>
-                        <td>${t.cliente}</td>
+                        <td>${t.cliente}<br><small style="color:#64748b">${t.ruc_cliente ? 'RUC:'+t.ruc_cliente : ''}</small></td>
                         <td><strong>${t.marca}</strong><br>${t.modelo}<br><small>S/N: ${t.numero_serie || 'N/A'}</small></td>
+                        <td>${fallaInfo}</td>
                         <td>${accHTML}</td>
-                        <td><strong>${fechaFormat}</strong><div class="reception-info">👤 Por: ${t.empleado_receptor || 'No registrado'}</div></td>
+                        <td><strong>${fechaFormat}</strong><div class="reception-info">👤 Por: ${t.empleado_receptor || '-'}</div></td>
                         <td style="text-align: center;">${estadoBadge}${estadoPagoBadge}</td>
                         <td class="acciones-td">
-                            <button onclick="abrirModalOTM(${t.id_ticket})" class="btn-success" title="OTM Técnica">🛠️</button>
-                            <button onclick="generarReporteOTM(${t.id_ticket})" class="btn-otm-report" title="Reporte OTM">📋</button>
-                            ${btnEntrega}${btnFP}<button onclick="imprimirFR(${t.id_ticket})" class="btn-print" title="Imprimir FR">🖨️</button>${btnEliminar}
+                            ${btnFR}${btnOTM}${btnFE}${btnFP}
                         </td>
                     </tr>
                 `;
             });
         }
 
-        // ================= LÓGICA FOTOS DE RECEPCIÓN (FR) =================
-        function agregarFotoFR() { 
-            const archivo = document.getElementById('frFotoFile').files[0]; 
-            const desc = document.getElementById('frFotoDesc').value.trim(); 
-            if(!archivo) return alert("Selecciona una foto primero."); 
-            
-            const lector = new FileReader(); 
-            lector.onload = function(e) { 
-                fotosFRGlobal.push({ url: e.target.result, descripcion: desc }); 
-                document.getElementById('frFotoFile').value = ''; 
-                document.getElementById('frFotoDesc').value = ''; 
-                renderFotosFR(); 
-            }; 
-            lector.readAsDataURL(archivo); 
-        }
-        function eliminarFotoFR(index) { fotosFRGlobal.splice(index, 1); renderFotosFR(); }
-        function renderFotosFR() { 
-            document.getElementById('galeriaFotosFR').innerHTML = fotosFRGlobal.length ? fotosFRGlobal.map((f, i) => `<div class="foto-item"><button type="button" class="btn-eliminar-foto" onclick="eliminarFotoFR(${i})">✕</button><img src="${f.url}"><p>${f.descripcion}</p></div>`).join('') : ''; 
-        }
-
-        // ================= LÓGICA FACTURA PROFORMA =================
-        function abrirModalFP(idTicket) {
-            fpActualId = idTicket; 
-            const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
-            const otm = t.otm_data || {};
-            const fp = t.fp_data || {};
-
-            document.getElementById('fpHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} &nbsp;|&nbsp; <strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo} <small>(S/N: ${t.numero_serie || 'N/A'})</small>`;
-            document.getElementById('fpFalla').innerText = t.problema_reportado || 'No reportado';
-            document.getElementById('fpDiag').innerText = otm.diagnostico || 'Pendiente de diagnóstico';
-            document.getElementById('fpRep').innerText = otm.repuestos || 'Ningún repuesto reportado';
-            document.getElementById('fpRes').innerText = otm.resultado || 'Sin estado final registrado';
-            
-            document.getElementById('fpResumenTareas').value = fp.resumen_tareas || '';
-            document.getElementById('fpCostoReparacion').value = fp.costo_reparacion || '';
-            document.getElementById('fpCostoRepuestos').value = fp.costo_repuestos || '';
-            document.getElementById('fpMoneda').value = fp.moneda || 'PEN';
-            document.getElementById('fpTC').value = fp.tc || '';
-            document.getElementById('fpIGV').value = fp.igv !== undefined ? fp.igv : 18;
-            document.getElementById('fpDescuento').value = fp.descuento || 0;
-            document.getElementById('fpPagado').checked = (t.estado_pago === 'Pagado');
-            
-            document.getElementById('modalFP').style.display = 'flex'; 
-        }
-
-        function cerrarModalFP() { document.getElementById('modalFP').style.display = 'none'; }
-
-        async function guardarFP() { 
-            const resumen_tareas = document.getElementById('fpResumenTareas').value.trim();
-            const costo_reparacion = document.getElementById('fpCostoReparacion').value;
-            const costo_repuestos = document.getElementById('fpCostoRepuestos').value;
-            const moneda = document.getElementById('fpMoneda').value;
-            const tc = document.getElementById('fpTC').value;
-            const igv = document.getElementById('fpIGV').value;
-            const descuento = document.getElementById('fpDescuento').value;
-            const pagado = document.getElementById('fpPagado').checked;
-            
-            if(!costo_reparacion) return alert('Por favor, ingresa el costo de reparación.');
-            const fpData = { resumen_tareas, costo_reparacion, costo_repuestos, moneda, tc, igv, descuento, pagado };
-            
-            await fetch(`${API_URL}/tickets/${fpActualId}/fp`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fpData) }); 
-            alert(pagado ? '¡El pago se ha registrado exitosamente!' : '¡Factura Proforma guardada!'); 
-            cerrarModalFP(); cargarTickets(); 
-        }
-
-        function imprimirFP() {
-            const t = ticketsCargados.find(ticket => ticket.id_ticket === fpActualId); if (!t) return;
-            const otm = t.otm_data || {};
-            const resumenTareas = document.getElementById('fpResumenTareas').value.trim() || 'No especificado.';
-            const cReparacion = parseFloat(document.getElementById('fpCostoReparacion').value || 0);
-            const cRepuestos = parseFloat(document.getElementById('fpCostoRepuestos').value || 0);
-            const moneda = document.getElementById('fpMoneda').value;
-            const simboloMoneda = moneda === 'USD' ? '$' : 'S/';
-            const tcStr = document.getElementById('fpTC').value;
-            const txtTC = (moneda === 'USD' && tcStr) ? `<br><small style="color:#64748b;">(T/C Referencial: S/ ${tcStr})</small>` : '';
-            const igvPct = parseFloat(document.getElementById('fpIGV').value || 0);
-            const descPct = parseFloat(document.getElementById('fpDescuento').value || 0);
-
-            const montoDescuento = cReparacion * (descPct / 100);
-            const subtotalNeto = (cReparacion - montoDescuento) + cRepuestos;
-            const montoIGV = subtotalNeto * (igvPct / 100);
-            const totalPagar = subtotalNeto + montoIGV;
-
-            const fechaHoy = new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' });
-            const estaPagado = document.getElementById('fpPagado').checked;
-            const selloPago = estaPagado ? `<div style="color: #166534; font-weight: bold; font-size: 20px; border: 3px solid #166534; padding: 10px; text-align: center; margin-top: 15px; border-radius: 8px; transform: rotate(-5deg); width: fit-content; margin-left: auto; margin-right: auto;">CANCELADO / PAGADO</div>` : '';
-
-            let htmlDescuento = descPct > 0 ? `<tr><td>Descuento Promocional en Servicio (${descPct}%)</td><td style="text-align: right; color: #dc2626;">- ${simboloMoneda} ${montoDescuento.toFixed(2)}</td></tr>` : '';
-            let htmlRepuestosCosto = cRepuestos > 0 ? `<tr><td>Repuestos, Componentes y Materiales Utilizados</td><td style="text-align: right;">${simboloMoneda} ${cRepuestos.toFixed(2)}</td></tr>` : '';
-
-            const ventana = window.open('', '_blank', 'width=800,height=900');
-            ventana.document.write(`
-                <!DOCTYPE html><html lang="es"><head><title>Proforma - ${t.numero_fr}</title><style>@page { size: A4 portrait; margin: 1.5cm; } body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; margin: 0; color: #333; line-height: 1.4; } .cabecera-titulo { text-align: center; font-size: 16px; font-weight: bold; color: #7c3aed; margin-top: 5px; margin-bottom: 10px;} .fr-box { border: 2px solid #0f172a; padding: 5px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; margin-top: 10px; margin-bottom: 20px; } .seccion { margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; } .seccion-titulo { background-color: #f1f5f9; font-weight: bold; padding: 8px 12px; border-bottom: 1px solid #cbd5e1; color: #0f172a; font-size: 13px; } .seccion-contenido { padding: 12px; } table.costos { width: 100%; border-collapse: collapse; margin-top: 10px; } table.costos th, table.costos td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; } table.costos th { background: #f8fafc; color: #0f172a; } table.costos tr.total-row th { background: #7c3aed; color: white; font-size: 15px; text-align: right; } table.costos tr.total-row td { background: #f3e8ff; font-weight: bold; font-size: 16px; color: #7c3aed; text-align: right; } .fila { display: flex; margin-bottom: 5px; } .etiq { font-weight: bold; width: 150px; color: #475569; } .val { flex: 1; }</style></head>
-                <body>
-                    ${encabezadoEmpresaHTML}
-                    <div style="text-align: center;"><div class="cabecera-titulo">FACTURA PROFORMA (PRESUPUESTO TÉCNICO)</div><div class="fr-box">REF FR N° ${t.numero_fr}</div></div>
-                    <div style="text-align: right; margin-bottom: 10px; font-weight: bold; color: #64748b;">Fecha de emisión: ${fechaHoy}</div>
-                    <div class="seccion"><div class="seccion-titulo">📋 DATOS DEL CLIENTE Y EQUIPO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Cliente / Empresa:</div><div class="val"><strong>${t.cliente}</strong></div></div><div class="fila"><div class="etiq">Equipo:</div><div class="val">${t.marca} ${t.modelo}</div></div><div class="fila"><div class="etiq">Número de Serie:</div><div class="val">${t.numero_serie || 'No Especificado'}</div></div></div></div>
-                    <div class="seccion"><div class="seccion-titulo">🛠️ INFORME TÉCNICO RESUMIDO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Falla Reportada:</div><div class="val"><i>${t.problema_reportado}</i></div></div><div class="fila"><div class="etiq">Diagnóstico Original:</div><div class="val">${otm.diagnostico || '-'}</div></div><div class="fila"><div class="etiq" style="color: #7c3aed;">Trabajo Realizado:</div><div class="val"><strong>${resumenTareas}</strong></div></div><div class="fila"><div class="etiq">Repuestos Usados:</div><div class="val">${otm.repuestos || 'No se requirieron repuestos.'}</div></div><div class="fila" style="margin-top: 10px;"><div class="etiq" style="color:#16a34a;">Estado Unidad:</div><div class="val"><strong>${otm.resultado || '-'}</strong></div></div></div></div>
-                    <div class="seccion" style="border-color: #8b5cf6;"><div class="seccion-titulo" style="background-color: #f3e8ff; color: #6d28d9; border-bottom-color: #d8b4fe;">💰 DETALLE DE COSTOS Y FACTURACIÓN</div><div class="seccion-contenido"><table class="costos"><tr><th>Concepto de Servicio / Producto</th><th style="width: 160px; text-align: right;">Importe</th></tr><tr><td>Servicio de Reparación y Mano de Obra Técnica</td><td style="text-align: right;">${simboloMoneda} ${cReparacion.toFixed(2)}</td></tr>${htmlDescuento}${htmlRepuestosCosto}<tr><td style="text-align: right; font-weight: bold;">Subtotal Neto:</td><td style="text-align: right; font-weight: bold;">${simboloMoneda} ${subtotalNeto.toFixed(2)}</td></tr><tr><td style="text-align: right;">Impuesto de Ley (IGV ${igvPct}%):</td><td style="text-align: right;">${simboloMoneda} ${montoIGV.toFixed(2)}</td></tr><tr class="total-row"><th>TOTAL A PAGAR:</th><td>${simboloMoneda} ${totalPagar.toFixed(2)} ${txtTC}</td></tr></table>${selloPago}<p style="font-size: 11px; color: #64748b; margin-top: 15px; font-style: italic;">* Este documento es una proforma y detalla los costos incurridos en la Ficha de Recepción (FR) adjunta.</p></div></div>
-                    <div style="margin-top: 60px; text-align: center; font-weight: bold; border-top: 1px solid #333; width: 250px; margin-left: auto; margin-right: auto; padding-top: 5px;">Administración - Innova Electronics SAC</div>
-                    <script>window.onload=function(){window.print();}<\/script>
-                </body></html>
-            `); ventana.document.close();
-        }
-
-        // ================= IMPRIMIR FR (AHORA CON FOTOS) =================
-        function imprimirFR(idTicket) { 
-            const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return; 
-            const fechaFormat = new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }); 
+        // ================= VISOR Y PRINTS =================
+        function abrirVisorFR(idTicket) {
+            const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return;
+            const rucStr = t.ruc_cliente ? `<br><strong>RUC:</strong> ${t.ruc_cliente}` : '';
             let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); 
             
-            // Generar bloque de fotos de Recepción si existen
-            let htmlFotos = '';
-            if (t.fotos_fr && t.fotos_fr.length > 0) {
-                htmlFotos = `<div class="seccion"><div class="titulo">EVIDENCIA FOTOGRÁFICA DE RECEPCIÓN</div><div class="contenido" style="display:flex; gap:10px; flex-wrap:wrap;">`;
-                t.fotos_fr.forEach(f => { htmlFotos += `<div style="border:1px solid #ccc; padding:5px; text-align:center; width:200px;"><img src="${f.url}" style="width:100%; max-height:150px; object-fit:contain;"><br><small>${f.descripcion}</small></div>`; });
-                htmlFotos += `</div></div>`;
+            document.getElementById('verFRContenido').innerHTML = `
+                <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px; border-radius:4px; border:1px solid #e2e8f0;">
+                    <div><strong>FR N°:</strong> ${t.numero_fr}</div>
+                    <div><strong>Fecha:</strong> ${new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+                </div>
+                <div style="margin-top:15px;"><strong>Cliente:</strong> ${t.cliente} ${rucStr}</div>
+                <div style="margin-top:10px;"><strong>Equipo:</strong> ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})</div>
+                <div style="margin-top:10px; color:#b91c1c;"><strong>Falla Reportada:</strong> <i>${t.problema_reportado}</i></div>
+                <div style="margin-top:10px; padding:10px; background:#f1f5f9; border-left:3px solid #3b82f6;"><strong>Accesorios e Inspección:</strong><br>${accs}</div>
+                <div style="margin-top:10px; color:#475569;"><strong>Recibido por:</strong> ${t.empleado_receptor || '-'}</div>
+            `;
+            
+            let htmlBotones = '';
+            if(usuarioActual.rol === 'Administración') {
+                htmlBotones += `<button onclick='document.getElementById("modalVerFR").style.display="none"; eliminarTicket(${t.id_ticket})' class="btn-danger" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px;">🗑️ Eliminar</button>`;
+                htmlBotones += `<button onclick='document.getElementById("modalVerFR").style.display="none"; abrirModalEdit("ticket", ${t.id_ticket})' class="btn-success" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px; border:none; color:white;">✏️ Editar FR</button>`;
             }
-
-            const ventana = window.open('', '_blank'); 
-            ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>FR - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} h2.doc-title{text-align:center; font-size:18px; margin-top:0;} .seccion{border:1px solid #ccc; margin-bottom:15px;} .titulo{background:#f1f5f9; font-weight:bold; padding:5px;} .contenido{padding:10px;}</style></head><body>${encabezadoEmpresaHTML}<h2 class="doc-title">FICHA DE RECEPCIÓN (FR)</h2><div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">N°: ${t.numero_fr}</div><div class="seccion"><div class="titulo">GENERALES</div><div class="contenido">Cliente: ${t.cliente}<br>Fecha de Ingreso: ${fechaFormat}<br>Recibido por: ${t.empleado_receptor || '-'}</div></div><div class="seccion"><div class="titulo">EQUIPO</div><div class="contenido">Marca: ${t.marca} - Modelo: ${t.modelo} - S/N: ${t.numero_serie || '-'}</div></div><div class="seccion"><div class="titulo">FALLA REPORTADA POR CLIENTE</div><div class="contenido"><i>${t.problema_reportado}</i></div></div><div class="seccion"><div class="titulo">ACCESORIOS E INSPECCIÓN INICIAL</div><div class="contenido">${accs}</div></div>${htmlFotos}<div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;"><div style="width:200px; border-top:1px solid #000;">Firma Cliente (Conformidad)</div><div style="width:200px; border-top:1px solid #000;">Firma Recepción (Innova Electronics)</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); 
+            htmlBotones += `<button onclick="imprimirFR(${t.id_ticket})" class="btn-print" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px;">🖨️ Imprimir FR</button>`;
+            
+            document.getElementById('frBotonesAccion').innerHTML = htmlBotones;
+            document.getElementById('modalVerFR').style.display = 'flex';
         }
 
-        // ================= (IMPRIMIR ENTREGA, OTM Y CRUD OTM SE MANTIENEN INTACTOS) =================
-        function imprimirFichaEntrega() { const t = ticketsCargados.find(ticket => ticket.id_ticket === entregaActualId); if (!t) return; const fechaCruda = document.getElementById('entregaFecha').value; const fechaEntregaFormato = fechaCruda ? new Date(fechaCruda).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'Pendiente'; const obs = document.getElementById('entregaObservaciones').value.trim() || 'Ninguna.'; let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); const ventana = window.open('', '_blank'); ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>Entrega - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} h2.doc-title{text-align:center; font-size:18px; margin-top:0;} .seccion{border:1px solid #ccc; margin-bottom:15px;} .titulo{background:#f1f5f9; font-weight:bold; padding:5px;} .contenido{padding:10px;}</style></head><body>${encabezadoEmpresaHTML}<h2 class="doc-title">FICHA DE ENTREGA DE EQUIPO</h2><div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">FR N°: ${t.numero_fr}</div><div class="seccion"><div class="titulo">CLIENTE Y EQUIPO</div><div class="contenido">Cliente: ${t.cliente}<br>Equipo: ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})</div></div><div class="seccion"><div class="titulo">ACCESORIOS ENTREGADOS</div><div class="contenido">${accs}</div></div><div class="seccion" style="border-color:#f59e0b;"><div class="titulo" style="background:#fef3c7; color:#b45309;">CONDICIONES DE SALIDA</div><div class="contenido">Fecha de Entrega Definitiva: <strong>${fechaEntregaFormato}</strong><br><br><i>Observaciones: ${obs}</i></div></div><div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;"><div style="width:200px; border-top:1px solid #000;">Firma Cliente (Conformidad)</div><div style="width:200px; border-top:1px solid #000;">Innova Electronics</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); }
-        function generarReporteOTM(idTicket) { const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return; const otm = t.otm_data || {}; if (!otm.tecnico && !otm.diagnostico && (!otm.actividades || otm.actividades.length === 0)) return alert("Aún no hay datos técnicos en la OTM."); const f = (iso) => iso ? new Date(iso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit', hour12: true }) : 'N/A'; let acts = '<p>Sin actividades.</p>'; if (otm.actividades && otm.actividades.length) acts = otm.actividades.map(a => `<div style="border-bottom:1px solid #eee; padding:5px 0;"><b>${a.fecha}</b>: ${a.texto}</div>`).join(''); let fotos = '<p>Sin fotos.</p>'; if (otm.fotos && otm.fotos.length) fotos = '<div style="display:flex; gap:10px; flex-wrap:wrap;">' + otm.fotos.map(fot => `<div style="border:1px solid #ccc; padding:5px; text-align:center; width:200px;"><img src="${fot.url}" style="width:100%; max-height:150px; object-fit:contain;"><br><small>${fot.descripcion}</small></div>`).join('') + '</div>'; const v = window.open('', '_blank'); v.document.write(`<!DOCTYPE html><html><head><title>OTM - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} .btn-print{background:#0284c7; color:white; padding:10px; cursor:pointer; border:none; margin-bottom:20px;} @media print{.btn-print{display:none;}} .box{border:1px solid #ccc; margin-bottom:10px;} .tit{background:#e2e8f0; font-weight:bold; padding:5px;} .cont{padding:10px;}</style></head><body><button class="btn-print" onclick="window.print()">🖨️ IMPRIMIR OTM</button>${encabezadoEmpresaHTML}<h2 style="text-align:center; margin-top:0;">REPORTE DE ORDEN TÉCNICA (OTM) - FR N° ${t.numero_fr}</h2><div class="box"><div class="tit">Datos Principales</div><div class="cont">Cliente: ${t.cliente} | Equipo: ${t.marca} ${t.modelo}<br>Técnico Responsable: ${otm.tecnico || '-'} | Inicio: ${f(otm.fecha_inicio)} | Fin: ${f(otm.fecha_termino)}</div></div><div class="box"><div class="tit">Falla Original Reportada</div><div class="cont"><i>${t.problema_reportado}</i></div></div><div class="box"><div class="tit">Diagnóstico Técnico Especializado</div><div class="cont">${otm.diagnostico || '-'}</div></div><div class="box"><div class="tit">Bitácora de Actividades Operativas</div><div class="cont">${acts}</div></div><div class="box"><div class="tit">Resultado Final y Repuestos</div><div class="cont">Repuestos Utilizados: ${otm.repuestos || '-'}<br>Estado / Resultado Final: <b>${otm.resultado || '-'}</b></div></div><div class="box"><div class="tit">Evidencias Fotográficas</div><div class="cont">${fotos}</div></div></body></html>`); v.document.close(); }
+        function imprimirFR(idTicket) { 
+            const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return; 
+            const fechaFormat = new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); 
+            let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); 
+            const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : '';
+            
+            let htmlFotos = ''; if (t.fotos_fr && t.fotos_fr.length > 0) { htmlFotos = `<div class="seccion"><div class="titulo">EVIDENCIA FOTOGRÁFICA DE RECEPCIÓN</div><div class="contenido" style="display:flex; gap:10px; flex-wrap:wrap;">`; t.fotos_fr.forEach(f => { htmlFotos += `<div style="border:1px solid #ccc; padding:5px; text-align:center; width:200px;"><img src="${f.url}" style="width:100%; max-height:150px; object-fit:contain;"><br><small>${f.descripcion}</small></div>`; }); htmlFotos += `</div></div>`; }
+            const ventana = window.open('', '_blank'); 
+            ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>FR - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} h2.doc-title{text-align:center; font-size:18px; margin-top:0;} .seccion{border:1px solid #ccc; margin-bottom:15px;} .titulo{background:#f1f5f9; font-weight:bold; padding:5px;} .contenido{padding:10px;}</style></head><body>${encabezadoEmpresaHTML}<h2 class="doc-title">FICHA DE RECEPCIÓN (FR)</h2><div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">N°: ${t.numero_fr}</div><div class="seccion"><div class="titulo">GENERALES</div><div class="contenido">Cliente: ${t.cliente}${rucHtml}<br>Fecha de Ingreso: ${fechaFormat}<br>Recibido por: ${t.empleado_receptor || '-'}</div></div><div class="seccion"><div class="titulo">EQUIPO</div><div class="contenido">Marca: ${t.marca} - Modelo: ${t.modelo} - S/N: ${t.numero_serie || '-'}</div></div><div class="seccion"><div class="titulo">FALLA REPORTADA POR CLIENTE</div><div class="contenido"><i>${t.problema_reportado}</i></div></div><div class="seccion"><div class="titulo">ACCESORIOS E INSPECCIÓN INICIAL</div><div class="contenido">${accs}</div></div>${htmlFotos}<div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;"><div style="width:200px; border-top:1px solid #000;">Firma Cliente (Conformidad)</div><div style="width:200px; border-top:1px solid #000;">Firma Recepción (Innova Electronics)</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); 
+        }
 
-        function abrirModalOTM(idTicket) { otmActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); document.getElementById('otmHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} | <strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo} <br><strong style="color:red">Falla:</strong> ${t.problema_reportado}`; const otm = t.otm_data || {}; document.getElementById('otmFechaInicio').value = otm.fecha_inicio || ''; document.getElementById('otmFechaTermino').value = otm.fecha_termino || ''; document.getElementById('otmTecnico').value = otm.tecnico || ''; document.getElementById('otmDiagnostico').value = otm.diagnostico || ''; document.getElementById('otmRepuestos').value = otm.repuestos || ''; document.getElementById('otmResultado').value = otm.resultado || ''; actividadesGlobal = otm.actividades || []; fotosGlobal = otm.fotos || []; renderActividadesOTM(); renderFotosOTM(); document.getElementById('modalOTM').style.display = 'flex'; }
+        // ================= (LÓGICA FOTOS FR, FP, OTM, ENTREGA MANTENIDAS) =================
+        function agregarFotoFR() { const archivo = document.getElementById('frFotoFile').files[0]; const desc = document.getElementById('frFotoDesc').value.trim(); if(!archivo) return alert("Selecciona una foto primero."); const lector = new FileReader(); lector.onload = function(e) { fotosFRGlobal.push({ url: e.target.result, descripcion: desc }); document.getElementById('frFotoFile').value = ''; document.getElementById('frFotoDesc').value = ''; renderFotosFR(); }; lector.readAsDataURL(archivo); }
+        function eliminarFotoFR(index) { fotosFRGlobal.splice(index, 1); renderFotosFR(); }
+        function renderFotosFR() { document.getElementById('galeriaFotosFR').innerHTML = fotosFRGlobal.length ? fotosFRGlobal.map((f, i) => `<div class="foto-item"><button type="button" class="btn-eliminar-foto" onclick="eliminarFotoFR(${i})">✕</button><img src="${f.url}"><p>${f.descripcion}</p></div>`).join('') : ''; }
+
+        document.getElementById('formFR').addEventListener('submit', async (e) => { e.preventDefault(); const dataFR = { id_empleado: document.getElementById('selectEmpleado').value, id_cliente: document.getElementById('selectCliente').value, numero_fr: document.getElementById('numFR').value.trim(), marca: document.getElementById('marcaEquipo').value, modelo: document.getElementById('modeloEquipo').value, numero_serie: document.getElementById('serieEquipo').value, accesorios: obtenerTextoAccesorios(), problema_reportado: document.getElementById('problema').value, fotos_fr: fotosFRGlobal }; const req = await fetch(`${API_URL}/tickets`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataFR)}); if (!req.ok) { const errorData = await req.json(); alert(errorData.error || 'Ocurrió un error.'); return; } document.getElementById('formFR').reset(); fotosFRGlobal = []; renderFotosFR(); cambiarPlantilla(); cargarTickets(); alert('FR creada exitosamente.');});
+        document.getElementById('formCliente').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/clientes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_completo: document.getElementById('nombreCliente').value, telefono: document.getElementById('telefonoCliente').value, ruc: document.getElementById('rucCliente').value }) }); document.getElementById('formCliente').reset(); cargarClientes(); });
+        document.getElementById('formEmpleado').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/empleados`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_completo: document.getElementById('nombreEmpleado').value, rol: document.getElementById('rolEmpleado').value, password: document.getElementById('passEmpleado').value }) }); document.getElementById('formEmpleado').reset(); cargarEmpleados(); });
+        document.getElementById('formPlantilla').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/plantillas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_plantilla: document.getElementById('nomPlantilla').value, marca_defecto: document.getElementById('marcaPlantilla').value, modelo_defecto: document.getElementById('modeloPlantilla').value, accesorios: document.getElementById('listaAccesoriosNuevos').value.split('\n') })}); document.getElementById('formPlantilla').reset(); cargarPlantillas(); });
+        async function eliminarTicket(id) { if (confirm('⚠️ ¿Eliminar Ficha de Recepción y todo su historial? No se puede deshacer.')) { await fetch(`${API_URL}/tickets/${id}`, { method: 'DELETE' }); cargarTickets(); } }
+
+        function abrirModalFP(idTicket) { fpActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); const otm = t.otm_data || {}; const fp = t.fp_data || {}; document.getElementById('fpHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} &nbsp;|&nbsp; <strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo} <small>(S/N: ${t.numero_serie || 'N/A'})</small>`; document.getElementById('fpFalla').innerText = t.problema_reportado || 'No reportado'; document.getElementById('fpDiag').innerText = otm.diagnostico || 'Pendiente de diagnóstico'; document.getElementById('fpRep').innerText = otm.repuestos || 'Ningún repuesto reportado'; document.getElementById('fpRes').innerText = otm.resultado || 'Sin estado final registrado'; document.getElementById('fpResumenTareas').value = fp.resumen_tareas || ''; document.getElementById('fpCostoReparacion').value = fp.costo_reparacion || ''; document.getElementById('fpCostoRepuestos').value = fp.costo_repuestos || ''; document.getElementById('fpMoneda').value = fp.moneda || 'PEN'; document.getElementById('fpTC').value = fp.tc || ''; document.getElementById('fpIGV').value = fp.igv !== undefined ? fp.igv : 18; document.getElementById('fpDescuento').value = fp.descuento || 0; document.getElementById('fpPagado').checked = (t.estado_pago === 'Pagado'); document.getElementById('modalFP').style.display = 'flex'; }
+        function cerrarModalFP() { document.getElementById('modalFP').style.display = 'none'; }
+        async function guardarFP() { const fpData = { resumen_tareas: document.getElementById('fpResumenTareas').value.trim(), costo_reparacion: document.getElementById('fpCostoReparacion').value, costo_repuestos: document.getElementById('fpCostoRepuestos').value, moneda: document.getElementById('fpMoneda').value, tc: document.getElementById('fpTC').value, igv: document.getElementById('fpIGV').value, descuento: document.getElementById('fpDescuento').value, pagado: document.getElementById('fpPagado').checked }; if(!fpData.costo_reparacion) return alert('Por favor, ingresa el costo de reparación.'); await fetch(`${API_URL}/tickets/${fpActualId}/fp`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fpData) }); alert(fpData.pagado ? '¡El pago se ha registrado exitosamente!' : '¡Factura Proforma guardada/actualizada!'); cerrarModalFP(); cargarTickets(); }
+        function imprimirFP() { const t = ticketsCargados.find(ticket => ticket.id_ticket === fpActualId); if (!t) return; const otm = t.otm_data || {}; const resumenTareas = document.getElementById('fpResumenTareas').value.trim() || 'No especificado.'; const cReparacion = parseFloat(document.getElementById('fpCostoReparacion').value || 0); const cRepuestos = parseFloat(document.getElementById('fpCostoRepuestos').value || 0); const moneda = document.getElementById('fpMoneda').value; const simboloMoneda = moneda === 'USD' ? '$' : 'S/'; const tcStr = document.getElementById('fpTC').value; const txtTC = (moneda === 'USD' && tcStr) ? `<br><small style="color:#64748b;">(T/C Referencial: S/ ${tcStr})</small>` : ''; const igvPct = parseFloat(document.getElementById('fpIGV').value || 0); const descPct = parseFloat(document.getElementById('fpDescuento').value || 0); const montoDescuento = cReparacion * (descPct / 100); const subtotalNeto = (cReparacion - montoDescuento) + cRepuestos; const montoIGV = subtotalNeto * (igvPct / 100); const totalPagar = subtotalNeto + montoIGV; const fechaHoy = new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' }); const estaPagado = document.getElementById('fpPagado').checked; const selloPago = estaPagado ? `<div style="color: #166534; font-weight: bold; font-size: 20px; border: 3px solid #166534; padding: 10px; text-align: center; margin-top: 15px; border-radius: 8px; transform: rotate(-5deg); width: fit-content; margin-left: auto; margin-right: auto;">CANCELADO / PAGADO</div>` : ''; let htmlDescuento = descPct > 0 ? `<tr><td>Descuento Promocional en Servicio (${descPct}%)</td><td style="text-align: right; color: #dc2626;">- ${simboloMoneda} ${montoDescuento.toFixed(2)}</td></tr>` : ''; let htmlRepuestosCosto = cRepuestos > 0 ? `<tr><td>Repuestos, Componentes y Materiales Utilizados</td><td style="text-align: right;">${simboloMoneda} ${cRepuestos.toFixed(2)}</td></tr>` : ''; const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; const ventana = window.open('', '_blank', 'width=800,height=900'); ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>Proforma - ${t.numero_fr}</title><style>@page { size: A4 portrait; margin: 1.5cm; } body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; margin: 0; color: #333; line-height: 1.4; } .cabecera-titulo { text-align: center; font-size: 16px; font-weight: bold; color: #7c3aed; margin-top: 5px; margin-bottom: 10px;} .fr-box { border: 2px solid #0f172a; padding: 5px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; margin-top: 10px; margin-bottom: 20px; } .seccion { margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; } .seccion-titulo { background-color: #f1f5f9; font-weight: bold; padding: 8px 12px; border-bottom: 1px solid #cbd5e1; color: #0f172a; font-size: 13px; } .seccion-contenido { padding: 12px; } table.costos { width: 100%; border-collapse: collapse; margin-top: 10px; } table.costos th, table.costos td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; } table.costos th { background: #f8fafc; color: #0f172a; } table.costos tr.total-row th { background: #7c3aed; color: white; font-size: 15px; text-align: right; } table.costos tr.total-row td { background: #f3e8ff; font-weight: bold; font-size: 16px; color: #7c3aed; text-align: right; } .fila { display: flex; margin-bottom: 5px; } .etiq { font-weight: bold; width: 150px; color: #475569; } .val { flex: 1; }</style></head><body>${encabezadoEmpresaHTML}<div style="text-align: center;"><div class="cabecera-titulo">FACTURA PROFORMA (PRESUPUESTO TÉCNICO)</div><div class="fr-box">REF FR N° ${t.numero_fr}</div></div><div style="text-align: right; margin-bottom: 10px; font-weight: bold; color: #64748b;">Fecha de emisión: ${fechaHoy}</div><div class="seccion"><div class="seccion-titulo">📋 DATOS DEL CLIENTE Y EQUIPO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Cliente / Empresa:</div><div class="val"><strong>${t.cliente}</strong>${rucHtml}</div></div><div class="fila"><div class="etiq">Equipo:</div><div class="val">${t.marca} ${t.modelo}</div></div><div class="fila"><div class="etiq">Número de Serie:</div><div class="val">${t.numero_serie || 'No Especificado'}</div></div></div></div><div class="seccion"><div class="seccion-titulo">🛠️ INFORME TÉCNICO RESUMIDO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Falla Reportada:</div><div class="val"><i>${t.problema_reportado}</i></div></div><div class="fila"><div class="etiq">Diagnóstico Original:</div><div class="val">${otm.diagnostico || '-'}</div></div><div class="fila"><div class="etiq" style="color: #7c3aed;">Trabajo Realizado:</div><div class="val"><strong>${resumenTareas}</strong></div></div><div class="fila"><div class="etiq">Repuestos Usados:</div><div class="val">${otm.repuestos || 'No se requirieron repuestos.'}</div></div><div class="fila" style="margin-top: 10px;"><div class="etiq" style="color:#16a34a;">Estado Unidad:</div><div class="val"><strong>${otm.resultado || '-'}</strong></div></div></div></div><div class="seccion" style="border-color: #8b5cf6;"><div class="seccion-titulo" style="background-color: #f3e8ff; color: #6d28d9; border-bottom-color: #d8b4fe;">💰 DETALLE DE COSTOS Y FACTURACIÓN</div><div class="seccion-contenido"><table class="costos"><tr><th>Concepto de Servicio / Producto</th><th style="width: 160px; text-align: right;">Importe</th></tr><tr><td>Servicio de Reparación y Mano de Obra Técnica</td><td style="text-align: right;">${simboloMoneda} ${cReparacion.toFixed(2)}</td></tr>${htmlDescuento}${htmlRepuestosCosto}<tr><td style="text-align: right; font-weight: bold;">Subtotal Neto:</td><td style="text-align: right; font-weight: bold;">${simboloMoneda} ${subtotalNeto.toFixed(2)}</td></tr><tr><td style="text-align: right;">Impuesto de Ley (IGV ${igvPct}%):</td><td style="text-align: right;">${simboloMoneda} ${montoIGV.toFixed(2)}</td></tr><tr class="total-row"><th>TOTAL A PAGAR:</th><td>${simboloMoneda} ${totalPagar.toFixed(2)} ${txtTC}</td></tr></table>${selloPago}<p style="font-size: 11px; color: #64748b; margin-top: 15px; font-style: italic;">* Este documento es una proforma y detalla los costos incurridos en la Ficha de Recepción (FR) adjunta.</p></div></div><div style="margin-top: 60px; text-align: center; font-weight: bold; border-top: 1px solid #333; width: 250px; margin-left: auto; margin-right: auto; padding-top: 5px;">Administración - Innova Electronics SAC</div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); }
+
+        function abrirModalOTM(idTicket) { 
+            otmActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
+            document.getElementById('otmHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} | <strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo} <br><strong style="color:red">Falla:</strong> ${t.problema_reportado}`; 
+            const otm = t.otm_data || {}; 
+            document.getElementById('otmFechaInicio').value = otm.fecha_inicio || ''; 
+            document.getElementById('otmFechaTermino').value = otm.fecha_termino || ''; 
+            document.getElementById('otmTecnico').value = otm.tecnico || ''; 
+            document.getElementById('otmDiagnostico').value = otm.diagnostico || ''; 
+            document.getElementById('otmRepuestos').value = otm.repuestos || ''; 
+            document.getElementById('otmResultado').value = otm.resultado || ''; 
+            actividadesGlobal = otm.actividades || []; fotosGlobal = otm.fotos || []; 
+            renderActividadesOTM(); renderFotosOTM(); 
+            document.getElementById('btnImprimirOTM').onclick = function() { generarReporteOTM(idTicket); };
+            document.getElementById('modalOTM').style.display = 'flex'; 
+        }
         function cerrarModalOTM() { document.getElementById('modalOTM').style.display = 'none'; }
         function agregarActividadOTM() { const texto = document.getElementById('otmTxtActividad').value.trim(); if(!texto) return alert("Escribe una actividad."); const fecha = new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}); actividadesGlobal.push({ fecha, texto }); document.getElementById('otmTxtActividad').value = ''; renderActividadesOTM(); }
         function renderActividadesOTM() { document.getElementById('listaActividadesOTM').innerHTML = actividadesGlobal.length ? actividadesGlobal.map(a => `<div class="actividad-item"><span class="actividad-fecha">🗓️ ${a.fecha}</span>${a.texto}</div>`).join('') : '<p style="color:gray; font-size:0.8rem;">No hay actividades registradas.</p>'; }
         function agregarFotoOTM() { const archivo = document.getElementById('otmFotoFile').files[0]; const desc = document.getElementById('otmFotoDesc').value.trim(); if(!archivo || !desc) return alert("Falta foto o descripción."); const lector = new FileReader(); lector.onload = function(e) { fotosGlobal.push({ url: e.target.result, descripcion: desc }); document.getElementById('otmFotoFile').value = ''; document.getElementById('otmFotoDesc').value = ''; renderFotosOTM(); }; lector.readAsDataURL(archivo); }
         function eliminarFotoOTM(index) { if(confirm("¿Eliminar foto?")) { fotosGlobal.splice(index, 1); renderFotosOTM(); } }
         function renderFotosOTM() { document.getElementById('galeriaFotosOTM').innerHTML = fotosGlobal.length ? fotosGlobal.map((f, i) => `<div class="foto-item"><button type="button" class="btn-eliminar-foto" onclick="eliminarFotoOTM(${i})">✕</button><img src="${f.url}"><p>${f.descripcion}</p></div>`).join('') : '<p style="color:gray; font-size:0.8rem;">Sin fotos.</p>'; }
-        async function guardarOTM() { const otmData = { fecha_inicio: document.getElementById('otmFechaInicio').value, fecha_termino: document.getElementById('otmFechaTermino').value, tecnico: document.getElementById('otmTecnico').value, diagnostico: document.getElementById('otmDiagnostico').value, repuestos: document.getElementById('otmRepuestos').value, resultado: document.getElementById('otmResultado').value, actividades: actividadesGlobal, fotos: fotosGlobal }; await fetch(`${API_URL}/tickets/${otmActualId}/otm`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(otmData) }); alert('¡OTM guardada exitosamente!'); cerrarModalOTM(); cargarTickets(); }
+        async function guardarOTM() { const otmData = { fecha_inicio: document.getElementById('otmFechaInicio').value, fecha_termino: document.getElementById('otmFechaTermino').value, tecnico: document.getElementById('otmTecnico').value, diagnostico: document.getElementById('otmDiagnostico').value, repuestos: document.getElementById('otmRepuestos').value, resultado: document.getElementById('otmResultado').value, actividades: actividadesGlobal, fotos: fotosGlobal }; await fetch(`${API_URL}/tickets/${otmActualId}/otm`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(otmData) }); alert('¡OTM guardada/actualizada exitosamente!'); cerrarModalOTM(); cargarTickets(); }
+        
+        function generarReporteOTM(idTicket) { const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return; const otm = t.otm_data || {}; if (!otm.tecnico && !otm.diagnostico && (!otm.actividades || otm.actividades.length === 0)) return alert("Aún no hay datos técnicos en la OTM."); const f = (iso) => iso ? new Date(iso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'N/A'; let acts = '<p>Sin actividades.</p>'; if (otm.actividades && otm.actividades.length) acts = otm.actividades.map(a => `<div style="border-bottom:1px solid #eee; padding:5px 0;"><b>${a.fecha}</b>: ${a.texto}</div>`).join(''); let fotos = '<p>Sin fotos.</p>'; if (otm.fotos && otm.fotos.length) fotos = '<div style="display:flex; gap:10px; flex-wrap:wrap;">' + otm.fotos.map(fot => `<div style="border:1px solid #ccc; padding:5px; text-align:center; width:200px;"><img src="${fot.url}" style="width:100%; max-height:150px; object-fit:contain;"><br><small>${fot.descripcion}</small></div>`).join('') + '</div>'; const v = window.open('', '_blank'); v.document.write(`<!DOCTYPE html><html><head><title>OTM - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} .btn-print{background:#0284c7; color:white; padding:10px; cursor:pointer; border:none; margin-bottom:20px;} @media print{.btn-print{display:none;}} .box{border:1px solid #ccc; margin-bottom:10px;} .tit{background:#e2e8f0; font-weight:bold; padding:5px;} .cont{padding:10px;}</style></head><body><button class="btn-print" onclick="window.print()">🖨️ IMPRIMIR OTM</button>${encabezadoEmpresaHTML}<h2 style="text-align:center; margin-top:0;">REPORTE DE ORDEN TÉCNICA (OTM) - FR N° ${t.numero_fr}</h2><div class="box"><div class="tit">Datos Principales</div><div class="cont">Cliente: ${t.cliente} | Equipo: ${t.marca} ${t.modelo}<br>Técnico Responsable: ${otm.tecnico || '-'} | Inicio: ${f(otm.fecha_inicio)} | Fin: ${f(otm.fecha_termino)}</div></div><div class="box"><div class="tit">Falla Original Reportada</div><div class="cont"><i>${t.problema_reportado}</i></div></div><div class="box"><div class="tit">Diagnóstico Técnico Especializado</div><div class="cont">${otm.diagnostico || '-'}</div></div><div class="box"><div class="tit">Bitácora de Actividades Operativas</div><div class="cont">${acts}</div></div><div class="box"><div class="tit">Resultado Final y Repuestos</div><div class="cont">Repuestos Utilizados: ${otm.repuestos || '-'}<br>Estado / Resultado Final: <b>${otm.resultado || '-'}</b></div></div><div class="box"><div class="tit">Evidencias Fotográficas</div><div class="cont">${fotos}</div></div></body></html>`); v.document.close(); }
 
         function abrirModalEntrega(idTicket) { entregaActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); document.getElementById('entregaHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} <br><strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo}`; const entrega = t.entrega_data || {}; let fechaSugerida = entrega.fecha_entrega || ''; if(!fechaSugerida) { const ahora = new Date(); ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset()); fechaSugerida = ahora.toISOString().slice(0,16); } document.getElementById('entregaFecha').value = fechaSugerida; document.getElementById('entregaObservaciones').value = entrega.observaciones || ''; document.getElementById('modalEntrega').style.display = 'flex'; }
         function cerrarModalEntrega() { document.getElementById('modalEntrega').style.display = 'none'; }
-        async function guardarEntrega() { const fecha_entrega = document.getElementById('entregaFecha').value; const observaciones = document.getElementById('entregaObservaciones').value.trim(); if(!fecha_entrega) return alert('Fecha obligatoria.'); await fetch(`${API_URL}/tickets/${entregaActualId}/entrega`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fecha_entrega, observaciones }) }); alert('¡Equipo ENTREGADO exitosamente!'); cerrarModalEntrega(); cargarTickets(); }
+        async function guardarEntrega() { const fecha_entrega = document.getElementById('entregaFecha').value; const observaciones = document.getElementById('entregaObservaciones').value.trim(); if(!fecha_entrega) return alert('Fecha obligatoria.'); await fetch(`${API_URL}/tickets/${entregaActualId}/entrega`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fecha_entrega, observaciones }) }); alert('¡Ficha de Entrega guardada/actualizada exitosamente!'); cerrarModalEntrega(); cargarTickets(); }
+        function imprimirFichaEntrega() { const t = ticketsCargados.find(ticket => ticket.id_ticket === entregaActualId); if (!t) return; const fechaCruda = document.getElementById('entregaFecha').value; const fechaEntregaFormato = fechaCruda ? new Date(fechaCruda).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Pendiente'; const obs = document.getElementById('entregaObservaciones').value.trim() || 'Ninguna.'; let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; const ventana = window.open('', '_blank'); ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>Entrega - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} h2.doc-title{text-align:center; font-size:18px; margin-top:0;} .seccion{border:1px solid #ccc; margin-bottom:15px;} .titulo{background:#f1f5f9; font-weight:bold; padding:5px;} .contenido{padding:10px;}</style></head><body>${encabezadoEmpresaHTML}<h2 class="doc-title">FICHA DE ENTREGA DE EQUIPO</h2><div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">FR N°: ${t.numero_fr}</div><div class="seccion"><div class="titulo">CLIENTE Y EQUIPO</div><div class="contenido">Cliente: ${t.cliente}${rucHtml}<br>Equipo: ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})</div></div><div class="seccion"><div class="titulo">ACCESORIOS ENTREGADOS</div><div class="contenido">${accs}</div></div><div class="seccion" style="border-color:#f59e0b;"><div class="titulo" style="background:#fef3c7; color:#b45309;">CONDICIONES DE SALIDA</div><div class="contenido">Fecha de Entrega Definitiva: <strong>${fechaEntregaFormato}</strong><br><br><i>Observaciones: ${obs}</i></div></div><div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;"><div style=\"width:200px; border-top:1px solid #000;\">Firma Cliente (Conformidad)</div><div style=\"width:200px; border-top:1px solid #000;\">Innova Electronics</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); }
 
-        async function cambiarPlantilla() { const sel = document.getElementById('plantillaEquipo'); const id = sel.value; const cont = document.getElementById('contenedorAccesorios'); document.getElementById('marcaEquipo').value = ""; document.getElementById('modeloEquipo').value = ""; cont.innerHTML = ''; accesoriosCargadosTemporalmente = []; if (id === 'generico') { cont.innerHTML = `<div id="listaGenerica"></div><button type="button" class="btn-secondary" onclick="agregarLineaGenerica()">＋ Accesorio</button>`; agregarLineaGenerica(); } else { const opt = sel.options[sel.selectedIndex]; document.getElementById('marcaEquipo').value = opt.getAttribute('data-marca'); document.getElementById('modeloEquipo').value = opt.getAttribute('data-modelo'); const res = await fetch(`${API_URL}/plantillas/${id}/accesorios`); const accs = await res.json(); accesoriosCargadosTemporalmente = accs; let h = ''; accs.forEach((a, i) => { h += `<div class="item-accesorio"><input type="checkbox" id="chk_acc_${i}"><label for="chk_acc_${i}" style="flex:1;">${a.nombre_accesorio}</label><input type="text" id="obs_acc_${i}" placeholder="Estado (ej: Ok, Roto)" style="width:40%;"></div>`; }); cont.innerHTML = h; } }
-        function agregarLineaGenerica() { const div = document.createElement('div'); div.className = 'item-accesorio'; div.innerHTML = `<input type="text" class="acc-gen-nombre" placeholder="Nombre accesorio"><input type="text" class="acc-gen-obs" placeholder="Estado"><button type="button" class="btn-danger" onclick="this.parentElement.remove()">✕</button>`; document.getElementById('listaGenerica').appendChild(div); }
-        function obtenerTextoAccesorios() { let l = []; if (document.getElementById('plantillaEquipo').value === 'generico') { document.querySelectorAll('.acc-gen-nombre').forEach((inp, i) => { const obs = document.querySelectorAll('.acc-gen-obs')[i].value.trim(); if(inp.value.trim()) l.push(`• ${inp.value.trim()}${obs ? ` (${obs})` : ''}`); }); } else { accesoriosCargadosTemporalmente.forEach((a, i) => { if (document.getElementById(`chk_acc_${i}`)?.checked) { const obs = document.getElementById(`obs_acc_${i}`).value.trim(); l.push(`✔ ${a.nombre_accesorio}${obs ? ` (${obs})` : ''}`); } }); } return l.length ? l.join('\n') : 'Sin accesorios reportados'; }
-        
-        async function eliminarTicket(id) { if (confirm('⚠️ ¿Eliminar Ficha de Recepción y su historial (OTM/Entrega)? No se puede deshacer.')) { await fetch(`${API_URL}/tickets/${id}`, { method: 'DELETE' }); cargarTickets(); } }
-
-        document.getElementById('formEmpleado').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/empleados`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_completo: document.getElementById('nombreEmpleado').value, rol: document.getElementById('rolEmpleado').value, password: document.getElementById('passEmpleado').value }) }); document.getElementById('formEmpleado').reset(); cargarEmpleados(); });
-        document.getElementById('formCliente').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/clientes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_completo: document.getElementById('nombreCliente').value, telefono: document.getElementById('telefonoCliente').value }) }); document.getElementById('formCliente').reset(); cargarClientes(); });
-        
-        // ENVIO MODIFICADO DE FORM FR PARA ENVIAR FOTOS Y RECIBIR ERROR DE DUPLICADO
-        document.getElementById('formFR').addEventListener('submit', async (e) => { 
-            e.preventDefault(); 
-            const dataFR = { 
-                id_empleado: document.getElementById('selectEmpleado').value, 
-                id_cliente: document.getElementById('selectCliente').value, 
-                numero_fr: document.getElementById('numFR').value.trim(), 
-                marca: document.getElementById('marcaEquipo').value, 
-                modelo: document.getElementById('modeloEquipo').value, 
-                numero_serie: document.getElementById('serieEquipo').value, 
-                accesorios: obtenerTextoAccesorios(), 
-                problema_reportado: document.getElementById('problema').value,
-                fotos_fr: fotosFRGlobal 
-            };
-            
-            const req = await fetch(`${API_URL}/tickets`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataFR)}); 
-            
-            if (!req.ok) {
-                const errorData = await req.json();
-                alert(errorData.error || 'Ocurrió un error al guardar la FR.');
-                return; // Detiene el proceso si hay error (ej: FR duplicada)
-            }
-
-            document.getElementById('formFR').reset(); 
-            fotosFRGlobal = []; 
-            renderFotosFR(); 
-            cambiarPlantilla(); 
-            cargarTickets(); 
-            alert('Ficha de Recepción creada exitosamente.');
-        });
-        
-        document.getElementById('formPlantilla').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/plantillas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_plantilla: document.getElementById('nomPlantilla').value, marca_defecto: document.getElementById('marcaPlantilla').value, modelo_defecto: document.getElementById('modeloPlantilla').value, accesorios: document.getElementById('listaAccesoriosNuevos').value.split('\n') })}); document.getElementById('formPlantilla').reset(); cargarPlantillas(); });
     </script>
 </body>
 </html>
