@@ -802,24 +802,118 @@
         
         function cerrarModalFP() { document.getElementById('modalFP').style.display = 'none'; }
         
-        async function guardarFP() { 
-            const fpData = { 
-                fecha_fp: formatoSalidaFecha(document.getElementById('fpFecha').value), 
-                usuario_fp: usuarioActual.nombre_completo,
-                resumen_tareas: document.getElementById('fpResumenTareas').value.trim(), 
-                costo_reparacion: document.getElementById('fpCostoReparacion').value, 
-                costo_repuestos: document.getElementById('fpCostoRepuestos').value, 
-                moneda: document.getElementById('fpMoneda').value, 
-                tc: document.getElementById('fpTC').value, 
-                igv: document.getElementById('fpIGV').value, 
-                descuento: document.getElementById('fpDescuento').value, 
-                pagado: document.getElementById('fpPagado').checked 
-            }; 
-            if(!fpData.costo_reparacion) return alert('Por favor, ingresa el costo de reparación.'); 
-            await fetch(`${API_URL}/tickets/${fpActualId}/fp`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(fpData) }); 
-            alert(fpData.pagado ? '¡El pago se ha registrado exitosamente!' : '¡Factura Proforma guardada/actualizada!'); 
-            cerrarModalFP(); cargarTickets(); 
+        // =======================================================================
+// 1. NUEVA FUNCIÓN: EL "DISPARADOR" FINANCIERO
+// Esta función envía el dinero a la base de datos de finanzas
+// =======================================================================
+async function registrarIngresoDesdeMantenimiento(datosFP) {
+    const saldoPendiente = datosFP.monto_total - datosFP.monto_pagado;
+    let estadoPago = 'PENDIENTE';
+    
+    if (datosFP.monto_pagado >= datosFP.monto_total) {
+        estadoPago = 'PAGADO';
+    } else if (datosFP.monto_pagado > 0) {
+        estadoPago = 'ADELANTO';
+    }
+
+    const payloadFinanciero = {
+        origen_modulo: 'MANTENIMIENTO',
+        nro_documento_origen: datosFP.nro_fp,
+        id_cliente: datosFP.id_cliente,
+        nombre_cliente: datosFP.nombre_cliente,
+        concepto: datosFP.concepto,
+        monto_subtotal: datosFP.monto_subtotal,
+        impuesto_igv: datosFP.impuesto_igv,
+        monto_total: datosFP.monto_total,
+        estado_pago: estadoPago,
+        monto_pagado: datosFP.monto_pagado,
+        saldo_pendiente: saldoPendiente,
+        metodo_pago: datosFP.metodo_pago,
+        moneda: datosFP.moneda, // 👈 Se agrega moneda
+        tc: datosFP.tc,         // 👈 Se agrega tipo de cambio
+        fecha_emision: datosFP.fecha_emision // 👈 Añade esta línea
+    };
+
+    try {
+        const respuesta = await fetch('/api/finanzas/ingresos', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payloadFinanciero)
+        });
+        if (respuesta.ok) {
+            console.log("✅ Ingreso registrado exitosamente en Finanzas.");
         }
+    } catch (error) {
+        console.error("❌ Error al enviar dinero a Finanzas:", error);
+    }
+}
+
+// =======================================================================
+// 2. FUNCIÓN guardarFP MEJORADA (REEMPLAZA A LA TUYA)
+// =======================================================================
+async function guardarFP() { 
+    const fpData = { 
+        fecha_fp: formatoSalidaFecha(document.getElementById('fpFecha').value), 
+        usuario_fp: usuarioActual.nombre_completo,
+        resumen_tareas: document.getElementById('fpResumenTareas').value.trim(), 
+        costo_reparacion: document.getElementById('fpCostoReparacion').value, 
+        costo_repuestos: document.getElementById('fpCostoRepuestos').value, 
+        moneda: document.getElementById('fpMoneda').value, 
+        tc: document.getElementById('fpTC').value, 
+        igv: document.getElementById('fpIGV').value, 
+        descuento: document.getElementById('fpDescuento').value, 
+        pagado: document.getElementById('fpPagado').checked 
+    }; 
+    
+    if(!fpData.costo_reparacion) return alert('Por favor, ingresa el costo de reparación.'); 
+    
+    // A) Guardamos la Factura Proforma en el ticket de Mantenimiento (Tu código original)
+    await fetch(`${API_URL}/tickets/${fpActualId}/fp`, { 
+        method: 'PUT', 
+        headers: { 'Content-Type': 'application/json' }, 
+        body: JSON.stringify(fpData) 
+    }); 
+    
+    // B) ¡LA MAGIA DE FINANZAS! Extraemos los datos y los enviamos
+    const t = ticketsCargados.find(ticket => ticket.id_ticket === fpActualId);
+    if (t) {
+        // Hacemos la misma matemática exacta que usas en tu imprimirFP()
+        const cReparacion = parseFloat(fpData.costo_reparacion || 0);
+        const cRepuestos = parseFloat(fpData.costo_repuestos || 0);
+        const descPct = parseFloat(fpData.descuento || 0);
+        const igvPct = parseFloat(fpData.igv || 0);
+        
+        const montoDescuento = cReparacion * (descPct / 100);
+        const subtotalNeto = (cReparacion - montoDescuento) + cRepuestos;
+        const montoIGV = subtotalNeto * (igvPct / 100);
+        const totalPagar = subtotalNeto + montoIGV;
+
+        // Validamos cuánto dinero entró hoy (Si el check "Pagado" está activo, pagó todo)
+        const montoIngresadoHoy = fpData.pagado ? totalPagar : 0;
+
+        const datosFinanzas = {
+            nro_fp: `FP-${t.numero_fr}`,
+            id_cliente: null, 
+            nombre_cliente: t.cliente,
+            concepto: `Servicio Técnico - ${t.marca} ${t.modelo}`,
+            monto_subtotal: subtotalNeto,
+            impuesto_igv: montoIGV,
+            monto_total: totalPagar,
+            monto_pagado: montoIngresadoHoy,
+            metodo_pago: 'NO ESPECIFICADO',
+            moneda: fpData.moneda,                             // 👈 Captura USD o PEN
+            tc: parseFloat(document.getElementById('fpTC').value || 1), // 👈 Captura el T/C
+            fecha_emision: fpData.fecha_fp // 👈 Añade esta línea para enviar la fecha que el técnico eligió
+        };
+
+        // Disparamos la información al módulo financiero
+        await registrarIngresoDesdeMantenimiento(datosFinanzas);
+    }
+
+    alert(fpData.pagado ? '¡El pago se ha registrado exitosamente en Mantenimiento y Finanzas!' : '¡Factura Proforma guardada/actualizada!'); 
+    cerrarModalFP(); 
+    cargarTickets(); 
+}
 
         function imprimirFP() { 
             const t = ticketsCargados.find(ticket => ticket.id_ticket === fpActualId); if (!t) return; 

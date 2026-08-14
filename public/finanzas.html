@@ -1,0 +1,700 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Financiero | Innova Electronics</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f3f4f6; margin: 0; padding: 20px; }
+        .header { background-color: #1e293b; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        
+        .layout-container { display: flex; gap: 20px; align-items: flex-start; }
+        .main-content { flex: 1; min-width: 0; }
+        .sidebar { width: 320px; background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); position: sticky; top: 20px; }
+
+        /* TARJETAS KPI */
+        .kpi-container { display: flex; flex-wrap: wrap; gap: 15px; margin-bottom: 20px; }
+        .kpi-card { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 200px; text-align: center; }
+        .kpi-card h3 { margin: 0; color: #64748b; font-size: 13px; text-transform: uppercase; }
+        .kpi-card .monto-principal { margin: 5px 0 0; font-size: 22px; font-weight: bold; }
+        .kpi-card .monto-secundario { font-size: 14px; color: #64748b; font-weight: 600; margin-top: 3px; }
+        
+        .kpi-ingreso { color: #10b981; } .kpi-egreso { color: #ef4444; } .kpi-saldo { color: #3b82f6; } .kpi-pendiente { color: #f59e0b; }
+
+        .charts-container { display: flex; gap: 15px; flex-wrap: wrap; margin-bottom: 20px; }
+        .chart-box { background: white; padding: 15px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); flex: 1; min-width: 300px; }
+        .chart-wrapper { position: relative; height: 260px; width: 100%; }
+
+        /* SECCIÓN TABLA */
+        .table-section { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); max-height: 520px; overflow-y: auto; }
+        .table-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; position: sticky; top: 0; background: white; z-index: 5; padding-bottom: 5px; }
+        #buscador-tabla { padding: 10px; width: 280px; border-radius: 6px; border: 1px solid #cbd5e1; outline: none; font-size: 14px; }
+        
+        table { width: 100%; border-collapse: collapse; }
+        th, td { border-bottom: 1px solid #ddd; padding: 10px; text-align: left; font-size: 13px; }
+        th { background-color: #f8fafc; color: #333; position: sticky; top: 40px; z-index: 4; }
+        .tag-ingreso { background-color: #d1fae5; color: #065f46; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+        .tag-egreso { background-color: #fee2e2; color: #991b1b; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+        /* 🟡 Cuentas por Cobrar (Clientes) */
+        .tag-por-cobrar { background-color: #fef3c7; color: #b45309; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+
+        /* 🔴 Cuentas por Pagar (Costos Fijos / Egresos) */
+        .tag-por-pagar { background-color: #ffe4e6; color: #9f1239; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; }
+        .sidebar h3 { margin-top: 0; color: #1e293b; border-bottom: 2px solid #ef4444; padding-bottom: 8px; }
+        .sidebar input, .sidebar select, .sidebar button { width: 100%; padding: 10px; margin-bottom: 10px; border-radius: 4px; border: 1px solid #ccc; box-sizing: border-box; }
+        .sidebar button { background-color: #ef4444; color: white; border: none; cursor: pointer; font-weight: bold; margin-top: 5px; }
+        .sidebar button:hover { background-color: #dc2626; }
+
+        /* MODAL NOTIFICACIONES */
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
+        .modal-content { background: white; width: 90%; max-width: 650px; border-radius: 8px; padding: 25px; max-height: 85vh; overflow-y: auto; position: relative; }
+        .alerta-item { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    </style>
+</head>
+<body>
+
+    <div class="header">
+        <h2>📊 Panel Financiero - Innova Electronics SAC</h2>
+        <div style="display: flex; gap: 15px; align-items: center;">
+            
+           <button onclick="abrirModalCostosFijos()" style="background:#64748b; border:none; padding:8px 15px; border-radius:6px; color:white; font-weight:bold; cursor:pointer;">
+            ⚙️ Costos Fijos
+           </button>
+
+            <button onclick="abrirNotificaciones()" style="background:#f59e0b; border:none; padding:8px 15px; border-radius:6px; color:white; font-weight:bold; cursor:pointer; position:relative;">
+                🔔 Alertas
+                <span id="badge-alertas" style="position:absolute; top:-8px; right:-8px; background:#ef4444; padding:3px 7px; border-radius:50%; font-size:11px; display:none;">0</span>
+            </button>
+
+            <select id="filtro-agrupacion" onchange="cargarDatosDashboard()" style="padding: 8px 12px; border-radius: 6px; border: none; font-weight: bold; cursor: pointer;">
+                <option value="DIA">📅 Gráfica: Por Días</option>
+                <option value="MES">📆 Gráfica: Por Meses</option>
+            </select>
+            <button onclick="cargarDatosDashboard()" style="padding: 8px 15px; cursor:pointer; font-weight: bold; border-radius:6px; border:none; background:#3b82f6; color:white;">🔄 Actualizar</button>
+        </div>
+    </div>
+
+    <div id="modal-notificaciones" class="modal-overlay">
+        <div class="modal-content">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e2e8f0; padding-bottom:15px; margin-bottom: 20px;">
+                <h2 style="margin:0; color:#1e293b;">🔔 Centro de Notificaciones</h2>
+                <button onclick="cerrarNotificaciones()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#94a3b8;">&times;</button>
+            </div>
+            
+            <h3 style="color:#ef4444; border-bottom: 1px solid #fee2e2; padding-bottom:5px;">🔻 Cuentas por Pagar (Costos Fijos / Egresos)</h3>
+            <div id="lista-pagar"></div>
+
+            <h3 style="color:#10b981; border-bottom: 1px solid #d1fae5; padding-bottom:5px; margin-top:30px;">💧 Cuentas por Cobrar (Clientes)</h3>
+            <div id="lista-cobrar"></div>
+        </div>
+    </div>
+
+<div id="modal-costos-fijos" class="modal-overlay">
+        <div class="modal-content" style="max-width: 750px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:2px solid #e2e8f0; padding-bottom:15px; margin-bottom: 20px;">
+                <h2 style="margin:0; color:#1e293b;">⚙️ Configurar Costos Fijos Programados</h2>
+                <button onclick="cerrarModalCostosFijos()" style="background:none; border:none; font-size:24px; cursor:pointer; color:#94a3b8;">&times;</button>
+            </div>
+
+            <form id="form-costo-fijo" onsubmit="guardarCostoFijo(event)" style="background:#f8fafc; padding:15px; border-radius:8px; border:1px solid #e2e8f0; margin-bottom:20px; display:flex; flex-wrap:wrap; gap:10px;">
+                <input type="hidden" id="cf_id">
+                <div style="flex:1; min-width:180px;">
+                    <label style="font-size:11px; font-weight:bold;">Categoría</label>
+                    <select id="cf_categoria" required style="width:100%; padding:8px; box-sizing:border-box;">
+                        <option value="">Seleccione...</option>
+                        <option value="ALQUILER LOCAL">Alquiler de Local</option>
+                        <option value="PAGO PERSONAL">Pago de Personal</option>
+                        <option value="COMPRA REPUESTOS">Compra de Repuestos/Insumos</option>
+                        <option value="SERVICIOS">Servicios (Agua/Luz/Internet)</option>
+                        <option value="OTROS">Otros Gastos</option>
+                    </select>
+                </div>
+                <div style="flex:2; min-width:200px;">
+                    <label style="font-size:11px; font-weight:bold;">Descripción</label>
+                    <input type="text" id="cf_descripcion" placeholder="Ej. Alquiler taller principal" required style="width:100%; padding:8px; box-sizing:border-box;">
+                </div>
+                <div style="flex:1; min-width:110px;">
+                    <label style="font-size:11px; font-weight:bold;">Monto (S/)</label>
+                    <input type="number" step="0.01" id="cf_monto" placeholder="0.00" required style="width:100%; padding:8px; box-sizing:border-box;">
+                </div>
+                <div style="flex:1; min-width:110px;">
+                    <label style="font-size:11px; font-weight:bold;">Día Venc. (1-31)</label>
+                    <input type="number" min="1" max="31" id="cf_dia" placeholder="Ej. 28" required style="width:100%; padding:8px; box-sizing:border-box;">
+                </div>
+                <div style="width:100%; text-align:right; margin-top:5px;">
+                    <button type="button" onclick="limpiarFormCostoFijo()" style="background:#94a3b8; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold; margin-right:5px;">Cancelar</button>
+                    <button type="submit" style="background:#10b981; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">💾 Guardar Plantilla</button>
+                </div>
+            </form>
+
+            <table style="width:100%;">
+                <thead>
+                    <tr style="background:#f1f5f9;">
+                        <th>Día Venc.</th>
+                        <th>Categoría</th>
+                        <th>Descripción</th>
+                        <th>Monto</th>
+                        <th style="text-align:center;">Acciones</th>
+                    </tr>
+                </thead>
+                <tbody id="tabla-costos-fijos-body"></tbody>
+            </table>
+        </div>
+    </div>
+
+
+    <div class="layout-container">
+        <div class="main-content">
+            
+            <div class="kpi-container">
+                <div class="kpi-card">
+                    <h3>Total Ingresos (En Caja)</h3>
+                    <div class="monto-principal kpi-ingreso" id="txt-ingresos-pen">S/ 0.00</div>
+                    <div class="monto-secundario" id="txt-ingresos-usd">$ 0.00 USD</div>
+                </div>
+                <div class="kpi-card">
+                    <h3>Total Egresos (Confirmados)</h3>
+                    <div class="monto-principal kpi-egreso" id="txt-egresos-pen">S/ 0.00</div>
+                    <div class="monto-secundario" id="txt-egresos-usd">$ 0.00 USD</div>
+                </div>
+                <div class="kpi-card">
+                    <h3>Saldo Líquido Actual</h3>
+                    <div class="monto-principal kpi-saldo" id="txt-saldo-pen">S/ 0.00</div>
+                    <div class="monto-secundario" id="txt-saldo-usd">$ 0.00 USD</div>
+                </div>
+                <div class="kpi-card">
+                    <h3>Total Por Cobrar (Deudas)</h3>
+                    <div class="monto-principal kpi-pendiente" id="txt-pendiente-pen">S/ 0.00</div>
+                    <div class="monto-secundario" id="txt-pendiente-usd">$ 0.00 USD</div>
+                </div>
+            </div>
+
+            <div class="charts-container">
+                <div class="chart-box">
+                    <h3 style="text-align: center; color: #333; margin-top:0; font-size:15px;" id="titulo-grafico-lineas">Curva de Liquidez</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="graficoLineas"></canvas>
+                    </div>
+                </div>
+                <div class="chart-box">
+                    <h3 style="text-align: center; color: #333; margin-top:0; font-size:15px;">Distribución de Gastos</h3>
+                    <div class="chart-wrapper">
+                        <canvas id="graficoTorta"></canvas>
+                    </div>
+                </div>
+            </div>
+
+            <div class="table-section">
+                <div class="table-header">
+                    <h3 style="margin: 0; color: #333;">📑 Registro de Flujo de Caja</h3>
+                    <input type="text" id="buscador-tabla" onkeyup="filtrarTabla()" placeholder="🔍 Buscar cliente, concepto, doc, fecha...">
+                </div>
+                <table>
+                    <thead>
+                        <tr>
+                            <th>Fecha</th>
+                            <th>Documento</th>
+                            <th>Tipo</th>
+                            <th>Concepto / Detalle</th>
+                            <th>Estado</th>
+                            <th>Monto / Conversión</th>
+                            <th>Acción</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tabla-flujo-body"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="sidebar">
+            <h3>💸 Registrar Egreso Manual</h3>
+            <form id="form-egreso" onsubmit="registrarEgreso(event)">
+                <label style="font-size:12px; font-weight:bold; color:#64748b;">Fecha de Registro</label>
+                <input type="date" id="fecha_egreso" required>
+
+                <label style="font-size:12px; font-weight:bold; color:#64748b;">Categoría</label>
+                <select id="categoria" required>
+                    <option value="">Seleccione Categoría...</option>
+                    <option value="ALQUILER LOCAL">Alquiler de Local</option>
+                    <option value="PAGO PERSONAL">Pago de Personal</option>
+                    <option value="COMPRA REPUESTOS">Compra de Repuestos/Insumos</option>
+                    <option value="SERVICIOS">Servicios (Agua/Luz/Internet)</option>
+                    <option value="OTROS">Otros Gastos</option>
+                </select>
+
+                <label style="font-size:12px; font-weight:bold; color:#64748b;">Descripción</label>
+                <input type="text" id="descripcion" placeholder="Ej. Materiales varios" required>
+
+                <label style="font-size:12px; font-weight:bold; color:#64748b;">Monto (S/)</label>
+                <input type="number" step="0.01" id="monto" placeholder="0.00" required>
+
+                <label style="font-size:12px; font-weight:bold; color:#64748b;">Método de Pago</label>
+                <select id="metodo_pago" required>
+                    <option value="EFECTIVO">Caja Chica (Efectivo)</option>
+                    <option value="CUENTA BANCARIA">Cuenta Bancaria</option>
+                </select>
+
+                <button type="submit">💾 Guardar Egreso</button>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let chartLineas = null;
+        let chartTorta = null;
+        let datosAlertasGlobal = { cuentas_por_pagar: [], cuentas_por_cobrar: [] }; // Memoria de alertas
+
+        // --- LÓGICA DE MODAL DE COSTOS FIJOS ---
+        async function abrirModalCostosFijos() {
+            document.getElementById('modal-costos-fijos').style.display = 'flex';
+            limpiarFormCostoFijo();
+            await listarCostosFijosModal();
+        }
+
+        function cerrarModalCostosFijos() {
+            document.getElementById('modal-costos-fijos').style.display = 'none';
+        }
+
+        async function listarCostosFijosModal() {
+            try {
+                const res = await fetch('/api/finanzas/costos-fijos');
+                const datos = await res.json();
+                const tbody = document.getElementById('tabla-costos-fijos-body');
+                tbody.innerHTML = '';
+
+                datos.forEach(cf => {
+                    tbody.innerHTML += `
+                        <tr>
+                            <td style="font-weight:bold; text-align:center; color:#3b82f6;">Día ${cf.dia_vencimiento}</td>
+                            <td><strong>${cf.categoria}</strong></td>
+                            <td>${cf.descripcion}</td>
+                            <td style="font-weight:bold; color:#ef4444;">S/ ${parseFloat(cf.monto).toFixed(2)}</td>
+                            <td style="text-align:center;">
+                                <button onclick="prepararEdicionCostoFijo(${cf.id}, '${cf.categoria}', '${cf.descripcion}', ${cf.monto}, ${cf.dia_vencimiento})" style="background:none; border:none; cursor:pointer; font-size:16px;">✏️</button>
+                                <button onclick="eliminarCostoFijo(${cf.id})" style="background:none; border:none; cursor:pointer; font-size:16px;">🗑️</button>
+                            </td>
+                        </tr>
+                    `;
+                });
+            } catch (e) { console.error("Error al listar costos fijos", e); }
+        }
+
+        async function guardarCostoFijo(e) {
+            e.preventDefault();
+            const id = document.getElementById('cf_id').value;
+            const payload = {
+                categoria: document.getElementById('cf_categoria').value,
+                descripcion: document.getElementById('cf_descripcion').value,
+                monto: document.getElementById('cf_monto').value,
+                dia_vencimiento: document.getElementById('cf_dia').value
+            };
+
+            const metodo = id ? 'PUT' : 'POST';
+            const url = id ? `/api/finanzas/costos-fijos/${id}` : '/api/finanzas/costos-fijos';
+
+            try {
+                const res = await fetch(url, {
+                    method: metodo,
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(payload)
+                });
+                if (res.ok) {
+                    alert(id ? "¡Plantilla actualizada!" : "¡Plantilla creada exitosamente!");
+                    limpiarFormCostoFijo();
+                    listarCostosFijosModal();
+                    cargarDatosDashboard(); // Actualiza alertas en caso haya cambiado alguna fecha
+                }
+            } catch (err) { alert("Error al guardar costo fijo."); }
+        }
+
+        function prepararEdicionCostoFijo(id, cat, desc, monto, dia) {
+            document.getElementById('cf_id').value = id;
+            document.getElementById('cf_categoria').value = cat;
+            document.getElementById('cf_descripcion').value = desc;
+            document.getElementById('cf_monto').value = monto;
+            document.getElementById('cf_dia').value = dia;
+        }
+
+        function limpiarFormCostoFijo() {
+            document.getElementById('form-costo-fijo').reset();
+            document.getElementById('cf_id').value = '';
+        }
+
+        async function eliminarCostoFijo(id) {
+            if (!confirm("⚠️ ¿Estás seguro de eliminar este costo fijo programado? Ya no se generará automáticamente en los siguientes meses.")) return;
+            try {
+                const res = await fetch(`/api/finanzas/costos-fijos/${id}`, { method: 'DELETE' });
+                if (res.ok) {
+                    listarCostosFijosModal();
+                    cargarDatosDashboard();
+                }
+            } catch (err) { alert("Error al eliminar."); }
+        }
+
+        async function cargarDatosDashboard() {
+            try {
+                const resIngresos = await fetch('/api/finanzas/ingresos');
+                const ingresos = await resIngresos.json();
+
+                const resEgresos = await fetch('/api/finanzas/egresos');
+                const egresos = await resEgresos.json();
+
+                // CÁLCULOS MATEMÁTICOS (Excluyendo Egresos Pendientes de la Caja Real)
+                let totalIngresosPEN = 0; let totalIngresosUSD = 0;
+                let totalPendientePEN = 0; let totalPendienteUSD = 0;
+
+                ingresos.forEach(item => {
+                    const pagado = parseFloat(item.monto_pagado || 0);
+                    const pendiente = parseFloat(item.saldo_pendiente || 0);
+                    const tc = parseFloat(item.tc || 1);
+                    
+                    if (item.moneda === 'USD') {
+                        totalIngresosUSD += pagado; totalIngresosPEN += (pagado * tc);
+                        totalPendienteUSD += pendiente; totalPendientePEN += (pendiente * tc);
+                    } else {
+                        totalIngresosPEN += pagado; totalPendientePEN += pendiente;
+                    }
+                });
+
+                // Solo suma Egresos que NO sean "PENDIENTE"
+                const totalEgresosPEN = egresos.reduce((suma, item) => {
+                    return item.estado_pago !== 'PENDIENTE' ? suma + parseFloat(item.monto_total || 0) : suma;
+                }, 0);
+                
+                const tcPromedio = 3.75; 
+                const totalEgresosUSD = totalEgresosPEN / tcPromedio;
+
+                const saldoLiquidoPEN = totalIngresosPEN - totalEgresosPEN;
+                const saldoLiquidoUSD = totalIngresosUSD - totalEgresosUSD;
+
+                // IMPRIMIR TARJETAS
+                document.getElementById('txt-ingresos-pen').innerText = 'S/ ' + totalIngresosPEN.toFixed(2);
+                document.getElementById('txt-ingresos-usd').innerText = '$ ' + totalIngresosUSD.toFixed(2) + ' USD';
+
+                document.getElementById('txt-egresos-pen').innerText = 'S/ ' + totalEgresosPEN.toFixed(2);
+                document.getElementById('txt-egresos-usd').innerText = '$ ' + totalEgresosUSD.toFixed(2) + ' USD';
+
+                document.getElementById('txt-saldo-pen').innerText = 'S/ ' + saldoLiquidoPEN.toFixed(2);
+                document.getElementById('txt-saldo-usd').innerText = '$ ' + saldoLiquidoUSD.toFixed(2) + ' USD';
+
+                document.getElementById('txt-pendiente-pen').innerText = 'S/ ' + totalPendientePEN.toFixed(2);
+                document.getElementById('txt-pendiente-usd').innerText = '$ ' + totalPendienteUSD.toFixed(2) + ' USD';
+
+                const modoAgrupacion = document.getElementById('filtro-agrupacion').value;
+                dibujarGraficoTorta(egresos);
+                dibujarGraficoLineas(ingresos, egresos, modoAgrupacion);
+                dibujarTablaFlujo(ingresos, egresos);
+                
+                // DISPARAR EL CEREBRO PEREZOSO AL FINAL
+                await cargarAlertas();
+
+            } catch (error) { console.error("Error al cargar el dashboard:", error); }
+        }
+
+        // LÓGICA DEL CENTRO DE NOTIFICACIONES
+        async function cargarAlertas() {
+            try {
+                const res = await fetch('/api/finanzas/alertas');
+                const data = await res.json();
+                datosAlertasGlobal = data;
+
+                const badge = document.getElementById('badge-alertas');
+                const total = data.cuentas_por_pagar.length + data.cuentas_por_cobrar.length;
+                
+                if (total > 0) {
+                    badge.innerText = total;
+                    badge.style.display = 'inline-block';
+                } else {
+                    badge.style.display = 'none';
+                }
+            } catch (error) { console.error("Error cargando alertas", error); }
+        }
+
+        function abrirNotificaciones() {
+            document.getElementById('modal-notificaciones').style.display = 'flex';
+            const divPagar = document.getElementById('lista-pagar');
+            const divCobrar = document.getElementById('lista-cobrar');
+            divPagar.innerHTML = ''; divCobrar.innerHTML = '';
+
+            // Renderizar Por Pagar
+            if(datosAlertasGlobal.cuentas_por_pagar.length === 0) divPagar.innerHTML = '<p style="color:#64748b; font-size:14px;">✅ Todo al día. No hay pagos pendientes.</p>';
+            datosAlertasGlobal.cuentas_por_pagar.forEach(item => {
+                divPagar.innerHTML += `
+                    <div class="alerta-item" style="border-left: 5px solid #ef4444;">
+                        <div>
+                            <strong style="color:#1e293b;">${item.categoria}</strong><br>
+                            <small style="color:#64748b;">${item.descripcion_detalle}</small><br>
+                            <small style="color:#ef4444;">Vencido / Por pagar</small>
+                        </div>
+                        <div style="text-align:right;">
+                            <strong style="color:#ef4444; font-size:18px;">S/ ${parseFloat(item.monto_total).toFixed(2)}</strong><br>
+                            <button onclick="confirmarEgreso(${item.id_egreso}, ${item.monto_total})" style="background:#ef4444; color:white; border:none; padding:6px 12px; border-radius:4px; cursor:pointer; font-size:12px; margin-top:5px; font-weight:bold;">✅ Confirmar Pago</button>
+                        </div>
+                    </div>`;
+            });
+
+            // Renderizar Por Cobrar
+            if(datosAlertasGlobal.cuentas_por_cobrar.length === 0) divCobrar.innerHTML = '<p style="color:#64748b; font-size:14px;">✅ No hay cuentas pendientes de cobro.</p>';
+            datosAlertasGlobal.cuentas_por_cobrar.forEach(item => {
+                divCobrar.innerHTML += `
+                    <div class="alerta-item" style="border-left: 5px solid #10b981;">
+                        <div>
+                            <strong style="color:#1e293b;">${item.nro_documento_origen} - ${item.nombre_cliente}</strong><br>
+                            <small style="color:#64748b;">${item.concepto}</small><br>
+                            <span class="tag-pendiente">⚠️ ${item.estado_pago}</span>
+                        </div>
+                        <div style="text-align:right;">
+                            <strong style="color:#10b981; font-size:18px;">S/ ${parseFloat(item.saldo_pendiente).toFixed(2)}</strong><br>
+                            <small style="color:#64748b;">Abonado: S/ ${item.monto_pagado}</small>
+                        </div>
+                    </div>`;
+            });
+        }
+
+        function cerrarNotificaciones() {
+            document.getElementById('modal-notificaciones').style.display = 'none';
+        }
+
+       async function confirmarEgreso(id, montoSugerido) {
+            // 1. Abrimos un cuadro de diálogo para que el usuario confirme o edite el monto
+            const montoIngresado = prompt("⚠️ Confirma o modifica el monto exacto que salió de la caja para este pago:", parseFloat(montoSugerido).toFixed(2));
+            
+            // 2. Si el usuario le da a "Cancelar" en el cuadro, detenemos todo
+            if (montoIngresado === null) return; 
+
+            // 3. Validamos que haya puesto un número válido
+            const montoFinal = parseFloat(montoIngresado);
+            if (isNaN(montoFinal) || montoFinal <= 0) {
+                alert("Monto inválido. Operación cancelada.");
+                return;
+            }
+
+            // 4. Enviamos el nuevo monto al servidor
+            try {
+                const res = await fetch(`/api/finanzas/egresos/${id}/pagar`, { 
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ monto_final: montoFinal }) // 👈 Mandamos el monto actualizado
+                });
+                if(res.ok) {
+                    alert("¡Pago confirmado exitosamente! La caja y la fecha han sido actualizadas.");
+                    cerrarNotificaciones();
+                    cargarDatosDashboard(); // Esto refresca la tabla y las gráficas al instante
+                }
+            } catch(e) { alert("Error al conectar con el servidor."); }
+        }
+
+        // --- FUNCIONES RESTANTES INTACTAS ---
+
+        function filtrarTabla() {
+            const textoBusqueda = document.getElementById("buscador-tabla").value.toLowerCase();
+            const filas = document.getElementById("tabla-flujo-body").getElementsByTagName("tr");
+            for (let i = 0; i < filas.length; i++) {
+                const contenidoFila = filas[i].textContent || filas[i].innerText;
+                filas[i].style.display = contenidoFila.toLowerCase().indexOf(textoBusqueda) > -1 ? "" : "none";
+            }
+        }
+
+        function dibujarTablaFlujo(ingresos, egresos) {
+            const flujo = [];
+
+            ingresos.forEach(i => {
+                flujo.push({
+                    id: i.id_transaccion,
+                    fecha: new Date(i.fecha_emision),
+                    documento: i.nro_documento_origen,
+                    tipo: 'INGRESO',
+                    concepto: `${i.origen_modulo}: ${i.concepto} (${i.nombre_cliente})`,
+                    estado: i.estado_pago,
+                    monto: parseFloat(i.monto_total),
+                    moneda: i.moneda || 'PEN',
+                    tc: parseFloat(i.tc || 1)
+                });
+            });
+
+            egresos.forEach(e => {
+                flujo.push({
+                    id: e.id_egreso,
+                    fecha: new Date(e.fecha_egreso),
+                    documento: (e.nro_comprobante && e.nro_comprobante !== '-') ? e.nro_comprobante : 'SIN DOC',
+                    tipo: 'EGRESO',
+                    concepto: `${e.categoria}: ${e.descripcion_detalle}`,
+                    estado: e.estado_pago || 'PAGADO',
+                    monto: parseFloat(e.monto_total),
+                    moneda: 'PEN',
+                    tc: 1
+                });
+            });
+
+            flujo.sort((a, b) => b.fecha - a.fecha);
+
+            const tbody = document.getElementById('tabla-flujo-body');
+            tbody.innerHTML = '';
+
+            flujo.forEach(item => {
+                const tr = document.createElement('tr');
+                const fechaStr = item.fecha.toLocaleDateString('es-PE');
+                const tagClase = item.tipo === 'INGRESO' ? 'tag-ingreso' : 'tag-egreso';
+                
+                let badgeEstado = `<span style="color: #475569; font-weight: bold;">${item.estado}</span>`;
+                let colorMonto = item.tipo === 'INGRESO' ? '#10b981' : '#ef4444';
+
+                // 👈 DIFERENCIACIÓN VISUAL DE ESTADOS PENDIENTES
+                if (item.estado === 'PENDIENTE' || item.estado === 'ADELANTO') {
+                    if (item.tipo === 'INGRESO') {
+                        badgeEstado = `<span class="tag-por-cobrar">🟡 POR COBRAR (${item.estado})</span>`;
+                        colorMonto = '#d97706';
+                    } else {
+                        badgeEstado = `<span class="tag-por-pagar">🔴 POR PAGAR (PENDIENTE)</span>`;
+                        colorMonto = '#e11d48';
+                    }
+                }
+
+                let celdaMonto = item.moneda === 'USD' 
+                    ? `<div style="font-weight:bold; color:${colorMonto}">$ ${item.monto.toFixed(2)} USD</div><small style="color:#64748b;">(➔ S/ ${(item.monto * item.tc).toFixed(2)})</small>`
+                    : `<div style="font-weight:bold; color:${colorMonto}">S/ ${item.monto.toFixed(2)}</div>`;
+
+                tr.innerHTML = `
+                    <td>${fechaStr}</td>
+                    <td style="font-weight:bold; color:#475569;">${item.documento}</td>
+                    <td><span class="${tagClase}">${item.tipo}</span></td>
+                    <td>${item.concepto}</td>
+                    <td>${badgeEstado}</td>
+                    <td>${celdaMonto}</td>
+                    <td style="text-align: center;">
+                        <button onclick="eliminarRegistro(${item.id}, '${item.tipo}')" style="background:none; border:none; cursor:pointer; font-size:18px;" title="Eliminar registro">🗑️</button>
+                    </td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        async function eliminarRegistro(id, tipo) {
+            if (!confirm(`⚠️ ¿Deseas eliminar este ${tipo}?`)) return;
+            const rutaApi = tipo === 'INGRESO' ? `/api/finanzas/ingresos/${id}` : `/api/finanzas/egresos/${id}`;
+            try {
+                const response = await fetch(rutaApi, { method: 'DELETE' });
+                if (response.ok) cargarDatosDashboard(); 
+            } catch (error) { alert("Error de conexión con el servidor."); }
+        }
+
+        function dibujarGraficoLineas(ingresos, egresos, modoAgrupacion = 'DIA') {
+            const fechas = {};
+            document.getElementById('titulo-grafico-lineas').innerText = modoAgrupacion === 'MES' ? 'Curva Mensual de Liquidez (S/)' : 'Curva Diaria de Liquidez (S/)';
+
+            ingresos.forEach(i => {
+                let fecha = i.fecha_emision ? i.fecha_emision.split('T')[0] : 'Hoy';
+                if (modoAgrupacion === 'MES') fecha = fecha.substring(0, 7);
+                if (!fechas[fecha]) fechas[fecha] = { ingresoReal: 0, ingresoProyectado: 0, egreso: 0 };
+                
+                const tc = parseFloat(i.tc || 1);
+                const pagadoPEN = i.moneda === 'USD' ? (parseFloat(i.monto_pagado || 0) * tc) : parseFloat(i.monto_pagado || 0);
+                const pendientePEN = i.moneda === 'USD' ? (parseFloat(i.saldo_pendiente || 0) * tc) : parseFloat(i.saldo_pendiente || 0);
+
+                fechas[fecha].ingresoReal += pagadoPEN;
+                if (i.estado_pago === 'PENDIENTE' || i.estado_pago === 'ADELANTO') fechas[fecha].ingresoProyectado += pendientePEN;
+            });
+
+            egresos.forEach(e => {
+                let fecha = e.fecha_egreso ? e.fecha_egreso.split('T')[0] : 'Hoy';
+                if (modoAgrupacion === 'MES') fecha = fecha.substring(0, 7);
+                if (!fechas[fecha]) fechas[fecha] = { ingresoReal: 0, ingresoProyectado: 0, egreso: 0 };
+                
+                // CRUCIAL: Solo restamos del saldo si YA SE PAGÓ
+                if (e.estado_pago !== 'PENDIENTE') {
+                    fechas[fecha].egreso += parseFloat(e.monto_total || 0);
+                }
+            });
+
+            const labelsFechas = Object.keys(fechas).sort();
+            const labelsFormateados = labelsFechas.map(f => {
+                if (modoAgrupacion === 'MES' && f.length === 7) {
+                    const [ano, mes] = f.split('-');
+                    const mesesNombres = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Set', 'Oct', 'Nov', 'Dic'];
+                    return `${mesesNombres[parseInt(mes) - 1]} ${ano}`;
+                }
+                return f;
+            });
+
+            const dataIngresosReales = labelsFechas.map(f => fechas[f].ingresoReal);
+            const dataEgresos = labelsFechas.map(f => fechas[f].egreso);
+
+            let saldoAcumulado = 0;
+            let pendienteAcumulado = 0;
+            const dataSaldoLiquido = [];
+            const dataSaldoProyectado = [];
+
+            labelsFechas.forEach(f => {
+                saldoAcumulado += (fechas[f].ingresoReal - fechas[f].egreso);
+                pendienteAcumulado += fechas[f].ingresoProyectado;
+                dataSaldoLiquido.push(saldoAcumulado);
+                dataSaldoProyectado.push(saldoAcumulado + pendienteAcumulado);
+            });
+
+            const ctx = document.getElementById('graficoLineas').getContext('2d');
+            if (chartLineas) chartLineas.destroy();
+
+            chartLineas = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labelsFormateados.length > 0 ? labelsFormateados : ['Sin Datos'],
+                    datasets: [
+                        { label: '💧 Saldo Real en Caja (S/)', data: dataSaldoLiquido, borderColor: '#3b82f6', borderWidth: 3.5, backgroundColor: 'rgba(59, 130, 246, 0.12)', fill: true, tension: 0.3 },
+                        { label: '📈 Proyección (Si se cobra todo) (S/)', data: dataSaldoProyectado, borderColor: '#f59e0b', borderWidth: 2.5, borderDash: [5, 5], backgroundColor: 'transparent', fill: false, tension: 0.3 },
+                        { label: '🔻 Egresos Reales (S/)', data: dataEgresos, borderColor: '#ef4444', borderWidth: 2, backgroundColor: 'transparent', fill: false, tension: 0.3 },
+                        { label: 'Ingresos Cobrados (S/)', data: dataIngresosReales, borderColor: 'rgba(16, 185, 129, 0.45)', borderWidth: 1.5, backgroundColor: 'transparent', fill: false, tension: 0.3 }
+                    ]
+                },
+                options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            });
+        }
+
+        function dibujarGraficoTorta(egresos) {
+            const categorias = {};
+            egresos.forEach(e => {
+                // Solo grafica egresos confirmados
+                if(e.estado_pago !== 'PENDIENTE') {
+                    if(!categorias[e.categoria]) categorias[e.categoria] = 0;
+                    categorias[e.categoria] += parseFloat(e.monto_total);
+                }
+            });
+
+            const ctx = document.getElementById('graficoTorta').getContext('2d');
+            if(chartTorta) chartTorta.destroy();
+            chartTorta = new Chart(ctx, {
+                type: 'pie',
+                data: { labels: Object.keys(categorias), datasets: [{ data: Object.values(categorias), backgroundColor: ['#ef4444', '#f59e0b', '#3b82f6', '#10b981', '#8b5cf6'] }] },
+                options: { responsive: true, maintainAspectRatio: false }
+            });
+        }
+
+        async function registrarEgreso(event) {
+            event.preventDefault();
+            const nuevoEgreso = {
+                fecha_egreso: document.getElementById('fecha_egreso').value,
+                categoria: document.getElementById('categoria').value,
+                descripcion_detalle: document.getElementById('descripcion').value,
+                monto_total: document.getElementById('monto').value,
+                metodo_pago: document.getElementById('metodo_pago').value,
+                tipo_comprobante: 'SIN COMPROBANTE', nro_comprobante: '-'
+            };
+
+            try {
+                const response = await fetch('/api/finanzas/egresos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(nuevoEgreso) });
+                if(response.ok) {
+                    alert("¡Gasto registrado con éxito!");
+                    document.getElementById('form-egreso').reset();
+                    document.getElementById('fecha_egreso').value = new Date().toISOString().split('T')[0];
+                    cargarDatosDashboard();
+                }
+            } catch (error) { alert("Error al registrar."); }
+        }
+
+        window.onload = function() {
+            document.getElementById('fecha_egreso').value = new Date().toISOString().split('T')[0];
+            cargarDatosDashboard();
+        };
+    </script>
+</body>
+</html>

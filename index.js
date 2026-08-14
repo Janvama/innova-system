@@ -143,5 +143,237 @@ app.put('/api/tickets/:id/fp', async (req, res) => {
     } catch (e) { res.status(500).send(e.message); }
 });
 
+// =====================================================================
+// 💰 MÓDULO DE FINANZAS - INNOVA ELECTRONICS S.A.C.
+// =====================================================================
+
+// 1. REGISTRAR UN NUEVO INGRESO (De Mantenimiento, Ventas o Alquileres)
+// 1. REGISTRAR UN NUEVO INGRESO (Actualizado para Dólares y TC)
+// 1. REGISTRAR O ACTUALIZAR UN INGRESO (Evita duplicados)
+// 1. REGISTRAR O ACTUALIZAR UN INGRESO (Actualizado para modificar Fechas)
+app.post('/api/finanzas/ingresos', async (req, res) => {
+    try {
+        const { 
+            origen_modulo, nro_documento_origen, id_cliente, nombre_cliente, 
+            concepto, monto_subtotal, impuesto_igv, monto_total, 
+            estado_pago, monto_pagado, saldo_pendiente, metodo_pago, moneda, tc,
+            fecha_emision // 👈 Recibimos la nueva fecha desde el frontend
+        } = req.body;
+
+        const check = await pool.query(
+            "SELECT id_transaccion FROM transacciones_financieras WHERE nro_documento_origen = $1 AND origen_modulo = $2",
+            [nro_documento_origen, origen_modulo]
+        );
+
+        if (check.rows.length > 0) {
+            // SI YA EXISTE: Ahora también actualizamos la fecha_emision
+            const actualizado = await pool.query(
+                `UPDATE transacciones_financieras 
+                 SET concepto=$1, monto_subtotal=$2, impuesto_igv=$3, monto_total=$4, 
+                     estado_pago=$5, monto_pagado=$6, saldo_pendiente=$7, metodo_pago=$8, moneda=$9, tc=$10, fecha_emision=COALESCE($13, fecha_emision)
+                 WHERE nro_documento_origen=$11 AND origen_modulo=$12 RETURNING *`,
+                [concepto, monto_subtotal, impuesto_igv, monto_total, estado_pago, monto_pagado, saldo_pendiente, metodo_pago, moneda || 'PEN', tc || 1, nro_documento_origen, origen_modulo, fecha_emision || null]
+            );
+            return res.json(actualizado.rows[0]);
+        } else {
+            // SI NO EXISTE: Lo insertamos con su fecha correspondiente
+            const nuevo = await pool.query(
+                `INSERT INTO transacciones_financieras 
+                (origen_modulo, nro_documento_origen, id_cliente, nombre_cliente, concepto, monto_subtotal, impuesto_igv, monto_total, estado_pago, monto_pagado, saldo_pendiente, metodo_pago, moneda, tc, fecha_emision) 
+                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, COALESCE($15, CURRENT_TIMESTAMP)) RETURNING *`,
+                [origen_modulo, nro_documento_origen, id_cliente, nombre_cliente, concepto, monto_subtotal, impuesto_igv, monto_total, estado_pago, monto_pagado, saldo_pendiente, metodo_pago, moneda || 'PEN', tc || 1, fecha_emision || null]
+            );
+            return res.json(nuevo.rows[0]);
+        }
+    } catch (err) {
+        console.error("Error al registrar/actualizar ingreso:", err.message);
+        res.status(500).send("Error en el servidor al registrar el ingreso");
+    }
+});
+
+// 2. OBTENER TODOS LOS INGRESOS
+app.get('/api/finanzas/ingresos', async (req, res) => {
+    try {
+        const ingresos = await pool.query("SELECT * FROM transacciones_financieras ORDER BY fecha_emision DESC");
+        res.json(ingresos.rows);
+    } catch (err) { res.status(500).send("Error en el servidor"); }
+});
+
+// 3. ELIMINAR UN INGRESO
+app.delete('/api/finanzas/ingresos/:id', async (req, res) => {
+    try {
+        await pool.query("DELETE FROM transacciones_financieras WHERE id_transaccion = $1", [req.params.id]);
+        res.json({ message: "Ingreso eliminado exitosamente" });
+    } catch (err) { res.status(500).send("Error al eliminar ingreso"); }
+});
+
+// 4. REGISTRAR UN NUEVO EGRESO 
+// 4. REGISTRAR UN NUEVO EGRESO (Actualizado para recibir fecha personalizada)
+app.post('/api/finanzas/egresos', async (req, res) => {
+    try {
+        const { categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso } = req.body;
+        const nuevoEgreso = await pool.query(
+            `INSERT INTO egresos_operativos (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso) 
+            VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, CURRENT_TIMESTAMP)) RETURNING *`,
+            [categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso || null]
+        );
+        res.json(nuevoEgreso.rows[0]);
+    } catch (err) { 
+        console.error("Error al registrar egreso:", err.message);
+        res.status(500).send("Error en el servidor al registrar el egreso"); 
+    }
+});
+
+// 5. OBTENER TODOS LOS EGRESOS
+app.get('/api/finanzas/egresos', async (req, res) => {
+    try {
+        const egresos = await pool.query("SELECT * FROM egresos_operativos ORDER BY fecha_egreso DESC");
+        res.json(egresos.rows);
+    } catch (err) { res.status(500).send("Error en el servidor"); }
+});
+
+// 6. ELIMINAR UN EGRESO
+app.delete('/api/finanzas/egresos/:id', async (req, res) => {
+    try {
+        await pool.query("DELETE FROM egresos_operativos WHERE id_egreso = $1", [req.params.id]);
+        res.json({ message: "Egreso eliminado exitosamente" });
+    } catch (err) { res.status(500).send("Error al eliminar egreso"); }
+});
+
+// 7. EVALUACIÓN PEREZOSA: ALERTAS DE COBROS Y PAGOS
+app.get('/api/finanzas/alertas', async (req, res) => {
+    try {
+        const hoy = new Date();
+        // Ajustamos al huso horario de Perú (UTC-5)
+        hoy.setHours(hoy.getHours() - 5);
+        
+        const mesActual = hoy.toISOString().substring(0, 7); // Obtiene "YYYY-MM" (Ej: "2026-08")
+        const diaActual = hoy.getDate(); // Obtiene el día (Ej: 14)
+
+        // --- A. REVISIÓN DE COSTOS FIJOS ---
+        const costosFijos = await pool.query("SELECT * FROM costos_fijos_programados WHERE activo = true");
+        
+        for (let costo of costosFijos.rows) {
+            // Lógica: Si ya llegamos al día de pago Y aún no se ha generado en este mes...
+            if (diaActual >= costo.dia_vencimiento && costo.ultimo_mes_generado !== mesActual) {
+                
+                // 1. Generamos el egreso pero en estado "PENDIENTE"
+                await pool.query(
+                    `INSERT INTO egresos_operativos 
+                    (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso, estado_pago) 
+                    VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, 'PENDIENTE')`,
+                    [costo.categoria, `[AUTO] ${costo.descripcion}`, costo.monto, 'NO ESPECIFICADO', 'SIN COMPROBANTE', 'AUTO-GENERADO']
+                );
+
+                // 2. Actualizamos la plantilla para que el servidor recuerde que YA lo generó este mes y no lo duplique
+                await pool.query(
+                    `UPDATE costos_fijos_programados SET ultimo_mes_generado = $1 WHERE id = $2`,
+                    [mesActual, costo.id]
+                );
+            }
+        }
+
+        // --- B. RECOPILAR TODAS LAS ALERTAS PARA EL DASHBOARD ---
+        
+        // Cuentas por Pagar (Egresos pendientes, incluyendo los recién autogenerados)
+        const porPagar = await pool.query("SELECT * FROM egresos_operativos WHERE estado_pago = 'PENDIENTE' ORDER BY fecha_egreso ASC");
+        
+        // Cuentas por Cobrar (Ingresos de FP que estén PENDIENTES o ADELANTOS)
+        const porCobrar = await pool.query("SELECT * FROM transacciones_financieras WHERE estado_pago IN ('PENDIENTE', 'ADELANTO') ORDER BY fecha_emision ASC");
+
+        // Enviamos todo al Dashboard
+        res.json({
+            cuentas_por_pagar: porPagar.rows,
+            cuentas_por_cobrar: porCobrar.rows
+        });
+
+    } catch (err) {
+        console.error("Error al procesar alertas perezosas:", err.message);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+// 8. CONFIRMAR PAGO DE EGRESO (Cambiar de PENDIENTE a PAGADO)
+// 8. CONFIRMAR PAGO DE EGRESO (Actualizar Monto, Fecha a Hoy y Estado a PAGADO)
+app.put('/api/finanzas/egresos/:id/pagar', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { monto_final } = req.body; // 👈 Recibimos el monto que el usuario escriba
+        
+        const actualizado = await pool.query(
+            `UPDATE egresos_operativos 
+             SET estado_pago = 'PAGADO', 
+                 fecha_egreso = CURRENT_TIMESTAMP, 
+                 monto_total = $2 
+             WHERE id_egreso = $1 RETURNING *`,
+            [id, monto_final]
+        );
+        res.json(actualizado.rows[0]);
+    } catch (err) {
+        console.error("Error al confirmar pago de egreso:", err.message);
+        res.status(500).send("Error en el servidor al confirmar el pago");
+    }
+});
+
+// --- RUTAS DE GESTIÓN DE COSTOS FIJOS PROGRAMADOS ---
+
+// Obtener la lista de costos fijos
+app.get('/api/finanzas/costos-fijos', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM costos_fijos_programados WHERE activo = true ORDER BY dia_vencimiento ASC");
+        res.json(result.rows);
+    } catch (err) {
+        console.error("Error al obtener costos fijos:", err.message);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+// Guardar un nuevo costo fijo
+app.post('/api/finanzas/costos-fijos', async (req, res) => {
+    try {
+        const { categoria, descripcion, monto, dia_vencimiento } = req.body;
+        const nuevo = await pool.query(
+            `INSERT INTO costos_fijos_programados (categoria, descripcion, monto, dia_vencimiento, ultimo_mes_generado, activo) 
+             VALUES ($1, $2, $3, $4, '', true) RETURNING *`,
+            [categoria, descripcion, monto, dia_vencimiento]
+        );
+        res.json(nuevo.rows[0]);
+    } catch (err) {
+        console.error("Error al guardar costo fijo:", err.message);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+// Editar un costo fijo existente
+app.put('/api/finanzas/costos-fijos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { categoria, descripcion, monto, dia_vencimiento } = req.body;
+        const actualizado = await pool.query(
+            `UPDATE costos_fijos_programados 
+             SET categoria = $1, descripcion = $2, monto = $3, dia_vencimiento = $4 
+             WHERE id = $5 RETURNING *`,
+            [categoria, descripcion, monto, dia_vencimiento, id]
+        );
+        res.json(actualizado.rows[0]);
+    } catch (err) {
+        console.error("Error al editar costo fijo:", err.message);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+// Eliminar (Desactivar) un costo fijo
+app.delete('/api/finanzas/costos-fijos/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pool.query("UPDATE costos_fijos_programados SET activo = false WHERE id = $1", [id]);
+        res.json({ message: "Costo fijo eliminado correctamente" });
+    } catch (err) {
+        console.error("Error al eliminar costo fijo:", err.message);
+        res.status(500).send("Error en el servidor");
+    }
+});
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
