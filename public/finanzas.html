@@ -50,9 +50,18 @@
         .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.6); z-index: 1000; justify-content: center; align-items: center; }
         .modal-content { background: white; width: 90%; max-width: 650px; border-radius: 8px; padding: 25px; max-height: 85vh; overflow-y: auto; position: relative; }
         .alerta-item { background: #f8fafc; border: 1px solid #cbd5e1; padding: 15px; border-radius: 6px; margin-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+    
+        .tag-abono { background-color: #dbeafe; color: #1e40af; padding: 3px 8px; border-radius: 4px; font-weight: bold; font-size: 11px; border: 1px solid #bfdbfe; }
+
     </style>
 </head>
 <body>
+
+<div class="nav-menu" style="margin-bottom: 20px; display: flex; gap: 10px;">
+        <a href="index.html" style="text-decoration: none; background: #e2e8f0; color: #0f172a; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">🛠️ Módulo Mantenimiento</a>
+        <a href="finanzas.html" id="btnMenuFinanzas" class="active" style="text-decoration: none; background: #2563eb; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">📊 Módulo Finanzas</a>
+        <a href="comercial.html" id="btnMenuComercial" style="text-decoration: none; background: #e2e8f0; color: #0f172a; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">💼 Módulo Comercial</a>
+    </div>
 
     <div class="header">
         <h2>📊 Panel Financiero - Innova Electronics SAC</h2>
@@ -332,13 +341,17 @@
             } catch (err) { alert("Error al eliminar."); }
         }
 
-        async function cargarDatosDashboard() {
+async function cargarDatosDashboard() {
             try {
                 const resIngresos = await fetch('/api/finanzas/ingresos');
                 const ingresos = await resIngresos.json();
 
                 const resEgresos = await fetch('/api/finanzas/egresos');
                 const egresos = await resEgresos.json();
+
+                // NUEVO: Traemos el historial de abonos de dinero real
+                const resAbonos = await fetch('/api/finanzas/pagos_parciales');
+                const abonos = await resAbonos.json();
 
                 // CÁLCULOS MATEMÁTICOS (Excluyendo Egresos Pendientes de la Caja Real)
                 let totalIngresosPEN = 0; let totalIngresosUSD = 0;
@@ -357,7 +370,7 @@
                     }
                 });
 
-                // Solo suma Egresos que NO sean "PENDIENTE"
+                // Solo suma Egresos que NO sean "PENDIENTE" (Mantenemos tu lógica intacta)
                 const totalEgresosPEN = egresos.reduce((suma, item) => {
                     return item.estado_pago !== 'PENDIENTE' ? suma + parseFloat(item.monto_total || 0) : suma;
                 }, 0);
@@ -384,9 +397,11 @@
                 const modoAgrupacion = document.getElementById('filtro-agrupacion').value;
                 dibujarGraficoTorta(egresos);
                 dibujarGraficoLineas(ingresos, egresos, modoAgrupacion);
-                dibujarTablaFlujo(ingresos, egresos);
                 
-                // DISPARAR EL CEREBRO PEREZOSO AL FINAL
+                // NUEVA TABLA: Dibujamos el flujo incluyendo los abonos parciales
+                dibujarTablaFlujo(ingresos, egresos, abonos);
+                
+                // DISPARAR EL CEREBRO PEREZOSO AL FINAL (Mantenemos la instrucción vital)
                 await cargarAlertas();
 
             } catch (error) { console.error("Error al cargar el dashboard:", error); }
@@ -496,7 +511,7 @@
             }
         }
 
-        function dibujarTablaFlujo(ingresos, egresos) {
+        function dibujarTablaFlujo(ingresos, egresos, abonos = []) {
             const flujo = [];
 
             ingresos.forEach(i => {
@@ -509,7 +524,8 @@
                     estado: i.estado_pago,
                     monto: parseFloat(i.monto_total),
                     moneda: i.moneda || 'PEN',
-                    tc: parseFloat(i.tc || 1)
+                    tc: parseFloat(i.tc || 1),
+                    tipo_registro: 'INGRESO'
                 });
             });
 
@@ -523,9 +539,28 @@
                     estado: e.estado_pago || 'PAGADO',
                     monto: parseFloat(e.monto_total),
                     moneda: 'PEN',
-                    tc: 1
+                    tc: 1,
+                    tipo_registro: 'EGRESO'
                 });
             });
+
+            // NUEVO: INCORPORAMOS LOS ABONOS REALES (DINERO EN MANO)
+            if (abonos && abonos.length > 0) {
+                abonos.forEach(a => {
+                    flujo.push({
+                        id: a.id_pago,
+                        fecha: new Date(a.fecha_pago),
+                        documento: a.nro_documento,
+                        tipo: 'ABONO',
+                        concepto: `Amortización ${a.origen_modulo} (${a.cliente})`,
+                        estado: 'CASH RECIBIDO',
+                        monto: parseFloat(a.monto_abonado),
+                        moneda: a.moneda || 'PEN',
+                        tc: parseFloat(a.tc || 1),
+                        tipo_registro: 'ABONO'
+                    });
+                });
+            }
 
             flujo.sort((a, b) => b.fecha - a.fecha);
 
@@ -535,20 +570,30 @@
             flujo.forEach(item => {
                 const tr = document.createElement('tr');
                 const fechaStr = item.fecha.toLocaleDateString('es-PE');
-                const tagClase = item.tipo === 'INGRESO' ? 'tag-ingreso' : 'tag-egreso';
+                
+                let tagClase = '';
+                if (item.tipo_registro === 'INGRESO') tagClase = 'tag-ingreso';
+                else if (item.tipo_registro === 'EGRESO') tagClase = 'tag-egreso';
+                else if (item.tipo_registro === 'ABONO') tagClase = 'tag-abono';
                 
                 let badgeEstado = `<span style="color: #475569; font-weight: bold;">${item.estado}</span>`;
-                let colorMonto = item.tipo === 'INGRESO' ? '#10b981' : '#ef4444';
+                let colorMonto = item.tipo_registro === 'INGRESO' ? '#10b981' : '#ef4444';
 
-                // 👈 DIFERENCIACIÓN VISUAL DE ESTADOS PENDIENTES
+                // MANTENEMOS TU DIFERENCIACIÓN VISUAL DE ESTADOS PENDIENTES
                 if (item.estado === 'PENDIENTE' || item.estado === 'ADELANTO') {
-                    if (item.tipo === 'INGRESO') {
+                    if (item.tipo_registro === 'INGRESO') {
                         badgeEstado = `<span class="tag-por-cobrar">🟡 POR COBRAR (${item.estado})</span>`;
                         colorMonto = '#d97706';
                     } else {
                         badgeEstado = `<span class="tag-por-pagar">🔴 POR PAGAR (PENDIENTE)</span>`;
                         colorMonto = '#e11d48';
                     }
+                }
+
+                // AGREGAMOS EL ESTILO EXCLUSIVO PARA LOS ABONOS REALES
+                if (item.tipo_registro === 'ABONO' || item.estado === 'CASH RECIBIDO') {
+                    badgeEstado = `<span style="background:#dcfce3; color:#166534; padding:3px 8px; border-radius:4px; font-weight:bold; font-size:11px;">💰 DINERO EN CAJA</span>`;
+                    colorMonto = '#059669'; // Verde oscuro intenso
                 }
 
                 let celdaMonto = item.moneda === 'USD' 
@@ -563,22 +608,33 @@
                     <td>${badgeEstado}</td>
                     <td>${celdaMonto}</td>
                     <td style="text-align: center;">
-                        <button onclick="eliminarRegistro(${item.id}, '${item.tipo}')" style="background:none; border:none; cursor:pointer; font-size:18px;" title="Eliminar registro">🗑️</button>
+                        <button onclick="eliminarRegistro(${item.id}, '${item.tipo_registro}')" style="background:none; border:none; cursor:pointer; font-size:18px;" title="Eliminar registro">🗑️</button>
                     </td>
                 `;
                 tbody.appendChild(tr);
             });
         }
 
-        async function eliminarRegistro(id, tipo) {
-            if (!confirm(`⚠️ ¿Deseas eliminar este ${tipo}?`)) return;
-            const rutaApi = tipo === 'INGRESO' ? `/api/finanzas/ingresos/${id}` : `/api/finanzas/egresos/${id}`;
+        async function eliminarRegistro(id, tipo_registro) {
+            if (!confirm(`⚠️ ¿Deseas eliminar este ${tipo_registro}?`)) return;
+            
+            // Redirigir a la ruta correcta según el tipo de registro
+            let rutaApi = '';
+            if (tipo_registro === 'INGRESO') rutaApi = `/api/finanzas/ingresos/${id}`;
+            else if (tipo_registro === 'EGRESO') rutaApi = `/api/finanzas/egresos/${id}`;
+            else if (tipo_registro === 'ABONO') rutaApi = `/api/finanzas/pagos_parciales/${id}`;
+
             try {
                 const response = await fetch(rutaApi, { method: 'DELETE' });
-                if (response.ok) cargarDatosDashboard(); 
-            } catch (error) { alert("Error de conexión con el servidor."); }
+                if (response.ok) {
+                    cargarDatosDashboard(); 
+                } else {
+                    alert("Hubo un problema al eliminar el registro.");
+                }
+            } catch (error) { 
+                alert("Error de conexión con el servidor."); 
+            }
         }
-
         function dibujarGraficoLineas(ingresos, egresos, modoAgrupacion = 'DIA') {
             const fechas = {};
             document.getElementById('titulo-grafico-lineas').innerText = modoAgrupacion === 'MES' ? 'Curva Mensual de Liquidez (S/)' : 'Curva Diaria de Liquidez (S/)';
@@ -691,9 +747,42 @@
             } catch (error) { alert("Error al registrar."); }
         }
 
+// ==========================================
+        // 1. SISTEMA DE SEGURIDAD Y CONTROL DE ROLES
+        // ==========================================
+        let usuarioActual = null;
+
+        function verificarSeguridad() {
+            // Leemos la credencial guardada en el navegador
+            const usuarioGuardado = sessionStorage.getItem('innova_user');
+            
+            // Si no hay sesión iniciada, pateamos al login
+            if (!usuarioGuardado) {
+                window.location.href = 'index.html';
+                return false; 
+            }
+
+            usuarioActual = JSON.parse(usuarioGuardado);
+
+            // ⛔ RESTRICCIÓN TOTAL PARA TÉCNICOS ⛔
+            // Si el rol es Técnico, no lo dejamos ver Finanzas, lo expulsamos a Mantenimiento
+            if (usuarioActual.rol === 'Técnico') {
+                window.location.href = 'index.html';
+                return false;
+            }
+            
+            return true; // Solo si es Administrador o Gerencia pasa
+        }
+
+        // ==========================================
+        // 2. INICIALIZACIÓN DE LA PÁGINA
+        // ==========================================
         window.onload = function() {
-            document.getElementById('fecha_egreso').value = new Date().toISOString().split('T')[0];
-            cargarDatosDashboard();
+            const accesoPermitido = verificarSeguridad();
+            if (accesoPermitido) {
+                document.getElementById('fecha_egreso').value = new Date().toISOString().split('T')[0];
+                cargarDatosDashboard();
+            }
         };
     </script>
 </body>

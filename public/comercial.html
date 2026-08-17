@@ -1,0 +1,1025 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Innova Electronics SAC - Comercial</title>
+    <style>
+        * { box-sizing: border-box; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; margin: 0; padding: 0; }
+        body { background-color: #f4f6f9; color: #333; padding: 20px; }
+        .header-bar { background-color: #0f172a; color: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; display: flex; justify-content: space-between; align-items: center; }
+        .header-bar h1 { font-size: 1.5rem; margin:0; }
+        .header-bar p { margin:0; font-size: 0.9rem; color: #94a3b8; }
+        .user-info { text-align: right; }
+        .nav-menu { margin-bottom: 20px; display: flex; gap: 10px; }
+        .nav-menu a { text-decoration: none; background: #e2e8f0; color: #0f172a; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem; }
+        .nav-menu a.active { background: #2563eb; color: white; }
+        .card { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); margin-bottom: 20px; }
+        h2 { margin-bottom: 15px; color: #0f172a; font-size: 1.1rem; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; display: flex; justify-content: space-between; align-items: center; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { border: 1px solid #cbd5e1; padding: 8px; text-align: left; font-size: 0.85rem; vertical-align: top;}
+        th { background-color: #f1f5f9; }
+        .btn-accion { padding: 6px 12px; font-weight: bold; border-radius: 4px; border: none; cursor: pointer; color: white; margin: 2px; font-size: 0.85rem; }
+        .btn-fae { background-color: #3b82f6; } .btn-fae:hover { background-color: #2563eb; } 
+        .btn-far { background-color: #f59e0b; } .btn-far:hover { background-color: #d97706; } 
+        .btn-fe { background-color: #10b981; } .btn-fe:hover { background-color: #059669; } 
+        .btn-fp { background-color: #8b5cf6; } .btn-fp:hover { background-color: #7c3aed; } 
+        .btn-print { background-color: #475569; } .btn-print:hover { background-color: #334155; }
+        .btn-mini-danger { background-color: #ef4444; color: white; border: none; border-radius: 4px; padding: 5px 8px; font-size: 0.8rem; cursor: pointer; font-weight: bold;}
+        .btn-secondary { background-color: #64748b; font-size: 0.8rem; padding: 5px 10px; margin-top: 5px; width: auto; color: white; border: none; border-radius: 4px; cursor: pointer;}
+        .modal-overlay { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index: 1000; justify-content:center; align-items:flex-start; padding-top: 20px; overflow-y: auto; }
+        .modal-content { background: white; width: 95%; max-width: 750px; padding: 25px; border-radius: 8px; position: relative; margin-bottom: 40px; }
+        .close-modal { position: absolute; top: 15px; right: 20px; cursor: pointer; font-size: 1.8rem; font-weight: bold; color: #64748b; }
+        form { display: flex; flex-direction: column; gap: 8px; }
+        label { font-weight: bold; font-size: 0.85rem; margin-top: 5px; color: #475569; }
+        input, select, textarea { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; width: 100%; }
+        .readonly-text { background-color: #f1f5f9; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 0.85rem; color: #334155; }
+        .item-accesorio { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; background: #f8fafc; padding: 6px; border-radius: 4px; border: 1px solid #e2e8f0; }
+        .btn-submit { background-color: #2563eb; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 15px; }
+        .badge-concretado { background:#e2e8f0; color:#475569; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; border: 1px solid #cbd5e1; display:inline-block; margin-top:2px;}
+        .badge-proceso { background:#dcfce3; color:#166534; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; border: 1px solid #86efac; display:inline-block; margin-top:2px;}
+        .progress-bar-bg { width: 100%; background-color: #e2e8f0; border-radius: 4px; height: 8px; margin-top: 5px; overflow: hidden; }
+        .progress-bar-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    
+    </style>
+</head>
+<body>
+
+    <div class="nav-menu">
+        <a href="index.html">🛠️ Módulo Mantenimiento</a>
+        <!-- Le agregamos el id="btnMenuFinanzas" a esta línea -->
+        <a href="finanzas.html" id="btnMenuFinanzas">📊 Módulo Finanzas</a>
+        <a href="comercial.html" class="active">💼 Módulo Comercial</a>
+    </div>
+
+    <header class="header-bar">
+        <div>
+            <h1>Innova Electronics SAC - Comercial</h1>
+            <p>Control Operativo de Ventas y Alquileres</p>
+        </div>
+        <div class="user-info">
+            <strong id="userDisplayNombre">Cargando...</strong><br>
+            <small id="userDisplayRol" style="color: #60a5fa;"></small>
+        </div>
+    </header>
+
+    <div class="card">
+        <h2>Panel de Control Comercial
+            <div>
+                <button class="btn-accion btn-fae" onclick="abrirModal('modalFAE')">＋ Nuevo Alquiler (FAE)</button>
+                <button class="btn-accion btn-fe" onclick="abrirModal('modalVenta')">＋ Nueva Venta (FV)</button>
+            </div>
+        </h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Documento</th>
+                    <th>Tipo</th>
+                    <th>Cliente</th>
+                    <th style="width: 25%;">Equipo (Detalles)</th>
+                    <th>Estado Actividad</th>
+                    <th>Estado Financiero</th>
+                    <th style="text-align: center;">Acciones Operativas y FIN</th>
+                </tr>
+            </thead>
+            <tbody id="tablaComercial"></tbody>
+        </table>
+    </div>
+
+<!-- VISOR DE DOCUMENTOS DE ORIGEN (FAE / FV) -->
+    <div id="modalVisorComercial" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px; border-top: 5px solid #3b82f6;">
+            <span class="close-modal" onclick="cerrarModal('modalVisorComercial')">×</span>
+            <h2 id="visorComercialTitulo" style="color:#0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom:10px; margin-top:0;">👁️ Detalles del Documento</h2>
+            <div id="visorComercialContenido" style="margin-top:15px; font-size:0.9rem; line-height:1.6;"></div>
+            <div id="visorBotonesAccion" style="display:flex; justify-content:flex-end; margin-top: 20px; border-top: 1px dashed #cbd5e1; padding-top: 15px;"></div>
+        </div>
+    </div>
+
+
+    <!-- MODAL FAE Y FAR (ALQUILERES) SE MANTIENEN INTACTOS -->
+    <div id="modalFAE" class="modal-overlay">
+        <div class="modal-content" style="border-top: 5px solid #3b82f6;">
+            <span class="close-modal" onclick="cerrarModal('modalFAE')">×</span>
+            <h2 style="color: #1e3a8a;">📦 Ficha de Arrendamiento de Entrega (FAE)</h2>
+            <form id="formFAE">
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;">
+                        <label>FAE N°:</label>
+                        <input type="text" id="alqContrato" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Gestor / Asesor:</label>
+                        <select id="alqGestor" required></select>
+                    </div>
+                </div><label>Cliente:</label>
+                <select id="alqCliente" required></select>
+                <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1; margin-top: 10px;">
+                    <label style="margin-top:0;">Plantilla / Tipo de Equipo:</label>
+                    <select id="alqPlantilla" required onchange="cambiarPlantillaAlquiler()">
+                        <option value="generico">-- Genérico / Otro Equipo --</option>
+                    </select><div style="display: flex; gap: 10px;">
+                        <div style="flex: 2;">
+                            <label>Nombre del Equipo:</label>
+                            <input type="text" id="alqEquipo" required>
+                        </div>
+                        <div style="flex: 1;">
+                            <label>Marca:</label>
+                            <input type="text" id="alqMarca">
+                        </div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;">
+                            <label>Modelo:</label>
+                            <input type="text" id="alqModelo">
+                        </div>
+                        <div style="flex: 1;">
+                            <label>N° Serie:</label>
+                            <input type="text" id="alqSerie" required>
+                        </div>
+                    </div>
+                    <label>Accesorios a entregar:</label>
+                    <div id="contenedorAccesoriosAlquiler">
+
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <div style="flex: 1;">
+                        <label>Fecha de Salida (Inicio):</label>
+                        <input type="date" id="alqInicio" required>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Fecha Fin (Tentativa):</label>
+                        <input type="date" id="alqFin" required>
+                    </div>
+                </div>
+
+                    <!-- NUEVO: MÓDULO FOTOGRÁFICO DE LA FAE -->
+                    <div style="border: 1px dashed #cbd5e1; padding: 10px; border-radius: 6px; background: #f8fafc; margin-top: 10px; margin-bottom: 15px;">
+                        <label style="margin-top: 0; color:#3b82f6;">📷 Evidencia Fotográfica de Entrega (Opcional):</label>
+                        <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                            <input type="file" id="faeFotoFile" accept="image/*" style="width: 200px; padding: 5px; border:1px solid #ccc; border-radius:4px;">
+                            <input type="text" id="faeFotoDesc" placeholder="Descripción (Ej: Rasguño derecho)" style="flex:1; padding: 5px; border:1px solid #ccc; border-radius:4px;">
+                            <button type="button" class="btn-secondary" onclick="agregarFotoFAE()" style="margin:0;">Subir Foto</button>
+                        </div>
+                        <div id="galeriaFotosFAE" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;"></div>
+                    </div>
+                
+
+
+                <button type="submit" class="btn-submit" style="background-color: #3b82f6;">💾 Generar FAE</button>
+            </form>
+        </div>
+    </div>
+    
+    <div id="modalFAR" class="modal-overlay"><div class="modal-content" style="border-top: 5px solid #f59e0b;"><span class="close-modal" onclick="cerrarModal('modalFAR')">×</span><h2 style="color: #b45309;">📥 Ficha de Arrendamiento de Recepción (FAR)</h2>
+        <form id="formFAR">
+            <div style="display: flex; gap: 10px;">
+                <div style="flex: 1;">
+                    <label>Contrato Origen:</label>
+                        <div class="readonly-text" id="farNumContrato"></div>
+                </div>
+                <div style="flex: 2;">
+                    <label>Cliente:</label>
+                    <div class="readonly-text" id="farCliente"></div>
+                </div>
+            </div>
+                <label>Equipo Retornado:</label><div class="readonly-text" id="farEquipo"></div>
+                <label style="margin-top: 10px; color: #b45309;">Accesorios a Retornar (Según FAE):</label>
+                <div class="readonly-text" id="farAccesorios" style="white-space: pre-line; font-size: 0.8rem; background: #fff; min-height: 40px; border: 1px dashed #cbd5e1;"></div>
+                
+                <!-- CAJA DE OBSERVACIONES ORIGINALES DE SALIDA (FAE) -->
+                <label style="margin-top: 10px; color: #1e3a8a;">Observaciones de Salida Original (FAE):</label>
+                <div class="readonly-text" id="farObsFAE" style="white-space: pre-line; font-size: 0.8rem; background: #eff6ff; border: 1px dashed #bfdbfe;"></div>
+                
+                <div style="display: flex; gap: 10px; margin-top: 10px; background: #f1f5f9; padding: 10px; border-radius: 4px; border: 1px dashed #cbd5e1;">
+                    <div style="flex: 1;">
+                        <label>Fecha de Salida (Inicio):</label>
+                        <div class="readonly-text" id="farFechaInicio" style="background: white;"></div>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Fecha Real de Devolución:</label>
+                        <input type="date" id="farFechaReal" required onchange="calcularDiasFAR()">
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Total de días:</label>
+                        <div class="readonly-text" id="farDiasTexto" style="font-weight:bold; color:#1e3a8a; text-align:center; background:white;">
+
+                        </div>
+                    </div>
+                    <input type="hidden" id="farDiasValor">
+                </div>
+                <label>Observaciones de Recepción:</label>
+                <textarea id="farObservaciones" rows="3" required></textarea>
+                <!-- NUEVO: VISOR DE FOTOS EN LA FAR Y BOTONES -->
+                    <label style="margin-top: 10px; color: #1e3a8a;">📷 Fotos de Entrega Inicial (FAE):</label>
+                    <div id="farFotosFAE" style="display:flex; gap:10px; flex-wrap:wrap; margin-top:5px; padding:10px; background:#f8fafc; border:1px solid #e2e8f0; border-radius:4px; min-height:40px;"></div>
+            
+                    <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                        <button type="button" class="btn-print" onclick="imprimirDocOperativo('FAR')" style="padding: 10px 15px; border-radius: 4px; font-weight: bold; border:none; cursor:pointer;">🖨️ Imprimir FAR</button>
+                        <button type="submit" class="btn-submit" style="background-color: #f59e0b; margin-top:0;">💾 Confirmar Recepción (FAR)</button>
+                    </div>
+            </form>
+            </div>
+        </div>
+
+    <!-- NUEVO: FORMULARIO DE FICHA DE VENTA (FV) -->
+    <div id="modalVenta" class="modal-overlay">
+        <div class="modal-content" style="border-top: 5px solid #10b981;">
+            <span class="close-modal" onclick="cerrarModal('modalVenta')">×</span>
+            <h2 style="color: #047857;">🛒 Generar Ficha de Venta (FV)</h2>
+            <form id="formNuevaFV">
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;"><label>N° Ficha Venta (FV):</label><input type="text" id="fvNumero" required placeholder="Ej: FV-001"></div>
+                    <div style="flex: 2;"><label>Cliente:</label><select id="fvCliente" required></select></div>
+                </div>
+                <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1; margin-top: 10px;">
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 2;"><label>Nombre del Equipo:</label><input type="text" id="fvEquipo" required></div>
+                        <div style="flex: 1;"><label>Marca:</label><input type="text" id="fvMarca" required></div>
+                    </div>
+                    <div style="display: flex; gap: 10px;">
+                        <div style="flex: 1;"><label>Modelo:</label><input type="text" id="fvModelo" required></div>
+                        <div style="flex: 1;"><label>N° de Serie:</label><input type="text" id="fvSerie"></div>
+                    </div>
+                    <label style="margin-top: 10px;">Accesorios Incluidos en la Venta:</label>
+                    <div id="listaAccesoriosFV"></div>
+                    <button type="button" class="btn-secondary" onclick="agregarAccesorioFV()">＋ Añadir Accesorio (Línea)</button>
+                </div>
+                <label>Notas u Observaciones del Equipo/Venta:</label>
+                <textarea id="fvObservaciones" rows="2" placeholder="Opcional..."></textarea>
+                <button type="submit" class="btn-submit" style="background-color: #10b981;">💾 Guardar Ficha de Venta</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL FE DE VENTA (ENTREGA) -->
+    <div id="modalFEVenta" class="modal-overlay">
+        <div class="modal-content" style="border-top: 5px solid #059669; max-width: 500px;">
+            <span class="close-modal" onclick="cerrarModal('modalFEVenta')">×</span>
+            <h2 style="color: #047857;">📦 Ficha de Entrega (FE) - Salida de Venta</h2>
+            <form id="formFEVenta">
+                <div style="background:#f0fdf4; padding:10px; border-radius:4px; margin-bottom:10px; font-size:0.85rem;">
+                    <strong>FV N°:</strong> <span id="feVenNum"></span><br>
+                    <strong>Cliente:</strong> <span id="feVenCli"></span><br>
+                    <strong>Equipo:</strong> <span id="feVenEq"></span><br>
+                    <strong style="margin-top:8px; display:inline-block; color:#047857;">Accesorios a Entregar:</strong> 
+                    <div id="feVenAcc" style="white-space: pre-line; margin-top:2px; font-weight: normal;"></div>
+                </div>
+                <label>Fecha Real de Entrega / Despacho:</label>
+                <input type="date" id="feVenFecha" required>
+                <label>Observaciones de Entrega al Cliente:</label>
+                <textarea id="feVenObs" rows="3" placeholder="Firma de conformidad, estado de empaque..."></textarea>
+
+                <!-- NUEVO: MÓDULO FOTOGRÁFICO DE LA FE DE VENTA -->
+                <div style="border: 1px dashed #cbd5e1; padding: 10px; border-radius: 6px; background: #f8fafc; margin-top: 10px; margin-bottom: 15px;">
+                    <label style="margin-top: 0; color:#059669;">📷 Evidencia Fotográfica de Entrega Física (Opcional):</label>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                        <input type="file" id="feFotoFile" accept="image/*" style="width: 200px; padding: 5px; border:1px solid #ccc; border-radius:4px;">
+                        <input type="text" id="feFotoDesc" placeholder="Descripción (Ej: Equipo embalado)" style="flex:1; padding: 5px; border:1px solid #ccc; border-radius:4px;">
+                        <button type="button" class="btn-secondary" onclick="agregarFotoFE()" style="margin:0;">Subir Foto</button>
+                    </div>
+                    <div id="galeriaFotosFE" style="display: flex; gap: 10px; flex-wrap: wrap; margin-top: 15px;"></div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                    <button type="button" class="btn-print" onclick="imprimirDocOperativo('FE')" style="padding: 10px 15px; border-radius: 4px; font-weight: bold; border:none; cursor:pointer;">🖨️ Imprimir FE</button>
+                    <button type="submit" class="btn-submit" style="background-color: #059669; margin-top:0;">💾 Confirmar Entrega (FE)</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL FP ADMIN UNIFICADO (ALQUILERES Y VENTAS FV) -->
+    <div id="modalFPAdmin" class="modal-overlay">
+        <div class="modal-content" style="border-top: 5px solid #8b5cf6; max-width: 800px;">
+            <span class="close-modal" onclick="cerrarModal('modalFPAdmin')">×</span>
+            <h2 style="color: #6d28d9;">📄 Factura Proforma y Amortizaciones</h2>
+            
+            <!-- CABECERA INTELIGENTE QUE MOSTRARÁ EQUIPO Y ACCESORIOS DE LA FV O FAE -->
+            <div id="fpSubtituloBox" style="background:#f3e8ff; padding:12px; border-radius:6px; margin-bottom:15px; font-size:0.85rem; border: 1px solid #d8b4fe;">
+                <strong id="fpSubtituloDoc" style="font-size:1rem; color:#6d28d9;"></strong><br>
+                <strong style="color:#475569;">Cliente:</strong> <span id="fpSubtituloCli"></span><br>
+                <strong style="color:#475569;">Equipo:</strong> <span id="fpSubtituloEq"></span><br>
+                <strong style="color:#475569;">Accesorios:</strong> <span id="fpSubtituloAcc"></span>
+            </div>
+            
+            <form id="formFPAdmin">
+                <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 15px;">
+                    <div style="display:flex; gap:10px; margin-bottom:15px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px;">
+                        <div style="flex:1;"><label>Moneda:</label><select id="fpUniMoneda" onchange="calcularTotales()"><option value="PEN">Soles (S/)</option><option value="USD">Dólares ($)</option></select></div>
+                        <div style="flex:1;"><label>Tipo de Cambio:</label><input type="number" step="0.01" id="fpUniTC" value="1.00" oninput="calcularTotales()"></div>
+                        <div style="flex:1;"><label>Descuento (%):</label><input type="number" step="0.01" id="fpUniDesc" value="0" oninput="calcularTotales()"></div>
+                        <div style="flex:1;"><label>IGV (%):</label><input type="number" step="0.01" id="fpUniIGV" value="18" oninput="calcularTotales()"></div>
+                    </div>
+
+                    <!-- ZONA DE ALQUILERES -->
+                    <div id="zonaPreciosAlquiler" style="display: none; display:flex; gap:15px;">
+                        <div style="flex:1;"><label>Costo Diario Neto:</label><input type="number" step="0.01" id="fpAlqCostoDia" placeholder="0.00" oninput="calcularTotales()"></div>
+                        <div style="flex:1;"><label>Días de Alquiler:</label><input type="number" id="fpAlqDias" oninput="calcularTotales()"></div>
+                        <div style="flex:1;"><label style="color:#b45309;">Depósito Garantía:</label><input type="number" step="0.01" id="fpAlqGarantia" placeholder="0.00"></div>
+                    </div>
+
+                    <!-- ZONA DE VENTAS FV -->
+                    <div id="zonaPreciosVenta" style="display: none; display:flex; gap:15px;">
+                        <div style="flex:1;"><label>Valor de Venta (Precio Equipo):</label><input type="number" step="0.01" id="fpVenPrecio" placeholder="0.00" oninput="calcularTotales()"></div>
+                        <div style="flex:1;"><label>Forma de Pago Acordada:</label><select id="fpVenForma"><option value="Contado">Contado</option><option value="Crédito">Crédito</option></select></div>
+                    </div>
+                </div>
+
+                <!-- ZONA DE CONTROL DE PAGOS / AMORTIZACIONES -->
+                <div style="background: #ecfdf5; padding: 15px; border-radius: 6px; border: 1px solid #10b981; margin-bottom: 15px;">
+                    <h3 style="margin-top:0; color:#047857; font-size: 1rem; border-bottom: 1px dashed #a7f3d0; padding-bottom:5px; margin-bottom:10px;">💳 Control de Pagos y Amortizaciones</h3>
+                    <div style="display:flex; gap:10px; margin-bottom:15px;">
+                        <div style="flex:1; background:white; padding:8px; border-radius:4px; text-align:center; border:1px solid #d1fae5;">
+                            <p style="margin:0; font-size:0.8rem; color:#64748b;">Monto Total:</p><h3 style="margin:0; color:#0f172a;" id="lblMontoTotal">0.00</h3>
+                        </div>
+                        <div style="flex:1; background:white; padding:8px; border-radius:4px; text-align:center; border:1px solid #d1fae5;">
+                            <p style="margin:0; font-size:0.8rem; color:#64748b;">Historial Pagado:</p><h3 style="margin:0; color:#059669;" id="lblMontoPagado">0.00</h3>
+                        </div>
+                        <div style="flex:1; background:#fef2f2; padding:8px; border-radius:4px; text-align:center; border:1px solid #fecaca;">
+                            <p style="margin:0; font-size:0.8rem; color:#64748b;">Saldo Restante:</p><h3 style="margin:0; color:#dc2626;" id="lblSaldoRestante">0.00</h3>
+                        </div>
+                    </div>
+                    
+                    <div style="display:flex; gap:15px; align-items:flex-end;">
+                        <div style="flex:1;"><label style="color:#047857;">Monto a Abonar/Amortizar HOY:</label><input type="number" step="0.01" id="fpAbonoHoy" value="0.00" style="border-color:#10b981; font-weight:bold;"></div>
+                        <div style="flex:1; padding-bottom: 5px;"><input type="checkbox" id="fpCheckPagadoTotal" onchange="marcarPagoTotal()" style="width:auto; transform:scale(1.3); margin-right:5px; cursor:pointer;"><label for="fpCheckPagadoTotal" style="color:#166534; cursor:pointer; font-size:0.9rem;">✅ Validar FP como 100% Pagado</label></div>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-top:20px;">
+                    <button type="button" class="btn-print" onclick="imprimirFPComercial()" style="padding: 10px 15px; border-radius: 4px; font-weight: bold;">🖨️ Imprimir Proforma</button>
+                    <button type="submit" class="btn-submit" style="background-color: #8b5cf6;">💾 Guardar Facturación y Pagos</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+
+
+
+    <script>
+
+// ==========================================
+        // 1. SISTEMA DE SEGURIDAD Y CONTROL DE ROLES
+        // ==========================================
+const API_URL = '/api'; 
+        let usuarioActual = null; 
+        let dataAlquileres = []; 
+        let dataVentas = [];
+        let itemSeleccionado = { tipo: null, id: null }; 
+        let accesoriosCargadosTemporalmente = [];
+        
+        const encabezadoEmpresaHTML = `<div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #0f172a; padding-bottom: 15px;"><h1 style="margin: 0; font-size: 24px; color: #0f172a;">INNOVA Electronics SAC.</h1><p style="margin: 8px 0 0 0; font-size: 13px; color: #475569; line-height: 1.5;"><strong>RUC:</strong> 20522316556 &nbsp;|&nbsp; <strong>Teléfonos:</strong> 986629193 / 987740312<br>administracion@innovaelectronicsperu.com<br>Calle Andalucia Mz.E Lt.25 Urb. La Capilla. La Molina. Lima.</p></div>`;
+
+        // ==========================================
+        // ÚNICA LLAVE DE ENCENDIDO Y SEGURIDAD
+        // ==========================================
+        document.addEventListener("DOMContentLoaded", () => {
+            // 1. Verificamos la sesión idéntico a Mantenimiento
+            const userGuardado = sessionStorage.getItem('innova_user');
+            
+            if (!userGuardado) {
+                window.location.href = 'index.html'; // Lo enviamos a loguearse
+                return;
+            }
+
+            // 2. Cargamos el usuario en memoria
+            usuarioActual = JSON.parse(userGuardado);
+            
+            const displayNombre = document.getElementById('userDisplayNombre');
+            if (displayNombre) {
+                displayNombre.innerText = usuarioActual.nombre_completo;
+            }
+            const displayRol = document.getElementById('userDisplayRol');
+            if (displayRol) {
+                displayRol.innerText = usuarioActual.rol;
+            }
+
+            // 3. ⛔ RESTRICCIÓN PARA TÉCNICOS EN EL MENÚ SUPERIOR ⛔
+            if (usuarioActual.rol === 'Técnico') {
+                const btnFinanzas = document.getElementById('btnMenuFinanzas');
+                if (btnFinanzas) {
+                    btnFinanzas.style.display = 'none'; // Desaparece el botón
+                }
+            }
+
+            // 4. ENCENDIDO DE DATOS (¡AQUÍ ESTABA LA OMISIÓN!)
+            cargarListas(); // Carga Clientes, Empleados y Plantillas
+            cargarDatosGlobales(); // Carga la tabla de Ventas y Alquileres
+        });
+
+
+
+
+
+        function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+
+        async function cargarListas() {
+            const rCli = await fetch(`${API_URL}/clientes`); const c = await rCli.json();
+            const rEmp = await fetch(`${API_URL}/empleados`); const e = await rEmp.json();
+            const sCliA = document.getElementById('alqCliente'); const sCliV = document.getElementById('fvCliente');
+            const sEmpA = document.getElementById('alqGestor');
+            c.forEach(x => { const o = `<option value="${x.nombre_completo}">${x.nombre_completo}</option>`; sCliA.innerHTML += `<option value="${x.id_cliente}">${x.nombre_completo}</option>`; sCliV.innerHTML += o; });
+            e.forEach(x => { const o = `<option value="${x.id_empleado}">${x.nombre_completo} (${x.rol})</option>`; sEmpA.innerHTML += o; });
+            cargarPlantillas();
+        }
+
+        // ================= ALQUILERES (SE MANTIENE IGUAL) =================
+        async function cargarPlantillas() { const res = await fetch(`${API_URL}/plantillas`); const plantillas = await res.json(); const select = document.getElementById('alqPlantilla'); select.innerHTML = '<option value="generico">-- Genérico / Otro Equipo --</option>'; plantillas.forEach(p => { select.innerHTML += `<option value="${p.id_plantilla}" data-nombre="${p.nombre_plantilla}" data-marca="${p.marca_defecto || ''}" data-modelo="${p.modelo_defecto || ''}">${p.nombre_plantilla}</option>`; }); cambiarPlantillaAlquiler(); }
+        async function cambiarPlantillaAlquiler() { const sel = document.getElementById('alqPlantilla'); const id = sel.value; const cont = document.getElementById('contenedorAccesoriosAlquiler'); document.getElementById('alqEquipo').value = ""; document.getElementById('alqMarca').value = ""; document.getElementById('alqModelo').value = ""; cont.innerHTML = ''; accesoriosCargadosTemporalmente = []; if (id === 'generico') { cont.innerHTML = `<div id="listaGenericaAlq"></div><button type="button" class="btn-secondary" onclick="agregarLineaExtraAlq()">＋ Añadir Accesorio</button>`; agregarLineaExtraAlq(); } else { const opt = sel.options[sel.selectedIndex]; document.getElementById('alqEquipo').value = opt.getAttribute('data-nombre'); document.getElementById('alqMarca').value = opt.getAttribute('data-marca'); document.getElementById('alqModelo').value = opt.getAttribute('data-modelo'); const res = await fetch(`${API_URL}/plantillas/${id}/accesorios`); const accs = await res.json(); accesoriosCargadosTemporalmente = accs; let h = ''; accs.forEach((a, i) => { h += `<div class="item-accesorio"><input type="checkbox" id="chk_acc_${i}" checked><label for="chk_acc_${i}" style="flex:1;">${a.nombre_accesorio}</label><input type="text" id="obs_acc_${i}" placeholder="Estado" style="width:40%;"></div>`; }); h += `<div id="listaGenericaAlq"></div><button type="button" class="btn-secondary" onclick="agregarLineaExtraAlq()">＋ Accesorio Extra</button>`; cont.innerHTML = h; } }
+        function agregarLineaExtraAlq() { const div = document.createElement('div'); div.className = 'item-accesorio'; div.innerHTML = `<input type="text" class="acc-gen-nombre" placeholder="Nombre accesorio"><input type="text" class="acc-gen-obs" placeholder="Estado"><button type="button" class="btn-mini-danger" onclick="this.parentElement.remove()">✕</button>`; document.getElementById('listaGenericaAlq').appendChild(div); }
+        function obtenerTextoAccesoriosAlquiler() { let l = []; if (document.getElementById('alqPlantilla').value !== 'generico') { accesoriosCargadosTemporalmente.forEach((a, i) => { if (document.getElementById(`chk_acc_${i}`)?.checked) { const obs = document.getElementById(`obs_acc_${i}`).value.trim(); l.push(`✔ ${a.nombre_accesorio}${obs ? ` (${obs})` : ''}`); } }); } document.querySelectorAll('.acc-gen-nombre').forEach((inp, i) => { const obs = document.querySelectorAll('.acc-gen-obs')[i].value.trim(); if(inp.value.trim()) l.push(`• ${inp.value.trim()}${obs ? ` (${obs})` : ''}`); }); return l.length ? l.join('\n') : 'Sin accesorios.'; }
+       
+        document.getElementById('formFAE').addEventListener('submit', async (e) => { 
+            e.preventDefault(); 
+            const data = { 
+                numero_contrato: document.getElementById('alqContrato').value, 
+                id_cliente: document.getElementById('alqCliente').value, 
+                id_empleado_gestor: document.getElementById('alqGestor').value, 
+                nombre_equipo: document.getElementById('alqEquipo').value, 
+                marca: document.getElementById('alqMarca').value, 
+                modelo: document.getElementById('alqModelo').value, 
+                numero_serie: document.getElementById('alqSerie').value, 
+                accesorios: obtenerTextoAccesoriosAlquiler(), 
+                fecha_inicio: document.getElementById('alqInicio').value, 
+                fecha_fin: document.getElementById('alqFin').value, 
+                fotos_fae: fotosFAEGlobal,
+                observaciones_fae: document.getElementById('alqObservacionesFAE').value.trim() 
+            }; 
+            await fetch(`${API_URL}/alquileres`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); 
+            cerrarModal('modalFAE'); document.getElementById('formFAE').reset(); fotosFAEGlobal = []; renderFotosFAE(); cargarDatosGlobales(); 
+        });
+        
+        function prepararFAR(idAlquiler) { 
+            itemSeleccionado = { tipo: 'Alquiler', id: idAlquiler }; 
+            const t = dataAlquileres.find(a => a.id_contrato === idAlquiler); 
+            document.getElementById('farNumContrato').innerText = t.numero_contrato; 
+            document.getElementById('farCliente').innerText = t.cliente; 
+            document.getElementById('farEquipo').innerText = `${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})`; 
+
+            // PROYECTA LA OBSERVACIÓN EN PANTALLA
+            document.getElementById('farObsFAE').innerText = t.observaciones_fae || 'Ninguna observación registrada en la salida.';
+            const fotos = t.fotos_fae || [];
+            document.getElementById('farFotosFAE').innerHTML = fotos.length ? fotos.map(f => `<div style="width:120px; border:1px solid #ccc; padding:5px; text-align:center; background:white;"><img src="${f.url}" style="width:100%; height:80px; object-fit:cover;"><p style="font-size:10px; margin:2px 0;">${f.descripcion}</p></div>`).join('') : '<span style="font-size:0.8rem; color:#64748b;">No se subieron fotos en la FAE.</span>';
+
+
+            document.getElementById('farFechaInicio').innerText = new Date(t.fecha_inicio).toLocaleDateString('es-PE'); 
+            const fRef = t.fecha_devolucion_real ? new Date(t.fecha_devolucion_real) : new Date(); 
+            fRef.setMinutes(fRef.getMinutes() - fRef.getTimezoneOffset()); 
+            document.getElementById('farAccesorios').innerText = t.accesorios || 'Sin accesorios registrados';
+            document.getElementById('farFechaReal').value = fRef.toISOString().split('T')[0]; 
+            document.getElementById('farObservaciones').value = t.estado_retorno_equipo === 'En uso' ? '' : (t.estado_retorno_equipo || ''); 
+            calcularDiasFAR(t.fecha_inicio); 
+            if (t.estado_alquiler === 'Devuelto' && t.dias_cobro) { 
+                document.getElementById('farDiasTexto').innerText = `${t.dias_cobro} Día(s)`; 
+                document.getElementById('farDiasValor').value = t.dias_cobro; 
+            } 
+            abrirModal('modalFAR'); 
+        }
+        
+        
+            function calcularDiasFAR(fIni = null) { 
+                const t = dataAlquileres.find(a => a.id_contrato === itemSeleccionado.id); 
+                const inicio = new Date(fIni || t.fecha_inicio); 
+                inicio.setHours(0,0,0,0); 
+                const fin = new Date(document.getElementById('farFechaReal').value + 'T00:00:00'); 
+                fin.setHours(0,0,0,0); let dias = Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)); 
+                if (dias <= 0) dias = 1;
+                document.getElementById('farDiasTexto').innerText = `${dias} Día(s)`; 
+                document.getElementById('farDiasValor').value = dias; 
+            }
+
+            document.getElementById('formFAR').addEventListener('submit', async (e) => { e.preventDefault(); 
+                const bodyData = { fecha_devolucion_real: document.getElementById('farFechaReal').value, estado_retorno_equipo: document.getElementById('farObservaciones').value.trim(), dias_cobro: document.getElementById('farDiasValor').value }; 
+                await fetch(`${API_URL}/alquileres/${itemSeleccionado.id}/devolver`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyData) }); 
+                cerrarModal('modalFAR'); 
+                cargarDatosGlobales(); 
+            });
+
+        // ================= CREACIÓN DE FICHA DE VENTA (FV) =================
+            function agregarAccesorioFV() {
+            const div = document.createElement('div');
+            div.style.display = 'flex'; div.style.gap = '10px'; div.style.marginBottom = '6px';
+            div.innerHTML = `
+                <input type="text" class="fv-acc-nombre" placeholder="Accesorio..." style="flex: 2; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                <input type="text" class="fv-acc-obs" placeholder="Nota/Estado" style="flex: 1; padding:6px; border:1px solid #ccc; border-radius:4px;">
+                <button type="button" class="btn-mini-danger" onclick="this.parentElement.remove()">✕</button>
+            `;
+            document.getElementById('listaAccesoriosFV').appendChild(div);
+        }
+
+        function obtenerAccesoriosFV() {
+            let lista = [];
+            const nombres = document.querySelectorAll('.fv-acc-nombre');
+            const obs = document.querySelectorAll('.fv-acc-obs');
+            nombres.forEach((input, index) => {
+                const nombre = input.value.trim(); const nota = obs[index].value.trim();
+                if (nombre) lista.push(`• ${nombre}${nota ? ` (${nota})` : ''}`);
+            });
+            return lista.length ? lista.join('\n') : 'Sin accesorios';
+        }
+
+        document.getElementById('formNuevaFV').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const data = {
+                numero_fv: document.getElementById('fvNumero').value.trim(),
+                cliente: document.getElementById('fvCliente').value,
+                equipo_nombre: document.getElementById('fvEquipo').value.trim(),
+                marca: document.getElementById('fvMarca').value.trim(),
+                modelo: document.getElementById('fvModelo').value.trim(),
+                serie: document.getElementById('fvSerie').value.trim(),
+                accesorios: obtenerAccesoriosFV(),
+                observaciones: document.getElementById('fvObservaciones').value.trim()
+            };
+            const res = await fetch(`${API_URL}/ventas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
+            if(res.ok) { alert('FV Creada con éxito'); cerrarModal('modalVenta'); document.getElementById('formNuevaFV').reset(); document.getElementById('listaAccesoriosFV').innerHTML=''; 
+            cargarDatosGlobales(); }
+            else { alert('Error: Posible número de FV duplicado.'); }
+        });
+
+        // ================= FICHA DE ENTREGA (FE) - VENTAS =================
+        function prepararFEVenta(idVenta) {
+            itemSeleccionado = { tipo: 'Venta', id: idVenta }; const t = dataVentas.find(v => v.id_fv === idVenta);
+            document.getElementById('feVenNum').innerText = t.numero_fv;
+            document.getElementById('feVenCli').innerText = t.cliente;
+            document.getElementById('feVenEq').innerText = `${t.equipo_nombre} ${t.marca} ${t.modelo}`;
+            document.getElementById('feVenAcc').innerText = t.accesorios || 'Sin accesorios registrados';
+            const fechaRef = t.fecha_entrega ? new Date(t.fecha_entrega) : new Date();
+            fechaRef.setMinutes(fechaRef.getMinutes() - fechaRef.getTimezoneOffset());
+            document.getElementById('feVenFecha').value = fechaRef.toISOString().split('T')[0];
+            document.getElementById('feVenObs').value = t.observaciones_fe || '';
+            abrirModal('modalFEVenta');
+        }
+
+        document.getElementById('formFEVenta').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = { fecha_entrega: document.getElementById('feVenFecha').value, observaciones_fe: document.getElementById('feVenObs').value };
+            await fetch(`${API_URL}/ventas/${itemSeleccionado.id}/entregar`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            alert("FE registrada. Equipo entregado al cliente."); cerrarModal('modalFEVenta'); 
+            cargarDatosGlobales();
+        });
+
+
+        // ================= TABLA PRINCIPAL COMERCIAL =================
+        async function cargarDatosGlobales() {
+            const rA = await fetch(`${API_URL}/alquileres`); dataAlquileres = await rA.json();
+            const rV = await fetch(`${API_URL}/ventas`); dataVentas = await rV.json();
+            
+            const tabla = document.getElementById('tablaComercial'); tabla.innerHTML = '';
+            const hoy = new Date();
+            
+            const todos = [
+                ...dataAlquileres.map(a => {
+                    let pagoStr = a.monto_pagado >= a.tarifa_total && a.tarifa_total > 0 ? 'Pagado' : (a.monto_pagado > 0 ? 'Amortizado' : 'Pendiente');
+                    let logistico = a.estado_alquiler === 'Devuelto' ? 'Concretado' : 'En proceso';
+                    
+                    // Restaurando la Barra de Progreso (Línea de tiempo)
+                    const fIni = new Date(a.fecha_inicio); const fFin = new Date(a.fecha_fin);
+                    const totalDias = Math.ceil((fFin - fIni) / (1000 * 60 * 60 * 24));
+                    const diasTrans = Math.ceil((hoy - fIni) / (1000 * 60 * 60 * 24));
+                    let pct = totalDias > 0 ? (diasTrans / totalDias) * 100 : 0;
+                    if(pct < 0) pct = 0; if(pct > 100) pct = 100;
+                    let colorBarra = pct < 75 ? '#3b82f6' : (pct < 100 ? '#f59e0b' : '#ef4444');
+                    let timeline = `<div style="font-size: 0.75rem; color:#64748b;">Del ${fIni.toLocaleDateString()} al ${fFin.toLocaleDateString()}</div>
+                                    <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%; background-color:${colorBarra};"></div></div>`;
+
+                    return { tipo: 'Alquiler', obj: a, id_unico: a.id_contrato, num: a.numero_contrato, cli: a.cliente, eq: `${a.nombre_equipo} (${a.marca})`, accs: a.accesorios, f1: a.fecha_inicio, estFin: parseFloat(a.tarifa_total)>0?pagoStr:'Sin Costeo', logistico, timeline };
+                }),
+                ...dataVentas.map(v => {
+                    // PUNTO 3 CORREGIDO: Lógica de estado financiero ("Amortizado" cuando monto_pagado > 0 pero no cubre el total y no está el check)
+                    let pagoStr = 'Pendiente';
+                    const mTotal = parseFloat(v.monto_total || 0);
+                    const mPagado = parseFloat(v.monto_pagado || 0);
+                    const esPagado100 = (v.fp_data && v.fp_data.pagado) || v.estado_pago === 'PAGADO' || (mTotal > 0 && mPagado >= mTotal);
+
+                    if (esPagado100) { pagoStr = 'Pagado'; } 
+                    else if (mPagado > 0) { pagoStr = 'Amortizado'; }
+                    else if (mTotal === 0) { pagoStr = 'Sin Costeo'; }
+
+                    let logistico = v.estado === 'Entregado' ? 'Concretado' : 'En proceso';
+                    let timeline = `<div style="font-size: 0.75rem; color:#10b981; font-weight:bold;">FV Generada: ${new Date(v.fecha_creacion).toLocaleDateString()}</div>`;
+                    if (logistico === 'Concretado') timeline += `<div style="font-size: 0.75rem; color:#64748b;">Entregado: ${new Date(v.fecha_entrega).toLocaleDateString()}</div>`;
+
+                    return { tipo: 'Venta', obj: v, id_unico: v.id_fv, num: v.numero_fv, cli: v.cliente, eq: `${v.equipo_nombre} (${v.marca})`, accs: v.accesorios, f1: v.fecha_creacion, estFin: pagoStr, logistico, timeline };
+                })
+            ].sort((a,b) => new Date(b.f1) - new Date(a.f1));
+
+            todos.forEach(t => {
+                let badgeLogistico = t.logistico === 'Concretado' ? `<span class="badge-concretado">✔️ Concretado</span>` : `<span class="badge-proceso">⏳ En proceso</span>`;
+                let colorFin = t.estFin === 'Sin Costeo' ? '🔴' : (t.estFin === 'Pagado' ? '🟢' : (t.estFin === 'Amortizado' ? '🔵' : '🟡'));
+                
+                let serieEquipo = t.tipo === 'Alquiler' ? t.obj.numero_serie : t.obj.serie;
+                
+                let btnFP = usuarioActual.rol === 'Administración' ? `<button class="btn-accion btn-fp" onclick="prepararFP('${t.tipo}', ${t.id_unico})" title="Factura Proforma y Pagos">💰 FP</button>` : '';
+                let btnEliminar = usuarioActual.rol === 'Administración' ? `<button class="btn-mini-danger" onclick="eliminarComercial('${t.tipo}', ${t.id_unico}, '${t.num}')" title="Eliminar Registro">🗑️</button>` : '';
+                
+                let accionesLog = '';
+                if(t.tipo === 'Alquiler') {
+                    accionesLog += `<button class="btn-accion btn-fae" onclick="abrirVisorComercial('${t.tipo}', ${t.id_unico})" title="Ver Ficha de Arrendamiento">FAE</button>`;
+                    accionesLog += `<button class="btn-accion btn-far" onclick="prepararFAR(${t.id_unico})" title="Ficha de Recepción (Actualizar/Editar)">📥 FAR</button>`;
+                } else {
+                    accionesLog += `<button class="btn-accion" style="background-color: #10b981; color:white;" onclick="abrirVisorComercial('${t.tipo}', ${t.id_unico})" title="Ver Ficha de Venta">FV</button>`;
+                    accionesLog += `<button class="btn-accion" style="background-color: #059669; color:white;" onclick="prepararFEVenta(${t.id_unico})" title="Ficha de Entrega (Actualizar/Editar)">📦 FE</button>`;
+                }
+
+                // =======================================================
+                // NUEVO: FILTRO VISUAL INTELIGENTE PARA REGISTROS CERRADOS
+                // Si el equipo se entregó/devolvió Y está 100% pagado, la fila se vuelve tenue.
+                // =======================================================
+                let estiloFila = (t.logistico === 'Concretado' && t.estFin === 'Pagado') ? 'opacity: 0.55; background-color: #f8fafc;' : '';
+
+                tabla.innerHTML += `<tr style="${estiloFila}">
+                    <td><strong>${t.num}</strong><br>${t.timeline}</td>
+                    <td>${t.tipo}</td>
+                    <td>${t.cli}</td>
+                    <td>
+                        <strong>${t.eq}</strong><br>
+                        <small style="color:gray;">S/N: ${serieEquipo || 'N/A'}</small>
+                    </td>
+                    <td>${badgeLogistico}</td>
+                    <td>${colorFin} ${t.estFin}</td>
+                    <td style="text-align: center;">
+                        <div style="display: flex; gap: 5px; justify-content: center; align-items: center; flex-wrap:wrap;">
+                            ${accionesLog} ${btnFP} ${btnEliminar}
+                        </div>
+                    </td>
+                </tr>`;
+            });
+        }
+
+            function abrirVisorComercial(tipo, id) {
+            let html = '';
+                if (tipo === 'Alquiler') {
+                const t = dataAlquileres.find(a => a.id_contrato === id);
+                document.getElementById('visorComercialTitulo').innerHTML = `👁️ Ficha de Arrendamiento (FAE)`;
+                document.querySelector('#modalVisorComercial .modal-content').style.borderTopColor = '#3b82f6';
+                
+                // Extraer fotos
+                let fotosHTML = '';
+                if(t.fotos_fae && t.fotos_fae.length > 0) {
+                    fotosHTML = `<div style="margin-top:15px; padding:10px; background:#f8fafc; border:1px solid #e2e8f0;"><strong>📷 Evidencia Fotográfica de Entrega:</strong><div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">` + t.fotos_fae.map(f => `<div style="width:120px; border:1px solid #ccc; padding:5px; background:white; text-align:center;"><img src="${f.url}" style="width:100%; height:80px; object-fit:cover;"><p style="font-size:10px; margin:2px 0;">${f.descripcion}</p></div>`).join('') + `</div></div>`;
+                }
+
+                html = `
+                    <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px; border-radius:4px; border:1px solid #e2e8f0;">
+                        <div><strong>FAE N°:</strong> ${t.numero_contrato}</div>
+                        <div><strong>Inicio:</strong> ${new Date(t.fecha_inicio).toLocaleDateString('es-PE')}</div>
+                    </div>
+                    <div style="margin-top:15px;"><strong>Cliente:</strong> ${t.cliente}</div>
+                    <div style="margin-top:10px;"><strong>Equipo:</strong> ${t.nombre_equipo} ${t.marca} ${t.modelo} <small>(S/N: ${t.numero_serie || 'N/A'})</small></div>
+                    <div style="margin-top:10px;"><strong>Observaciones de Entrega:</strong> <i>${t.observaciones_fae || 'Ninguna'}</i></div>
+                    <div style="margin-top:10px; padding:10px; background:#f1f5f9; border-left:3px solid #3b82f6;"><strong>Accesorios Entregados:</strong><br><div style="white-space:pre-line;">${t.accesorios || 'Ninguno'}</div></div>
+                    ${fotosHTML}
+                `;
+            }
+            else {
+                const t = dataVentas.find(v => v.id_fv === id);
+                document.getElementById('visorComercialTitulo').innerHTML = `👁️ Ficha de Venta (FV)`;
+                document.querySelector('#modalVisorComercial .modal-content').style.borderTopColor = '#10b981';
+                html = `
+                    <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px; border-radius:4px; border:1px solid #e2e8f0;">
+                        <div><strong>FV N°:</strong> ${t.numero_fv}</div>
+                        <div><strong>Fecha:</strong> ${new Date(t.fecha_creacion).toLocaleDateString('es-PE')}</div>
+                    </div>
+                    <div style="margin-top:15px;"><strong>Cliente:</strong> ${t.cliente}</div>
+                    <div style="margin-top:10px;"><strong>Equipo:</strong> ${t.equipo_nombre} ${t.marca} ${t.modelo} <small>(S/N: ${t.serie || 'N/A'})</small></div>
+                    <div style="margin-top:10px;"><strong>Observaciones:</strong> ${t.observaciones || 'Ninguna'}</div>
+                    <div style="margin-top:10px; padding:10px; background:#f1f5f9; border-left:3px solid #10b981;"><strong>Accesorios Incluidos:</strong><br><div style="white-space:pre-line;">${t.accesorios || 'Ninguno'}</div></div>
+                `;
+            }
+            document.getElementById('visorComercialContenido').innerHTML = html;
+            abrirModal('modalVisorComercial');
+        }
+
+
+        // ================= FP UNIFICADA FINANZAS (ALQ Y VENTAS) =================
+        let totalCalculadoGenerado = 0; let montoPagadoHistorico = 0; let subtotalCalculado = 0; let igvCalculado = 0; let saldoPendiente = 0;
+
+        function prepararFP(tipo, id) {
+            itemSeleccionado = { tipo, id }; 
+            document.getElementById('zonaPreciosAlquiler').style.display = 'none'; 
+            document.getElementById('zonaPreciosVenta').style.display = 'none';
+            document.getElementById('fpAbonoHoy').value = "0.00";
+            document.getElementById('fpCheckPagadoTotal').checked = false;
+            
+            if(tipo === 'Alquiler') {
+                const item = dataAlquileres.find(a => a.id_contrato === id);
+                document.getElementById('fpSubtituloDoc').innerText = `Proforma Contrato: ${item.numero_contrato}`; 
+                document.getElementById('fpSubtituloCli').innerText = item.cliente;
+                document.getElementById('fpSubtituloEq').innerText = `${item.nombre_equipo} ${item.marca} ${item.modelo}`;
+                document.getElementById('fpSubtituloAcc').innerText = item.accesorios || 'Ninguno';
+                
+                document.getElementById('fpUniMoneda').value = item.moneda || 'PEN';
+                document.getElementById('fpUniTC').value = item.tc || 1.00;
+                document.getElementById('fpUniDesc').value = item.descuento || 0;
+                document.getElementById('fpUniIGV').value = item.igv !== undefined ? item.igv : 18;
+                
+                document.getElementById('fpAlqCostoDia').value = item.costo_por_dia || ''; 
+                document.getElementById('fpAlqDias').value = item.dias_cobro || 1; 
+                document.getElementById('fpAlqGarantia').value = item.deposito_garantia || '';
+                
+                montoPagadoHistorico = parseFloat(item.monto_pagado || 0);
+                document.getElementById('zonaPreciosAlquiler').style.display = 'flex'; 
+            } else {
+                const item = dataVentas.find(v => v.id_fv === id);
+                const fp = item.fp_data || {};
+                document.getElementById('fpSubtituloDoc').innerText = `Proforma de Venta (FV): ${item.numero_fv}`; 
+                document.getElementById('fpSubtituloCli').innerText = item.cliente;
+                document.getElementById('fpSubtituloEq').innerText = `${item.equipo_nombre} ${item.marca} ${item.modelo}`;
+                document.getElementById('fpSubtituloAcc').innerText = item.accesorios || 'Ninguno';
+                
+                document.getElementById('fpUniMoneda').value = fp.moneda || 'PEN';
+                document.getElementById('fpUniTC').value = fp.tc || 1.00;
+                document.getElementById('fpUniDesc').value = fp.descuento || 0;
+                document.getElementById('fpUniIGV').value = fp.igv !== undefined ? fp.igv : 18;
+
+                document.getElementById('fpVenPrecio').value = fp.precio || '';
+                document.getElementById('fpVenForma').value = item.forma_pago || 'Contado'; 
+                
+                montoPagadoHistorico = parseFloat(item.monto_pagado || 0);
+                document.getElementById('zonaPreciosVenta').style.display = 'flex'; 
+            }
+            
+            calcularTotales(); abrirModal('modalFPAdmin');
+        }
+
+        function calcularTotales() {
+            const descPct = parseFloat(document.getElementById('fpUniDesc').value || 0);
+            const igvPct = parseFloat(document.getElementById('fpUniIGV').value || 0);
+            const simbolo = document.getElementById('fpUniMoneda').value === 'USD' ? '$' : 'S/';
+            let montoBase = 0;
+
+            if(itemSeleccionado.tipo === 'Alquiler') {
+                const costoDia = parseFloat(document.getElementById('fpAlqCostoDia').value || 0);
+                const dias = parseInt(document.getElementById('fpAlqDias').value || 1);
+                montoBase = costoDia * dias;
+            } else {
+                montoBase = parseFloat(document.getElementById('fpVenPrecio').value || 0);
+            }
+
+            subtotalCalculado = montoBase - (montoBase * (descPct / 100));
+            igvCalculado = subtotalCalculado * (igvPct / 100);
+            totalCalculadoGenerado = subtotalCalculado + igvCalculado;
+
+            saldoPendiente = totalCalculadoGenerado - montoPagadoHistorico;
+            if (saldoPendiente < 0) saldoPendiente = 0;
+
+            document.getElementById('lblMontoTotal').innerText = `${simbolo} ${totalCalculadoGenerado.toFixed(2)}`;
+            document.getElementById('lblMontoPagado').innerText = `${simbolo} ${montoPagadoHistorico.toFixed(2)}`;
+            document.getElementById('lblSaldoRestante').innerText = `${simbolo} ${saldoPendiente.toFixed(2)}`;
+        }
+
+        function marcarPagoTotal() {
+            if (document.getElementById('fpCheckPagadoTotal').checked) { document.getElementById('fpAbonoHoy').value = saldoPendiente.toFixed(2);
+            } else { document.getElementById('fpAbonoHoy').value = "0.00"; }
+        }
+
+        document.getElementById('formFPAdmin').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const abonoHoy = parseFloat(document.getElementById('fpAbonoHoy').value || 0);
+            const nuevoMontoPagado = montoPagadoHistorico + abonoHoy;
+            let saldoReal = totalCalculadoGenerado - nuevoMontoPagado;
+            
+            // PUNTO 3 CORREGIDO: Lógica de "Pagado" vs "Amortizado (Adelanto)"
+            let estaPagado100 = document.getElementById('fpCheckPagadoTotal').checked || saldoReal <= 0;
+            let estadoFinanzas = estaPagado100 ? 'PAGADO' : (nuevoMontoPagado > 0 ? 'ADELANTO' : 'PENDIENTE');
+
+            const moneda = document.getElementById('fpUniMoneda').value;
+            const tc = parseFloat(document.getElementById('fpUniTC').value || 1);
+            const desc = parseFloat(document.getElementById('fpUniDesc').value || 0);
+            const igv = parseFloat(document.getElementById('fpUniIGV').value || 0);
+
+            let url = '', body = {}, df = {};
+            
+            if(itemSeleccionado.tipo === 'Alquiler') {
+                const item = dataAlquileres.find(a => a.id_contrato === itemSeleccionado.id);
+                url = `${API_URL}/alquileres/${itemSeleccionado.id}/fp`; 
+                body = { tarifa_total: totalCalculadoGenerado, deposito_garantia: parseFloat(document.getElementById('fpAlqGarantia').value || 0), costo_por_dia: parseFloat(document.getElementById('fpAlqCostoDia').value || 0), dias_cobro: parseInt(document.getElementById('fpAlqDias').value || 1), descuento: desc, igv: igv, moneda: moneda, tc: tc, monto_pagado: nuevoMontoPagado }; 
+                
+                // PUNTO 2 CORREGIDO: Enviamos a finanzas el saldo real
+                df = { origen_modulo: 'ALQUILER', nro_documento_origen: item.numero_contrato, id_cliente: item.id_cliente, nombre_cliente: item.cliente, concepto: `Alquiler: ${item.nombre_equipo}`, monto_subtotal: subtotalCalculado, impuesto_igv: igvCalculado, monto_total: totalCalculadoGenerado, estado_pago: estadoFinanzas, monto_pagado: nuevoMontoPagado, saldo_pendiente: saldoReal, metodo_pago: 'NO ESPECIFICADO', moneda: moneda, tc: tc, fecha_emision: item.fecha_inicio }; 
+            } else {
+                const item = dataVentas.find(v => v.id_fv === itemSeleccionado.id);
+                url = `${API_URL}/ventas/${itemSeleccionado.id}/fp`; 
+                const fpDataJSON = { moneda, tc, descuento: desc, igv, precio: parseFloat(document.getElementById('fpVenPrecio').value || 0), pagado: estaPagado100 };
+                body = { monto_total: totalCalculadoGenerado, forma_pago: document.getElementById('fpVenForma').value, estado_pago: estadoFinanzas, monto_pagado: nuevoMontoPagado, fp_data: fpDataJSON };
+                
+                // PUNTO 2 CORREGIDO: Enviamos a finanzas el saldo real
+                df = { origen_modulo: 'VENTA', nro_documento_origen: item.numero_fv, id_cliente: null, nombre_cliente: item.cliente, concepto: `Venta Equipo: ${item.equipo_nombre}`, monto_subtotal: subtotalCalculado, impuesto_igv: igvCalculado, monto_total: totalCalculadoGenerado, estado_pago: estadoFinanzas, monto_pagado: nuevoMontoPagado, saldo_pendiente: saldoReal, metodo_pago: document.getElementById('fpVenForma').value, moneda: moneda, tc: tc, fecha_emision: item.fecha_creacion }; 
+            }
+            
+            const resComercial = await fetch(url, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body) });
+            if (!resComercial.ok) return alert('❌ Error al guardar en Comercial. Operación detenida.');
+
+            // Upsert al Documento Principal (Registra la Deuda Total y el saldo Pendiente)
+            await fetch('/api/finanzas/ingresos', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(df) });
+            
+            // Disparo del Dinero en Mano (Bolsillo Histórico)
+            if (abonoHoy > 0) {
+                const payloadAbono = { origen_modulo: df.origen_modulo, nro_documento: df.nro_documento_origen, cliente: df.nombre_cliente, monto_abonado: abonoHoy, moneda: df.moneda, tc: df.tc };
+                await fetch('/api/finanzas/pagos_parciales', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payloadAbono) });
+            }
+
+            alert('¡Facturación y Amortización Registradas!'); 
+            cerrarModal('modalFPAdmin'); 
+            cargarDatosGlobales(); 
+        });
+
+        function imprimirFPComercial() {
+            let docNum, cli, eq, periodoStr, cUni, cant, tipoCalc, valGtia = '';
+            const moneda = document.getElementById('fpUniMoneda').value; const sim = moneda === 'USD' ? '$' : 'S/'; 
+            const tc = parseFloat(document.getElementById('fpUniTC').value || 1);
+            
+            if(itemSeleccionado.tipo === 'Alquiler') {
+                const t = dataAlquileres.find(a => a.id_contrato === itemSeleccionado.id);
+                docNum = t.numero_contrato; cli = t.cliente; eq = `${t.nombre_equipo} (${t.marca})`;
+                cant = parseInt(document.getElementById('fpAlqDias').value || 1); cUni = parseFloat(document.getElementById('fpAlqCostoDia').value || 0);
+                periodoStr = `Del ${new Date(t.fecha_inicio).toLocaleDateString()} al ${t.fecha_devolucion_real ? new Date(t.fecha_devolucion_real).toLocaleDateString() : 'En curso'} (${cant} Días)`;
+                tipoCalc = `Tarifa por día de alquiler (${sim} ${cUni.toFixed(2)} x ${cant} días)`;
+                valGtia = `* El depósito de garantía de ${sim} ${parseFloat(document.getElementById('fpAlqGarantia').value||0).toFixed(2)} está sujeto a condiciones de devolución.`;
+            } else {
+                const t = dataVentas.find(v => v.id_fv === itemSeleccionado.id);
+                docNum = t.numero_fv; cli = t.cliente; eq = `${t.equipo_nombre} (${t.marca} - S/N: ${t.serie||'N/A'})`;
+                cant = 1; cUni = parseFloat(document.getElementById('fpVenPrecio').value || 0);
+                periodoStr = `Venta de Equipo Nuevo / Seminuevo. Forma de Pago: ${document.getElementById('fpVenForma').value}`;
+                tipoCalc = `Valor de Venta del Equipo (Unitario)`;
+            }
+
+            const descPct = parseFloat(document.getElementById('fpUniDesc').value || 0); const igvPct = parseFloat(document.getElementById('fpUniIGV').value || 0);
+            const bruto = cUni * cant; const mDesc = bruto * (descPct / 100); const neto = bruto - mDesc; const mIGV = neto * (igvPct / 100); const total = neto + mIGV;
+            const saldo = total - montoPagadoHistorico;
+            
+            const conv = moneda === 'USD' ? `<br><small style="color:#64748b;">(S/ ${(total * tc).toFixed(2)})</small>` : `<br><small style="color:#64748b;">($ ${(total / tc).toFixed(2)} USD)</small>`;
+            const htmlDescuento = descPct > 0 ? `<tr><td>Descuento Promocional (${descPct}%)</td><td style="text-align: right; color: #dc2626;">- ${sim} ${mDesc.toFixed(2)}</td></tr>` : '';
+            const selloPago = saldo <= 0 ? `<div style="color: #166534; font-weight: bold; font-size: 20px; border: 3px solid #166534; padding: 10px; text-align: center; margin-top: 15px; border-radius: 8px; transform: rotate(-5deg); width: fit-content; margin-left: auto; margin-right: auto;">CANCELADO / PAGADO</div>` : '';
+
+            const v = window.open('', '_blank');
+            v.document.write(`<!DOCTYPE html><html lang="es"><head><title>Proforma - ${docNum}</title><style>body { font-family: Arial; font-size: 13px; margin: 40px; } .cabecera-titulo { text-align: center; font-size: 16px; font-weight: bold; color: #7c3aed; } .fr-box { border: 2px solid #0f172a; padding: 5px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; margin-top: 10px; margin-bottom: 20px; } .seccion { margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 4px; } .seccion-titulo { background-color: #f1f5f9; font-weight: bold; padding: 8px 12px; border-bottom: 1px solid #cbd5e1; color: #0f172a; } .seccion-contenido { padding: 12px; } table.costos { width: 100%; border-collapse: collapse; margin-top: 10px; } table.costos th, table.costos td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; } table.costos th { background: #f8fafc; color: #0f172a; } table.costos tr.total-row th { background: #7c3aed; color: white; font-size: 15px; text-align: right; } table.costos tr.total-row td { background: #f3e8ff; font-weight: bold; font-size: 16px; color: #7c3aed; text-align: right; }</style></head><body>${encabezadoEmpresaHTML}<div style="text-align: center;"><div class="cabecera-titulo">FACTURA PROFORMA COMERCIAL</div><div class="fr-box">REF DOC N° ${docNum}</div></div><div class="seccion"><div class="seccion-titulo">📋 DATOS DEL CLIENTE Y OPERACIÓN</div><div class="seccion-contenido"><strong>Cliente:</strong> ${cli}<br><strong>Equipo Comercial:</strong> ${eq}<br><strong>Detalles:</strong> ${periodoStr}</div></div><div class="seccion" style="border-color: #8b5cf6;"><div class="seccion-titulo" style="background-color: #f3e8ff; color: #6d28d9; border-bottom-color: #d8b4fe;">💰 DETALLE DE COSTOS Y FACTURACIÓN</div><div class="seccion-contenido"><table class="costos"><tr><th>Concepto</th><th style="width: 160px; text-align: right;">Importe</th></tr><tr><td>${tipoCalc}</td><td style="text-align: right;">${sim} ${bruto.toFixed(2)}</td></tr>${htmlDescuento}<tr><td style="text-align: right; font-weight: bold;">Subtotal Neto:</td><td style="text-align: right; font-weight: bold;">${sim} ${neto.toFixed(2)}</td></tr><tr><td style="text-align: right;">Impuesto IGV (${igvPct}%):</td><td style="text-align: right;">${sim} ${mIGV.toFixed(2)}</td></tr><tr class="total-row"><th>TOTAL A PAGAR:</th><td>${sim} ${total.toFixed(2)} ${conv}</td></tr><tr><td style="text-align: right; color:#059669;"><strong>Abonado a la fecha:</strong></td><td style="text-align: right; color:#059669;"><strong>- ${sim} ${montoPagadoHistorico.toFixed(2)}</strong></td></tr><tr><td style="text-align: right; color:#dc2626;"><strong>SALDO RESTANTE:</strong></td><td style="text-align: right; color:#dc2626;"><strong>${sim} ${saldo > 0 ? saldo.toFixed(2) : '0.00'}</strong></td></tr></table>${selloPago}<p style="font-size: 11px; color: #64748b; margin-top: 15px; font-style: italic;">${valGtia}</p></div></div><div style="margin-top: 60px; text-align: center; font-weight: bold; border-top: 1px solid #333; width: 250px; margin-left: auto; margin-right: auto; padding-top: 5px;">Administración - Innova Electronics SAC</div><script>window.onload=function(){window.print();}<\/script></body></html>`);
+            v.document.close();
+        }
+
+        async function eliminarComercial(tipo, id, numDoc) { if(!confirm(`⚠️ ¿Eliminar documento ${numDoc}? Se borrará también de Finanzas (Solo su origen, revise su flujo de caja manual).`)) return; try { await fetch(tipo === 'Alquiler' ? `${API_URL}/alquileres/${id}` : `${API_URL}/ventas/${id}`, { method: 'DELETE' }); 
+        cargarDatosGlobales(); 
+    } 
+    catch (error) { alert("Error al eliminar."); 
+} 
+}
+
+        // =======================================================
+        // 1. SISTEMA FOTOGRÁFICO DE FAE
+        // =======================================================
+        let fotosFAEGlobal = [];
+        
+        function agregarFotoFAE() { 
+            const archivo = document.getElementById('faeFotoFile').files[0]; 
+            const desc = document.getElementById('faeFotoDesc').value.trim(); 
+            if(!archivo) return alert("Selecciona una foto primero."); 
+            const lector = new FileReader(); 
+            lector.onload = function(e) { 
+                fotosFAEGlobal.push({ url: e.target.result, descripcion: desc }); 
+                document.getElementById('faeFotoFile').value = ''; 
+                document.getElementById('faeFotoDesc').value = ''; 
+                renderFotosFAE(); 
+            }; 
+            lector.readAsDataURL(archivo); 
+        }
+        function eliminarFotoFAE(index) { fotosFAEGlobal.splice(index, 1); renderFotosFAE(); }
+        function renderFotosFAE() { 
+            document.getElementById('galeriaFotosFAE').innerHTML = fotosFAEGlobal.length ? fotosFAEGlobal.map((f, i) => `<div style="width:140px; border:1px solid #ccc; padding:5px; text-align:center; position:relative; background:white; border-radius:4px;"><button type="button" onclick="eliminarFotoFAE(${i})" style="background:#ef4444; color:white; border:none; border-radius:50%; width:22px; height:22px; position:absolute; top:2px; right:2px; cursor:pointer;">✕</button><img src="${f.url}" style="width:100%; height:100px; object-fit:cover; border-radius:2px;"><p style="font-size:10px; margin:2px 0;">${f.descripcion}</p></div>`).join('') : ''; 
+        }
+
+        // Actualiza la función prepararFAR() para que muestre las fotos:
+        const originalPrepararFAR = prepararFAR;
+        prepararFAR = function(idAlquiler) {
+            originalPrepararFAR(idAlquiler);
+            const t = dataAlquileres.find(a => a.id_contrato === idAlquiler);
+            const fotos = t.fotos_fae || [];
+            document.getElementById('farFotosFAE').innerHTML = fotos.length ? fotos.map(f => `<div style="width:120px; border:1px solid #ccc; padding:5px; text-align:center; background:white;"><img src="${f.url}" style="width:100%; height:80px; object-fit:cover;"><p style="font-size:10px; margin:2px 0;">${f.descripcion}</p></div>`).join('') : '<span style="font-size:0.8rem; color:#64748b;">No se subieron fotos en la FAE.</span>';
+        };
+
+        // Actualiza el visor para incluir los botones de impresión:
+        const originalAbrirVisorComercial = abrirVisorComercial;
+        abrirVisorComercial = function(tipo, id) {
+            originalAbrirVisorComercial(tipo, id);
+            document.getElementById('visorBotonesAccion').innerHTML = `<button onclick="imprimirDocOperativo('${tipo === 'Alquiler' ? 'FAE' : 'FV'}', ${id})" class="btn-print" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px; border:none; cursor:pointer;">🖨️ Imprimir ${tipo === 'Alquiler' ? 'FAE' : 'FV'}</button>`;
+        };
+
+        // LÓGICA FOTOGRÁFICA PARA FE (VENTAS)
+        let fotosFEGlobal = [];
+        
+        function agregarFotoFE() { 
+            const archivo = document.getElementById('feFotoFile').files[0]; 
+            const desc = document.getElementById('feFotoDesc').value.trim(); 
+            if(!archivo) return alert("Selecciona una foto primero."); 
+            const lector = new FileReader(); 
+            lector.onload = function(e) { 
+                fotosFEGlobal.push({ url: e.target.result, descripcion: desc }); 
+                document.getElementById('feFotoFile').value = ''; 
+                document.getElementById('feFotoDesc').value = ''; 
+                renderFotosFE(); 
+            }; 
+            lector.readAsDataURL(archivo); 
+        }
+        function eliminarFotoFE(index) { fotosFEGlobal.splice(index, 1); renderFotosFE(); }
+        function renderFotosFE() { 
+            document.getElementById('galeriaFotosFE').innerHTML = fotosFEGlobal.length ? fotosFEGlobal.map((f, i) => `<div style="width:140px; border:1px solid #ccc; padding:5px; text-align:center; position:relative; background:white; border-radius:4px;"><button type="button" onclick="eliminarFotoFE(${i})" style="background:#ef4444; color:white; border:none; border-radius:50%; width:22px; height:22px; position:absolute; top:2px; right:2px; cursor:pointer;">✕</button><img src="${f.url}" style="width:100%; height:100px; object-fit:cover; border-radius:2px;"><p style="font-size:10px; margin:2px 0;">${f.descripcion}</p></div>`).join('') : ''; 
+        }
+
+        // REEMPLAZAR EL ENVÍO DEL FORMULARIO FE
+        document.getElementById('formFEVenta').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const payload = { 
+                fecha_entrega: document.getElementById('feVenFecha').value, 
+                observaciones_fe: document.getElementById('feVenObs').value,
+                fotos_fe: fotosFEGlobal
+            };
+            await fetch(`${API_URL}/ventas/${itemSeleccionado.id}/entregar`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
+            alert("FE registrada. Equipo entregado al cliente."); 
+            cerrarModal('modalFEVenta'); 
+            fotosFEGlobal = []; renderFotosFE(); // Limpiamos para el próximo
+            cargarDatosGlobales();
+        });
+
+
+
+
+        // =======================================================
+        // 3. CENTRAL UNIVERSAL DE IMPRESIONES OPERATIVAS
+        // =======================================================
+        function imprimirDocOperativo(tipoDoc, idDirecto = null) {
+            let t = null, titulo = '', contenidoEspecifico = '', fotosHtml = '';
+            const idDoc = idDirecto || itemSeleccionado.id;
+
+            // ESTILOS PARA IMPRIMIR 4 FOTOS POR HOJA A4 (Grid 2x2)
+            const cssFotos = `
+                .grid-fotos { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; margin-top: 10px; }
+                .grid-fotos .foto-box { border: 1px solid #ccc; padding: 10px; text-align: center; background: #fff; page-break-inside: avoid; }
+                .grid-fotos img { width: 100%; height: 300px; object-fit: contain; }
+                .grid-fotos p { margin: 8px 0 0 0; font-size: 13px; color: #333; font-weight:bold; }
+            `;
+
+            if (tipoDoc === 'FAE' || tipoDoc === 'FAR') {
+                t = dataAlquileres.find(a => a.id_contrato === idDoc);
+                const accHtml = t.accesorios ? t.accesorios.replace(/\n/g, '<br>') : 'Ninguno';
+                
+                if (tipoDoc === 'FAE') {
+                    titulo = `FICHA DE ARRENDAMIENTO Y ENTREGA (FAE)`;
+                    contenidoEspecifico = `<strong>Inicio del Alquiler:</strong> ${new Date(t.fecha_inicio).toLocaleDateString('es-PE')}<br><strong>Fin Tentativo:</strong> ${new Date(t.fecha_fin).toLocaleDateString('es-PE')}<br><br><strong>Observaciones de Salida:</strong><br><i>${t.observaciones_fae || 'Ninguna'}</i>`;
+                    
+                    if (t.fotos_fae && t.fotos_fae.length > 0) {
+                        fotosHtml = `<div class="seccion" style="page-break-before: auto;"><div class="titulo">EVIDENCIA FOTOGRÁFICA DE SALIDA</div><div class="contenido grid-fotos">` + t.fotos_fae.map(f => `<div class="foto-box"><img src="${f.url}"><p>${f.descripcion}</p></div>`).join('') + `</div></div>`;
+                    }
+                } else {
+                    titulo = `FICHA DE ARRENDAMIENTO DE RECEPCIÓN (FAR)`;
+                    const fechaReal = document.getElementById('farFechaReal').value ? new Date(document.getElementById('farFechaReal').value).toLocaleDateString('es-PE') : 'Pendiente';
+                    const obs = document.getElementById('farObservaciones').value || 'Ninguna';
+                    // =======================================================
+                    // NUEVO: INYECTAMOS AMBAS OBSERVACIONES EN EL DOCUMENTO
+                    // =======================================================
+                    contenidoEspecifico = `<strong>Retorno Real:</strong> ${fechaReal}<br><br>
+                                           <strong style="color:#1e3a8a;">1. Observaciones Iniciales de Salida (Según FAE):</strong><br>
+                                           <i>${t.observaciones_fae || 'Ninguna observación registrada en la salida.'}</i><br><br>
+                                           <strong style="color:#b45309;">2. Condiciones y Observaciones de Retorno Final (FAR):</strong><br>
+                                           <i>${obs}</i>`;
+                    // En la FAR imprimimos las fotos de la FAE original para sustentar contrastes
+                    if (t.fotos_fae && t.fotos_fae.length > 0) {
+                        fotosHtml = `<div class="seccion" style="page-break-before: auto;"><div class="titulo">FOTOS DE SALIDA (FAE) PARA CONTRASTE</div><div class="contenido grid-fotos">` + t.fotos_fae.map(f => `<div class="foto-box"><img src="${f.url}"><p>${f.descripcion}</p></div>`).join('') + `</div></div>`;
+                    }
+                }
+
+                contenidoEspecifico = `<div class="seccion"><div class="titulo">DATOS GENERALES</div><div class="contenido"><strong>Documento Referencia:</strong> ${t.numero_contrato}<br><strong>Cliente:</strong> ${t.cliente}<br>${contenidoEspecifico}</div></div>
+                                       <div class="seccion"><div class="titulo">EQUIPO Y ACCESORIOS INVOLUCRADOS</div><div class="contenido"><strong>Equipo:</strong> ${t.nombre_equipo} ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})<br><br><strong>Accesorios Declarados:</strong><br>${accHtml}</div></div>`;
+            
+            } else if (tipoDoc === 'FV' || tipoDoc === 'FE') {
+                t = dataVentas.find(v => v.id_fv === idDoc);
+                const accHtml = t.accesorios ? t.accesorios.replace(/\n/g, '<br>') : 'Ninguno';
+                
+                if (tipoDoc === 'FV') {
+                    titulo = `FICHA DE VENTA Y ORDEN (FV)`;
+                    contenidoEspecifico = `<strong>Fecha Orden:</strong> ${new Date(t.fecha_creacion).toLocaleDateString('es-PE')}<br><strong>Observaciones:</strong> ${t.observaciones || 'Ninguna'}`;
+                } else {
+                    titulo = `FICHA DE ENTREGA DEFINITIVA DE VENTA (FE)`;
+                    const fechaReal = document.getElementById('feVenFecha').value ? new Date(document.getElementById('feVenFecha').value).toLocaleDateString('es-PE') : 'Pendiente';
+                    const obs = document.getElementById('feVenObs').value || 'Ninguna';
+                    contenidoEspecifico = `<strong>Fecha de Entrega Física:</strong> ${fechaReal}<br><strong>Condiciones de Entrega:</strong><br><i>${obs}</i>`;
+                    
+                    if (t.fotos_fe && t.fotos_fe.length > 0) {
+                        fotosHtml = `<div class="seccion" style="page-break-before: auto;"><div class="titulo">EVIDENCIA FOTOGRÁFICA DE ENTREGA (FE)</div><div class="contenido grid-fotos">` + t.fotos_fe.map(f => `<div class="foto-box"><img src="${f.url}"><p>${f.descripcion}</p></div>`).join('') + `</div></div>`;
+                    }
+                }
+
+                contenidoEspecifico = `<div class="seccion"><div class="titulo">DATOS DE LA VENTA</div><div class="contenido"><strong>Documento Referencia:</strong> ${t.numero_fv}<br><strong>Cliente:</strong> ${t.cliente}<br>${contenidoEspecifico}</div></div>
+                                       <div class="seccion"><div class="titulo">EQUIPO A DESPACHAR</div><div class="contenido"><strong>Equipo:</strong> ${t.equipo_nombre} ${t.marca} ${t.modelo} (S/N: ${t.serie || 'N/A'})<br><br><strong>Accesorios Incluidos:</strong><br>${accHtml}</div></div>`;
+            }
+
+            const ventana = window.open('', '_blank'); 
+            ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>${tipoDoc} - Innova</title><style>body{font-family:Arial; font-size:12px; margin:40px;} h2.doc-title{text-align:center; font-size:18px; margin-top:0; color:#0f172a;} .seccion{border:1px solid #ccc; margin-bottom:15px; border-radius:4px;} .titulo{background:#f1f5f9; font-weight:bold; padding:8px; border-bottom:1px solid #ccc; color:#0f172a;} .contenido{padding:12px; line-height:1.5;} ${cssFotos}</style></head><body>${encabezadoEmpresaHTML}<h2 class="doc-title">${titulo}</h2>${contenidoEspecifico}${fotosHtml}<div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;"><div style="width:200px; border-top:1px solid #000; padding-top:5px;">Firma de Conformidad Cliente</div><div style="width:200px; border-top:1px solid #000; padding-top:5px;">Firma Innova Electronics SAC</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`); 
+            ventana.document.close(); 
+        }
+
+    </script>
+</body>
+</html>

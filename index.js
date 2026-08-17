@@ -375,5 +375,193 @@ app.delete('/api/finanzas/costos-fijos/:id', async (req, res) => {
 });
 
 
+
+// ========================================================
+//        MÓDULO COMERCIAL: VENTAS Y ALQUILERES (V2)
+// ========================================================
+
+// 1. Obtener datos para el Panel de Control y Líneas de Tiempo
+app.get('/api/alquileres', async (req, res) => {
+    try {
+        const result = await pool.query(`
+            SELECT a.*, c.nombre_completo as cliente, e.nombre_completo as gestor
+            FROM contratos_alquiler a
+            LEFT JOIN clientes c ON a.id_cliente = c.id_cliente
+            LEFT JOIN empleados e ON a.id_empleado_gestor = e.id_empleado
+            ORDER BY a.fecha_registro DESC
+        `);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 1. Obtener todas las Ventas (Para el Panel Principal)
+app.get('/api/ventas', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM ventas_fv ORDER BY id_fv DESC");
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 2. TÉCNICOS: Crear FAE (Alquiler salida con fotos)
+// 2. TÉCNICOS: Crear FAE (Alquiler salida con fotos y observaciones)
+app.post('/api/alquileres', async (req, res) => {
+    const { numero_contrato, id_cliente, id_empleado_gestor, nombre_equipo, marca, modelo, numero_serie, accesorios, fecha_inicio, fecha_fin, fotos_fae, observaciones_fae } = req.body;
+    try {
+        const query = `
+            INSERT INTO contratos_alquiler 
+            (numero_contrato, id_cliente, id_empleado_gestor, nombre_equipo, marca, modelo, numero_serie, accesorios, fecha_inicio, fecha_fin, tarifa_total, deposito_garantia, fotos_fae, observaciones_fae)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, 0, $11, $12) RETURNING id_contrato;
+        `;
+        await pool.query(query, [numero_contrato, id_cliente, id_empleado_gestor, nombre_equipo, marca, modelo, numero_serie, accesorios, fecha_inicio, fecha_fin, JSON.stringify(fotos_fae || []), observaciones_fae]);
+        res.json({ mensaje: 'FAE registrado con éxito' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 2. Crear nueva Ficha de Venta (FV)
+app.post('/api/ventas', async (req, res) => {
+    const { numero_fv, cliente, equipo_nombre, marca, modelo, serie, accesorios, observaciones } = req.body;
+    try {
+        await pool.query(
+            `INSERT INTO ventas_fv (numero_fv, cliente, equipo_nombre, marca, modelo, serie, accesorios, observaciones, estado) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Pendiente Entrega')`,
+            [numero_fv, cliente, equipo_nombre, marca, modelo, serie, accesorios, observaciones]
+        );
+        res.json({ mensaje: 'FV creada exitosamente' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 3. Guardar Factura Proforma (FP) y Finanzas
+app.put('/api/ventas/:id/fp', async (req, res) => {
+    const { monto_total, forma_pago, estado_pago, monto_pagado, fp_data } = req.body;
+    try {
+        await pool.query(
+            "UPDATE ventas_fv SET monto_total = $1, forma_pago = $2, estado_pago = $3, monto_pagado = $4, fp_data = $5 WHERE id_fv = $6", 
+            [monto_total, forma_pago, estado_pago, monto_pagado, fp_data, req.params.id]
+        );
+        res.json({ mensaje: 'FP de Venta actualizada' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 8. ADMIN: Guardar Factura Proforma (FP) de Alquiler Avanzada
+app.put('/api/alquileres/:id/fp', async (req, res) => {
+    const { tarifa_total, deposito_garantia, costo_por_dia, dias_cobro, descuento, igv, moneda, tc, monto_pagado } = req.body;
+    try {
+        await pool.query(
+            "UPDATE contratos_alquiler SET tarifa_total = $1, deposito_garantia = $2, costo_por_dia = $3, dias_cobro = $4, descuento = $5, igv = $6, moneda = $7, tc = $8, monto_pagado = $9 WHERE id_contrato = $10", 
+            [tarifa_total, deposito_garantia, costo_por_dia, dias_cobro, descuento, igv, moneda, tc, monto_pagado, req.params.id]
+        );
+        res.json({ mensaje: 'FP de Alquiler actualizada con cálculos' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 6. TÉCNICOS/ADMIN: Concretar Logística (Marcar como Devuelto o Entregado)
+// 6. TÉCNICOS/ADMIN: Concretar Logística (Generar FAR y FE)
+// 6. TÉCNICOS/ADMIN: Concretar Logística (Generar FAR con fotos)
+// 6. TÉCNICOS/ADMIN: Concretar Logística (Generar FAR, calcular días)
+app.put('/api/alquileres/:id/devolver', async (req, res) => {
+    const { fecha_devolucion_real, estado_retorno_equipo, fotos_far, dias_cobro } = req.body;
+    try {
+        await pool.query(
+            "UPDATE contratos_alquiler SET estado_alquiler = 'Devuelto', fecha_devolucion_real = $1, estado_retorno_equipo = $2, fotos_far = $3, dias_cobro = $4 WHERE id_contrato = $5", 
+            [fecha_devolucion_real, estado_retorno_equipo, JSON.stringify(fotos_far || []), dias_cobro, req.params.id]
+        );
+        res.json({ mensaje: 'FAR generada y equipo devuelto' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 4. Guardar Ficha de Entrega (FE)
+// Guardar Ficha de Entrega (FE) - Incluye fotos
+app.put('/api/ventas/:id/entregar', async (req, res) => {
+    const { fecha_entrega, observaciones_fe, fotos_fe } = req.body;
+    try {
+        await pool.query(
+            "UPDATE ventas_fv SET estado = 'Entregado', fecha_entrega = $1, observaciones_fe = $2, fotos_fe = $3 WHERE id_fv = $4", 
+            [fecha_entrega, observaciones_fe, fotos_fe ? JSON.stringify(fotos_fe) : '[]', req.params.id]
+        );
+        res.json({ mensaje: 'Ficha de Entrega generada' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 7. ADMIN: Eliminar Registros Comerciales (Y limpiar su impacto en Finanzas)
+app.delete('/api/alquileres/:id', async (req, res) => {
+    try {
+        // A. Buscamos el N° de Documento para borrar el ingreso en Finanzas
+        const alq = await pool.query("SELECT numero_contrato FROM contratos_alquiler WHERE id_contrato = $1", [req.params.id]);
+        if (alq.rows.length > 0) {
+            await pool.query("DELETE FROM transacciones_financieras WHERE nro_documento_origen = $1 AND origen_modulo = 'ALQUILER'", [alq.rows[0].numero_contrato]);
+        }
+        // B. Borramos el contrato comercial
+        await pool.query("DELETE FROM contratos_alquiler WHERE id_contrato = $1", [req.params.id]);
+        res.json({ mensaje: 'Alquiler y registro financiero eliminados' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 5. Eliminar Venta
+app.delete('/api/ventas/:id', async (req, res) => {
+    try {
+        await pool.query("DELETE FROM ventas_fv WHERE id_fv = $1", [req.params.id]);
+        res.json({ mensaje: 'Venta eliminada' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// =========================================================
+// HISTORIAL DE PAGOS PARCIALES (INGRESOS PALPABLES EN CAJA)
+// =========================================================
+app.post('/api/finanzas/pagos_parciales', async (req, res) => {
+    const { origen_modulo, nro_documento, cliente, monto_abonado, moneda, tc } = req.body;
+    try {
+        await pool.query(
+            "INSERT INTO historial_pagos (origen_modulo, nro_documento, cliente, monto_abonado, moneda, tc) VALUES ($1, $2, $3, $4, $5, $6)",
+            [origen_modulo, nro_documento, cliente, monto_abonado, moneda || 'PEN', tc || 1]
+        );
+        res.json({ mensaje: 'Abono palpable registrado en el historial' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/finanzas/pagos_parciales', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM historial_pagos ORDER BY fecha_pago DESC");
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.delete('/api/finanzas/pagos_parciales/:id', async (req, res) => {
+    try {
+        await pool.query("DELETE FROM historial_pagos WHERE id_pago = $1", [req.params.id]);
+        res.json({ mensaje: 'Abono eliminado' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// =========================================================
+// MÓDULO COMERCIAL: FICHA DE VENTA (FV) Y FP DE VENTAS
+// =========================================================
+app.post('/api/comercial/fv', async (req, res) => {
+    const { numero_fv, cliente, equipo_nombre, marca, modelo, serie, accesorios, observaciones } = req.body;
+    try {
+        await pool.query(
+            `INSERT INTO ventas_fv (numero_fv, cliente, equipo_nombre, marca, modelo, serie, accesorios, observaciones) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8)`,
+            [numero_fv, cliente, equipo_nombre, marca, modelo, serie, accesorios, observaciones]
+        );
+        res.json({ mensaje: 'Ficha de Venta creada exitosamente' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.get('/api/comercial/fv', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM ventas_fv ORDER BY id_fv DESC");
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+app.put('/api/comercial/fv/:id/fp', async (req, res) => {
+    try {
+        const { fp_data, estado } = req.body;
+        await pool.query("UPDATE ventas_fv SET fp_data = $1, estado = $2 WHERE id_fv = $3", [fp_data, estado, req.params.id]);
+        res.json({ mensaje: 'Factura Proforma de Venta guardada' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));

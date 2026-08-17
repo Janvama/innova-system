@@ -103,6 +103,12 @@
     </div>
 
     <div id="appDashboard">
+<div class="nav-menu" style="margin-bottom: 20px; display: flex; gap: 10px;">
+    <a href="index.html" class="active" style="text-decoration: none; background: #2563eb; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">🛠️ Módulo Mantenimiento</a>
+    <a href="finanzas.html" id="btnMenuFinanzas" style="text-decoration: none; background: #e2e8f0; color: #0f172a; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">📊 Módulo Finanzas</a>
+    <a href="comercial.html" id="btnMenuComercial" style="text-decoration: none; background: #e2e8f0; color: #0f172a; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">💼 Módulo Comercial</a>
+</div>
+
         <header class="header-bar">
             <div>
                 <h1>Innova Electronics SAC</h1>
@@ -451,16 +457,34 @@
 
         function cerrarSesion() { sessionStorage.removeItem('innova_user'); location.reload(); }
 
-        function iniciarAplicacion() {
-            document.getElementById('loginScreen').style.display = 'none'; document.getElementById('appDashboard').style.display = 'block';
-            document.getElementById('userDisplayNombre').innerText = usuarioActual.nombre_completo; document.getElementById('userDisplayRol').innerText = usuarioActual.rol;
-            if(usuarioActual.rol !== 'Administración') {
-                document.getElementById('panelAdminEmpleados').style.display = 'none';
-                document.getElementById('panelAdminPlantillas').style.display = 'none';
-                document.getElementById('detallesAdminClientes').style.display = 'none';
-            }
-            cargarEmpleados(); cargarClientes(); cargarPlantillas(); cargarTickets();
-        }
+function iniciarAplicacion() {
+    document.getElementById('loginScreen').style.display = 'none'; 
+    document.getElementById('appDashboard').style.display = 'block';
+    
+    document.getElementById('userDisplayNombre').innerText = usuarioActual.nombre_completo; 
+    document.getElementById('userDisplayRol').innerText = usuarioActual.rol;
+    
+    // ⛔ RESTRICCIONES PARA TÉCNICOS ⛔
+    if(usuarioActual.rol !== 'Administración') {
+        // 1. Ocultar paneles de configuración de mantenimiento
+        document.getElementById('panelAdminEmpleados').style.display = 'none';
+        document.getElementById('panelAdminPlantillas').style.display = 'none';
+        document.getElementById('detallesAdminClientes').style.display = 'none';
+        
+        // 2. Ocultar ÚNICAMENTE el acceso al Módulo de Finanzas
+        const btnFinanzas = document.getElementById('btnMenuFinanzas');
+        if (btnFinanzas) btnFinanzas.style.display = 'none';
+        
+        // Nota: El botón Comercial NO se oculta, el técnico podrá ingresar y 
+        // allá se aplicarán sus propias restricciones operativas.
+    }
+    
+    // Encendido de datos
+    cargarEmpleados(); 
+    cargarClientes(); 
+    cargarPlantillas(); 
+    cargarTickets();
+}
 
         let accesoriosCargadosTemporalmente = []; let ticketsCargados = []; let fotosFRGlobal = []; 
         let otmActualId = null; let actividadesGlobal = []; let fotosGlobal = []; let entregaActualId = null; let fpActualId = null;
