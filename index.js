@@ -209,18 +209,19 @@ app.delete('/api/finanzas/ingresos/:id', async (req, res) => {
 
 // 4. REGISTRAR UN NUEVO EGRESO 
 // 4. REGISTRAR UN NUEVO EGRESO (Actualizado para recibir fecha personalizada)
+// 4. REGISTRAR UN NUEVO EGRESO (Bimonetario)
 app.post('/api/finanzas/egresos', async (req, res) => {
     try {
-        const { categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso } = req.body;
+        const { categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso, moneda, tc } = req.body;
         const nuevoEgreso = await pool.query(
-            `INSERT INTO egresos_operativos (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso) 
-            VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, CURRENT_TIMESTAMP)) RETURNING *`,
-            [categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso || null]
+            `INSERT INTO egresos_operativos (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso, moneda, tc) 
+            VALUES ($1, $2, $3, $4, $5, $6, COALESCE($7, CURRENT_TIMESTAMP), $8, $9) RETURNING *`,
+            [categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso || null, moneda || 'PEN', tc || 1]
         );
         res.json(nuevoEgreso.rows[0]);
     } catch (err) { 
         console.error("Error al registrar egreso:", err.message);
-        res.status(500).send("Error en el servidor al registrar el egreso"); 
+        res.status(500).send("Error en el servidor"); 
     }
 });
 
@@ -258,11 +259,12 @@ app.get('/api/finanzas/alertas', async (req, res) => {
             if (diaActual >= costo.dia_vencimiento && costo.ultimo_mes_generado !== mesActual) {
                 
                 // 1. Generamos el egreso pero en estado "PENDIENTE"
+                // 1. Generamos el egreso pero en estado "PENDIENTE" (Ahora hereda Moneda y TC)
                 await pool.query(
                     `INSERT INTO egresos_operativos 
-                    (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso, estado_pago) 
-                    VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, 'PENDIENTE')`,
-                    [costo.categoria, `[AUTO] ${costo.descripcion}`, costo.monto, 'NO ESPECIFICADO', 'SIN COMPROBANTE', 'AUTO-GENERADO']
+                    (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, fecha_egreso, estado_pago, moneda, tc) 
+                    VALUES ($1, $2, $3, $4, $5, $6, CURRENT_TIMESTAMP, 'PENDIENTE', $7, $8)`,
+                    [costo.categoria, `[AUTO] ${costo.descripcion}`, costo.monto, 'NO ESPECIFICADO', 'SIN COMPROBANTE', 'AUTO-GENERADO', costo.moneda || 'PEN', costo.tc || 1]
                 );
 
                 // 2. Actualizamos la plantilla para que el servidor recuerde que YA lo generó este mes y no lo duplique
@@ -331,11 +333,11 @@ app.get('/api/finanzas/costos-fijos', async (req, res) => {
 // Guardar un nuevo costo fijo
 app.post('/api/finanzas/costos-fijos', async (req, res) => {
     try {
-        const { categoria, descripcion, monto, dia_vencimiento } = req.body;
+        const { categoria, descripcion, monto, dia_vencimiento, moneda, tc } = req.body;
         const nuevo = await pool.query(
-            `INSERT INTO costos_fijos_programados (categoria, descripcion, monto, dia_vencimiento, ultimo_mes_generado, activo) 
-             VALUES ($1, $2, $3, $4, '', true) RETURNING *`,
-            [categoria, descripcion, monto, dia_vencimiento]
+            `INSERT INTO costos_fijos_programados (categoria, descripcion, monto, dia_vencimiento, ultimo_mes_generado, activo, moneda, tc) 
+             VALUES ($1, $2, $3, $4, '', true, $5, $6) RETURNING *`,
+            [categoria, descripcion, monto, dia_vencimiento, moneda || 'PEN', tc || 1]
         );
         res.json(nuevo.rows[0]);
     } catch (err) {
@@ -348,12 +350,12 @@ app.post('/api/finanzas/costos-fijos', async (req, res) => {
 app.put('/api/finanzas/costos-fijos/:id', async (req, res) => {
     try {
         const { id } = req.params;
-        const { categoria, descripcion, monto, dia_vencimiento } = req.body;
+        const { categoria, descripcion, monto, dia_vencimiento, moneda, tc } = req.body;
         const actualizado = await pool.query(
             `UPDATE costos_fijos_programados 
-             SET categoria = $1, descripcion = $2, monto = $3, dia_vencimiento = $4 
-             WHERE id = $5 RETURNING *`,
-            [categoria, descripcion, monto, dia_vencimiento, id]
+             SET categoria = $1, descripcion = $2, monto = $3, dia_vencimiento = $4, moneda = $5, tc = $6 
+             WHERE id = $7 RETURNING *`,
+            [categoria, descripcion, monto, dia_vencimiento, moneda || 'PEN', tc || 1, id]
         );
         res.json(actualizado.rows[0]);
     } catch (err) {

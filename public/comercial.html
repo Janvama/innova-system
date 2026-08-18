@@ -35,6 +35,7 @@
         input, select, textarea { padding: 8px; border: 1px solid #cbd5e1; border-radius: 4px; font-size: 0.85rem; width: 100%; }
         .readonly-text { background-color: #f1f5f9; padding: 8px; border-radius: 4px; border: 1px solid #cbd5e1; font-size: 0.85rem; color: #334155; }
         .item-accesorio { display: flex; align-items: center; gap: 8px; margin-bottom: 6px; background: #f8fafc; padding: 6px; border-radius: 4px; border: 1px solid #e2e8f0; }
+        .item-accesorio input[type="checkbox"] { width: auto; }
         .btn-submit { background-color: #2563eb; color: white; border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; margin-top: 15px; }
         .badge-concretado { background:#e2e8f0; color:#475569; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; border: 1px solid #cbd5e1; display:inline-block; margin-top:2px;}
         .badge-proceso { background:#dcfce3; color:#166534; padding:4px 8px; border-radius:4px; font-weight:bold; font-size:0.75rem; border: 1px solid #86efac; display:inline-block; margin-top:2px;}
@@ -153,6 +154,11 @@
                         <input type="date" id="alqFin" required>
                     </div>
                 </div>
+
+                    <label style="margin-top: 10px; color: #1e3a8a;">Observaciones de Salida (Opcional):</label>
+                     <textarea id="alqObservacionesFAE" rows="2" placeholder="Detalle el estado físico del equipo, rayaduras, acuerdos de entrega..."></textarea>
+
+
 
                     <!-- NUEVO: MÓDULO FOTOGRÁFICO DE LA FAE -->
                     <div style="border: 1px dashed #cbd5e1; padding: 10px; border-radius: 6px; background: #f8fafc; margin-top: 10px; margin-bottom: 15px;">
@@ -449,8 +455,21 @@ const API_URL = '/api';
                 fotos_fae: fotosFAEGlobal,
                 observaciones_fae: document.getElementById('alqObservacionesFAE').value.trim() 
             }; 
-            await fetch(`${API_URL}/alquileres`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); 
-            cerrarModal('modalFAE'); document.getElementById('formFAE').reset(); fotosFAEGlobal = []; renderFotosFAE(); cargarDatosGlobales(); 
+            // 1. Guardamos en la base de datos
+            await fetch(`${API_URL}/alquileres`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });            
+           
+            // 2. Cerramos la ventana
+            cerrarModal('modalFAE'); 
+
+            // 3. LIMPIEZA PROFUNDA (¡Aquí está la magia!)
+            document.getElementById('formFAE').reset(); // Limpia textos
+            document.getElementById('alqPlantilla').value = 'generico'; // Forzamos a que vuelva a "Genérico"
+            cambiarPlantillaAlquiler(); // Esta función tuya vaciará los checks y dejará todo en blanco automáticamente
+
+            // 4. Limpiamos fotos y actualizamos la tabla principal
+            fotosFAEGlobal = []; 
+            renderFotosFAE(); 
+            cargarDatosGlobales(); 
         });
         
         function prepararFAR(idAlquiler) { 
