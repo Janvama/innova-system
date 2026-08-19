@@ -164,11 +164,15 @@
                         <label>Cliente:</label>
                         <select id="selectCliente" required></select>
                         <label>N° Ficha de Recepción (FR):</label>
-                        <input type="text" id="numFR" required>
+                        <input type="text" id="numFR" value="FR" required>
                         <label>Plantilla / Tipo de Equipo:</label>
-                        <select id="plantillaEquipo" required onchange="cambiarPlantilla()">
-                            <option value="generico">-- Genérico / Otro Equipo --</option>
-                        </select>
+                        <div style="display: flex; gap: 10px;">
+                            <select id="plantillaEquipo" required onchange="cambiarPlantilla()" style="flex: 2;">
+                                <option value="generico">-- Genérico / Otro Equipo --</option>
+                            </select>
+                            <!-- Este campo solo aparecerá cuando sea Genérico -->
+                            <input type="text" id="nombreEquipoGenerico" placeholder="Especifique qué equipo es..." style="flex: 1; display: none;">
+                        </div>
                         <label>Marca y Modelo:</label>
                         <div style="display: flex; gap: 10px;">
                             <input type="text" id="marcaEquipo" placeholder="Marca" required>
@@ -626,20 +630,36 @@ function iniciarAplicacion() {
 
         // ================= GESTIÓN DE ACCESORIOS =================
         async function cambiarPlantilla() { 
-            const sel = document.getElementById('plantillaEquipo'); const id = sel.value; const cont = document.getElementById('contenedorAccesorios'); 
-            document.getElementById('marcaEquipo').value = ""; document.getElementById('modeloEquipo').value = ""; 
-            cont.innerHTML = ''; accesoriosCargadosTemporalmente = []; 
+            const sel = document.getElementById('plantillaEquipo'); 
+            const id = sel.value; 
+            const cont = document.getElementById('contenedorAccesorios'); 
+            const inputGenerico = document.getElementById('nombreEquipoGenerico');
+
+            document.getElementById('marcaEquipo').value = ""; 
+            document.getElementById('modeloEquipo').value = ""; 
+            cont.innerHTML = ''; 
+            accesoriosCargadosTemporalmente = []; 
             
             if (id === 'generico') { 
+                // 1. Mostramos el campo y lo hacemos obligatorio
+                inputGenerico.style.display = 'block';
+                inputGenerico.required = true;
+
                 cont.innerHTML = `<div id="listaGenerica"></div><button type="button" class="btn-secondary" onclick="agregarLineaExtra()">＋ Añadir Accesorio</button>`; 
                 agregarLineaExtra(); 
             } else { 
+                // 2. Ocultamos el campo, le quitamos lo obligatorio y lo limpiamos
+                inputGenerico.style.display = 'none';
+                inputGenerico.required = false;
+                inputGenerico.value = '';
+
                 const opt = sel.options[sel.selectedIndex]; 
                 document.getElementById('marcaEquipo').value = opt.getAttribute('data-marca'); 
                 document.getElementById('modeloEquipo').value = opt.getAttribute('data-modelo'); 
                 
                 const res = await fetch(`${API_URL}/plantillas/${id}/accesorios`); 
-                const accs = await res.json(); accesoriosCargadosTemporalmente = accs; 
+                const accs = await res.json(); 
+                accesoriosCargadosTemporalmente = accs; 
                 
                 let h = ''; 
                 accs.forEach((a, i) => { h += `<div class="item-accesorio"><input type="checkbox" id="chk_acc_${i}"><label for="chk_acc_${i}" style="flex:1;">${a.nombre_accesorio}</label><input type="text" id="obs_acc_${i}" placeholder="Estado (ej: Ok, Roto)" style="width:40%;"></div>`; }); 
@@ -738,11 +758,32 @@ function iniciarAplicacion() {
                 }
                 historialHTML += `</div>`;
 
+                // ==========================================
+                // NUEVO: SEPARACIÓN INTELIGENTE DEL EQUIPO
+                // ==========================================
+                let tipoEquipoUI = "";
+                let marcaEquipoUI = t.marca;
+                
+                // Si la marca contiene el separador " - " que pusimos al guardar, lo dividimos
+                if (t.marca && t.marca.includes(" - ")) {
+                    let partes = t.marca.split(" - ");
+                    tipoEquipoUI = `<span style="color: #2563eb; font-weight: bold; font-size: 0.9rem;">${partes[0]}</span><br>`;
+                    marcaEquipoUI = partes.slice(1).join(" - "); // El resto es la marca real
+                } else {
+                    // Para registros antiguos que no tenían el tipo de equipo
+                    tipoEquipoUI = `<span style="color: #64748b; font-weight: bold;">Equipo:</span><br>`;
+                }
+
+
                 tabla.innerHTML += `
                     <tr>
                         <td style="vertical-align: top;"><strong>${t.numero_fr}</strong></td>
                         <td style="vertical-align: top;">${t.cliente}<br><small style="color:#64748b">${t.ruc_cliente ? 'RUC:'+t.ruc_cliente : ''}</small></td>
-                        <td style="vertical-align: top;"><strong>${t.marca}</strong><br>${t.modelo}<br><small>S/N: ${t.numero_serie || 'N/A'}</small></td>
+                        <td style="vertical-align: top;">
+                            ${tipoEquipoUI}
+                            <strong>${marcaEquipoUI}</strong> - ${t.modelo}<br>
+                            <small style="color: #64748b;">S/N: ${t.numero_serie || 'N/A'}</small>
+                        </td>
                         <td style="vertical-align: top;">${fallaInfo}</td>
                         <td style="vertical-align: top;">${accHTML}</td>
                         <td style="vertical-align: top;">${historialHTML}</td>
@@ -800,7 +841,57 @@ function iniciarAplicacion() {
         function eliminarFotoFR(index) { fotosFRGlobal.splice(index, 1); renderFotosFR(); }
         function renderFotosFR() { document.getElementById('galeriaFotosFR').innerHTML = fotosFRGlobal.length ? fotosFRGlobal.map((f, i) => `<div class="foto-item"><button type="button" class="btn-eliminar-foto" onclick="eliminarFotoFR(${i})">✕</button><img src="${f.url}"><p>${f.descripcion}</p></div>`).join('') : ''; }
 
-        document.getElementById('formFR').addEventListener('submit', async (e) => { e.preventDefault(); const dataFR = { id_empleado: document.getElementById('selectEmpleado').value, id_cliente: document.getElementById('selectCliente').value, numero_fr: document.getElementById('numFR').value.trim(), marca: document.getElementById('marcaEquipo').value, modelo: document.getElementById('modeloEquipo').value, numero_serie: document.getElementById('serieEquipo').value, accesorios: obtenerTextoAccesorios(), problema_reportado: document.getElementById('problema').value, fotos_fr: fotosFRGlobal }; const req = await fetch(`${API_URL}/tickets`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataFR)}); if (!req.ok) { const errorData = await req.json(); alert(errorData.error || 'Ocurrió un error.'); return; } document.getElementById('formFR').reset(); fotosFRGlobal = []; renderFotosFR(); cambiarPlantilla(); cargarTickets(); alert('FR creada exitosamente.');});
+        document.getElementById('formFR').addEventListener('submit', async (e) => { 
+    e.preventDefault(); 
+    
+    // 1. VALIDACIÓN DEL NÚMERO (Usando solo "FR")
+    const numero_fr_input = document.getElementById('numFR').value.trim();
+    if (numero_fr_input === 'FR' || numero_fr_input === '') {
+        return alert('⚠️ Ingrese un número correlativo después de FR (Ejemplo: FR001)');
+    }
+
+    // 2. CONSTRUCCIÓN DEL NOMBRE + MARCA
+    const selPlantilla = document.getElementById('plantillaEquipo');
+    let tipoEquipoFinal = "";
+    if (selPlantilla.value === 'generico') {
+        tipoEquipoFinal = document.getElementById('nombreEquipoGenerico').value.trim();
+    } else {
+        tipoEquipoFinal = selPlantilla.options[selPlantilla.selectedIndex].text;
+    }
+    const marcaConTipo = tipoEquipoFinal + " - " + document.getElementById('marcaEquipo').value;
+
+    // 3. PREPARACIÓN Y ENVÍO DE DATOS
+    const dataFR = { 
+        id_empleado: document.getElementById('selectEmpleado').value, 
+        id_cliente: document.getElementById('selectCliente').value, 
+        numero_fr: numero_fr_input, // <-- Ahora sí funcionará sin recargar la página
+        marca: marcaConTipo, 
+        modelo: document.getElementById('modeloEquipo').value, 
+        numero_serie: document.getElementById('serieEquipo').value, 
+        accesorios: obtenerTextoAccesorios(), 
+        problema_reportado: document.getElementById('problema').value, 
+        fotos_fr: fotosFRGlobal 
+    }; 
+    
+    const req = await fetch(`${API_URL}/tickets`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataFR)}); 
+    if (!req.ok) { 
+        const errorData = await req.json(); 
+        alert(errorData.error || 'Ocurrió un error.'); 
+        return; 
+    } 
+    
+    // 4. LIMPIEZA
+    document.getElementById('formFR').reset(); 
+    document.getElementById('numFR').value = 'FR'; // <-- Vuelve a poner "FR" por defecto
+    document.getElementById('nombreEquipoGenerico').style.display = 'none';
+    
+    fotosFRGlobal = []; 
+    renderFotosFR(); 
+    cambiarPlantilla(); 
+    cargarTickets(); 
+    alert('FR creada exitosamente.');
+});
+
         document.getElementById('formCliente').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/clientes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_completo: document.getElementById('nombreCliente').value, telefono: document.getElementById('telefonoCliente').value, ruc: document.getElementById('rucCliente').value }) }); document.getElementById('formCliente').reset(); cargarClientes(); });
         document.getElementById('formEmpleado').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/empleados`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_completo: document.getElementById('nombreEmpleado').value, rol: document.getElementById('rolEmpleado').value, password: document.getElementById('passEmpleado').value }) }); document.getElementById('formEmpleado').reset(); cargarEmpleados(); });
         document.getElementById('formPlantilla').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/plantillas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_plantilla: document.getElementById('nomPlantilla').value, marca_defecto: document.getElementById('marcaPlantilla').value, modelo_defecto: document.getElementById('modeloPlantilla').value, accesorios: document.getElementById('listaAccesoriosNuevos').value.split('\n') })}); document.getElementById('formPlantilla').reset(); cargarPlantillas(); });
@@ -1018,6 +1109,15 @@ async function guardarFP() {
         }
 
         function imprimirFichaEntrega() { const t = ticketsCargados.find(ticket => ticket.id_ticket === entregaActualId); if (!t) return; const fechaCruda = document.getElementById('entregaFecha').value; const fechaEntregaFormato = fechaCruda ? new Date(fechaCruda).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Pendiente'; const obs = document.getElementById('entregaObservaciones').value.trim() || 'Ninguna.'; let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; const ventana = window.open('', '_blank'); ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>Entrega - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} h2.doc-title{text-align:center; font-size:18px; margin-top:0;} .seccion{border:1px solid #ccc; margin-bottom:15px;} .titulo{background:#f1f5f9; font-weight:bold; padding:5px;} .contenido{padding:10px;}</style></head><body>${encabezadoEmpresaHTML}<h2 class="doc-title">FICHA DE ENTREGA DE EQUIPO</h2><div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">FR N°: ${t.numero_fr}</div><div class="seccion"><div class="titulo">CLIENTE Y EQUIPO</div><div class="contenido">Cliente: ${t.cliente}${rucHtml}<br>Equipo: ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})</div></div><div class="seccion"><div class="titulo">ACCESORIOS ENTREGADOS</div><div class="contenido">${accs}</div></div><div class="seccion" style="border-color:#f59e0b;"><div class="titulo" style="background:#fef3c7; color:#b45309;">CONDICIONES DE SALIDA</div><div class="contenido">Fecha de Entrega Definitiva: <strong>${fechaEntregaFormato}</strong><br><br><i>Observaciones: ${obs}</i></div></div><div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;"><div style=\"width:200px; border-top:1px solid #000;\">Firma Cliente (Conformidad)</div><div style=\"width:200px; border-top:1px solid #000;\">Innova Electronics</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); }
+
+        // ==========================================
+        // SEGURO PARA MANTENER EL PREFIJO EN LA FR
+        // ==========================================
+        document.getElementById('numFR').addEventListener('input', function() {
+            if (!this.value.startsWith('FR')) {
+                this.value = 'FR';
+            }
+        });        
 
     </script>
 </body>
