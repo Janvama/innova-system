@@ -107,7 +107,7 @@
                 <div style="display: flex; gap: 10px;">
                     <div style="flex: 1;">
                         <label>FAE N°:</label>
-                        <input type="text" id="alqContrato" required>
+                        <input type="text" id="alqContrato" value="FAE" required>
                     </div>
                     <div style="flex: 1;">
                         <label>Gestor / Asesor:</label>
@@ -236,7 +236,9 @@
             <h2 style="color: #047857;">🛒 Generar Ficha de Venta (FV)</h2>
             <form id="formNuevaFV">
                 <div style="display: flex; gap: 10px;">
-                    <div style="flex: 1;"><label>N° Ficha Venta (FV):</label><input type="text" id="fvNumero" required placeholder="Ej: FV-001"></div>
+                    <div style="flex: 1;"><label>N° Ficha Venta (FV):</label>
+                        <input type="text" id="fvNumero" value="FV" required>
+                    </div>
                     <div style="flex: 2;"><label>Cliente:</label><select id="fvCliente" required></select></div>
                 </div>
                 <div style="background: #f8fafc; padding: 10px; border-radius: 6px; border: 1px dashed #cbd5e1; margin-top: 10px;">
@@ -308,12 +310,16 @@
                 <strong style="color:#475569;">Cliente:</strong> <span id="fpSubtituloCli"></span><br>
                 <strong style="color:#475569;">Equipo:</strong> <span id="fpSubtituloEq"></span><br>
                 <strong style="color:#475569;">Accesorios:</strong> <span id="fpSubtituloAcc"></span>
+                    <!-- NUEVO: CAJA PARA LAS OBSERVACIONES LOGÍSTICAS -->
+                <div id="fpSubtituloObsBox" style="margin-top: 10px; padding-top: 8px; border-top: 1px dashed #c084fc; font-size: 0.8rem; line-height: 1.4;">
+                    <!-- Aquí se inyectarán las observaciones mediante JS -->
+                </div>
             </div>
             
             <form id="formFPAdmin">
                 <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 15px;">
                     <div style="display:flex; gap:10px; margin-bottom:15px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 15px;">
-                        <div style="flex:1;"><label>Moneda:</label><select id="fpUniMoneda" onchange="calcularTotales()"><option value="PEN">Soles (S/)</option><option value="USD">Dólares ($)</option></select></div>
+                        <div style="flex:1;"><label>Moneda:</label><select id="fpUniMoneda" onchange="cambioMonedaFP()"><option value="PEN">Soles (S/)</option><option value="USD">Dólares ($)</option></select></div>
                         <div style="flex:1;"><label>Tipo de Cambio:</label><input type="number" step="0.01" id="fpUniTC" value="1.00" oninput="calcularTotales()"></div>
                         <div style="flex:1;"><label>Descuento (%):</label><input type="number" step="0.01" id="fpUniDesc" value="0" oninput="calcularTotales()"></div>
                         <div style="flex:1;"><label>IGV (%):</label><input type="number" step="0.01" id="fpUniIGV" value="18" oninput="calcularTotales()"></div>
@@ -423,6 +429,17 @@ const API_URL = '/api';
         function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
         function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
 
+        // ==========================================
+        // SEGUROS PARA MANTENER PREFIJOS EN DOCUMENTOS
+        // ==========================================
+        document.getElementById('alqContrato').addEventListener('input', function() {
+            if (!this.value.startsWith('FAE')) this.value = 'FAE';
+        });
+
+        document.getElementById('fvNumero').addEventListener('input', function() {
+            if (!this.value.startsWith('FV')) this.value = 'FV';
+        });
+
         async function cargarListas() {
             const rCli = await fetch(`${API_URL}/clientes`); const c = await rCli.json();
             const rEmp = await fetch(`${API_URL}/empleados`); const e = await rEmp.json();
@@ -441,6 +458,17 @@ const API_URL = '/api';
        
         document.getElementById('formFAE').addEventListener('submit', async (e) => { 
             e.preventDefault(); 
+
+            // 1. VALIDACIÓN DE DUPLICADOS Y VACÍOS (NUEVO)
+            const numDoc = document.getElementById('alqContrato').value.trim();
+            if (numDoc === 'FAE-') return alert('⚠️ Ingrese un número correlativo después de FAE-');
+            
+            // Revisa en tiempo real si el código ya existe en la lista de alquileres
+            const existeDoc = dataAlquileres.some(a => a.numero_contrato.toUpperCase() === numDoc.toUpperCase());
+            if (existeDoc) {
+                return alert(`⚠️ ERROR: El documento ${numDoc} ya existe en el sistema. Por favor ingrese un correlativo diferente.`);
+            }
+
             const data = { 
                 numero_contrato: document.getElementById('alqContrato').value, 
                 id_cliente: document.getElementById('alqCliente').value, 
@@ -543,6 +571,17 @@ const API_URL = '/api';
 
         document.getElementById('formNuevaFV').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // 1. VALIDACIÓN DE DUPLICADOS Y VACÍOS (NUEVO)
+            const numDoc = document.getElementById('fvNumero').value.trim();
+            if (numDoc === 'FV-') return alert('⚠️ Ingrese un número correlativo después de FV-');
+            
+            // Revisa en tiempo real si el código ya existe en la lista de ventas
+            const existeDoc = dataVentas.some(v => v.numero_fv.toUpperCase() === numDoc.toUpperCase());
+            if (existeDoc) {
+                return alert(`⚠️ ERROR: El documento ${numDoc} ya existe en el sistema. Por favor ingrese un correlativo diferente.`);
+            }
+
             const data = {
                 numero_fv: document.getElementById('fvNumero').value.trim(),
                 cliente: document.getElementById('fvCliente').value,
@@ -731,6 +770,12 @@ const API_URL = '/api';
                 document.getElementById('fpSubtituloEq').innerText = `${item.nombre_equipo} ${item.marca} ${item.modelo}`;
                 document.getElementById('fpSubtituloAcc').innerText = item.accesorios || 'Ninguno';
                 
+                // NUEVO: Proyectar Observaciones de Alquiler en Pantalla (FAE y FAR)
+                let obsHtmlAlq = `
+                    <strong style="color:#1e3a8a;">Salida (FAE):</strong> <i>${item.notas_observaciones || item.observaciones_fae || 'Sin observaciones.'}</i><br>
+                    <strong style="color:#b45309;">Retorno (FAR):</strong> <i>${item.estado_retorno_equipo || 'Pendiente / En uso.'}</i>`;
+                document.getElementById('fpSubtituloObsBox').innerHTML = obsHtmlAlq;
+
                 document.getElementById('fpUniMoneda').value = item.moneda || 'PEN';
                 document.getElementById('fpUniTC').value = item.tc || 1.00;
                 document.getElementById('fpUniDesc').value = item.descuento || 0;
@@ -750,6 +795,12 @@ const API_URL = '/api';
                 document.getElementById('fpSubtituloEq').innerText = `${item.equipo_nombre} ${item.marca} ${item.modelo}`;
                 document.getElementById('fpSubtituloAcc').innerText = item.accesorios || 'Ninguno';
                 
+                // NUEVO: Proyectar Observaciones de Venta en Pantalla (FV y FE)
+                let obsHtmlVen = `
+                    <strong style="color:#047857;">Orden (FV):</strong> <i>${item.observaciones || 'Sin observaciones.'}</i><br>
+                    <strong style="color:#059669;">Entrega (FE):</strong> <i>${item.observaciones_fe || 'Pendiente de entrega.'}</i>`;
+                document.getElementById('fpSubtituloObsBox').innerHTML = obsHtmlVen;
+
                 document.getElementById('fpUniMoneda').value = fp.moneda || 'PEN';
                 document.getElementById('fpUniTC').value = fp.tc || 1.00;
                 document.getElementById('fpUniDesc').value = fp.descuento || 0;
@@ -761,8 +812,37 @@ const API_URL = '/api';
                 montoPagadoHistorico = parseFloat(item.monto_pagado || 0);
                 document.getElementById('zonaPreciosVenta').style.display = 'flex'; 
             }
+            // Candado visual al abrir el modal
+            const monedaAct = document.getElementById('fpUniMoneda').value;
+            const tcInput = document.getElementById('fpUniTC');
+            if (monedaAct === 'PEN') {
+                tcInput.disabled = true;
+                tcInput.style.backgroundColor = '#e2e8f0';
+            } else {
+                tcInput.disabled = false;
+                tcInput.style.backgroundColor = '#ffffff';
+            }
             
+            calcularTotales(); 
+            abrirModal('modalFPAdmin');
             calcularTotales(); abrirModal('modalFPAdmin');
+        }
+
+        function cambioMonedaFP() {
+            const moneda = document.getElementById('fpUniMoneda').value;
+            const tcInput = document.getElementById('fpUniTC');
+            
+            if (moneda === 'PEN') {
+                tcInput.value = '1.00';
+                tcInput.disabled = true;
+                tcInput.style.backgroundColor = '#e2e8f0'; // Fondo gris visual
+            } else {
+                tcInput.value = ''; // Lo dejamos vacío para obligar al usuario a llenarlo
+                tcInput.disabled = false;
+                tcInput.style.backgroundColor = '#ffffff'; // Fondo blanco normal
+                tcInput.focus(); // Lleva el cursor directo al TC
+            }
+            calcularTotales();
         }
 
         function calcularTotales() {
@@ -798,6 +878,14 @@ const API_URL = '/api';
 
         document.getElementById('formFPAdmin').addEventListener('submit', async (e) => {
             e.preventDefault();
+
+            // ⛔ NUEVA VALIDACIÓN ESTRICTA DEL TIPO DE CAMBIO ⛔
+            const monedaSel = document.getElementById('fpUniMoneda').value;
+            const tcIngresado = document.getElementById('fpUniTC').value;
+            if (monedaSel === 'USD' && (!tcIngresado || parseFloat(tcIngresado) <= 0)) {
+                return alert('⚠️ ALERTA: Es obligatorio ingresar un Tipo de Cambio (T/C) válido para guardar operaciones en Dólares.');
+            }
+
             const abonoHoy = parseFloat(document.getElementById('fpAbonoHoy').value || 0);
             const nuevoMontoPagado = montoPagadoHistorico + abonoHoy;
             let saldoReal = totalCalculadoGenerado - nuevoMontoPagado;
@@ -847,8 +935,16 @@ const API_URL = '/api';
             cargarDatosGlobales(); 
         });
 
-        function imprimirFPComercial() {
-            let docNum, cli, eq, periodoStr, cUni, cant, tipoCalc, valGtia = '';
+function imprimirFPComercial() {
+            // ⛔ NUEVA VALIDACIÓN ESTRICTA DEL TIPO DE CAMBIO ⛔
+            const monedaValida = document.getElementById('fpUniMoneda').value;
+            const tcValido = document.getElementById('fpUniTC').value;
+            if (monedaValida === 'USD' && (!tcValido || parseFloat(tcValido) <= 0)) {
+                return alert('⚠️ ALERTA: Es obligatorio ingresar un Tipo de Cambio (T/C) válido antes de poder Imprimir la proforma en Dólares.');
+            }
+
+            // CORRECCIÓN: Se declara obsHTML aquí
+            let docNum, cli, eq, periodoStr, cUni, cant, tipoCalc, valGtia = '', obsHTML = '';
             const moneda = document.getElementById('fpUniMoneda').value; const sim = moneda === 'USD' ? '$' : 'S/'; 
             const tc = parseFloat(document.getElementById('fpUniTC').value || 1);
             
@@ -859,12 +955,26 @@ const API_URL = '/api';
                 periodoStr = `Del ${new Date(t.fecha_inicio).toLocaleDateString()} al ${t.fecha_devolucion_real ? new Date(t.fecha_devolucion_real).toLocaleDateString() : 'En curso'} (${cant} Días)`;
                 tipoCalc = `Tarifa por día de alquiler (${sim} ${cUni.toFixed(2)} x ${cant} días)`;
                 valGtia = `* El depósito de garantía de ${sim} ${parseFloat(document.getElementById('fpAlqGarantia').value||0).toFixed(2)} está sujeto a condiciones de devolución.`;
+                
+                // OBSERVACIONES ALQUILER (Para impresión)
+                obsHTML = `
+                    <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #cbd5e1;">
+                        <strong style="color:#1e3a8a;">Condiciones de Salida (FAE):</strong> <i>${t.notas_observaciones || t.observaciones_fae || 'Ninguna'}</i><br>
+                        <strong style="color:#b45309;">Condiciones de Retorno (FAR):</strong> <i>${t.estado_retorno_equipo || 'Pendiente / En uso'}</i>
+                    </div>`;
             } else {
                 const t = dataVentas.find(v => v.id_fv === itemSeleccionado.id);
                 docNum = t.numero_fv; cli = t.cliente; eq = `${t.equipo_nombre} (${t.marca} - S/N: ${t.serie||'N/A'})`;
                 cant = 1; cUni = parseFloat(document.getElementById('fpVenPrecio').value || 0);
                 periodoStr = `Venta de Equipo Nuevo / Seminuevo. Forma de Pago: ${document.getElementById('fpVenForma').value}`;
                 tipoCalc = `Valor de Venta del Equipo (Unitario)`;
+                
+                // OBSERVACIONES VENTA (Para impresión)
+                obsHTML = `
+                    <div style="margin-top:10px; padding-top:10px; border-top:1px dashed #cbd5e1;">
+                        <strong style="color:#047857;">Observaciones de Venta (FV):</strong> <i>${t.observaciones || 'Ninguna'}</i><br>
+                        <strong style="color:#059669;">Condiciones de Entrega (FE):</strong> <i>${t.observaciones_fe || 'Pendiente / No entregado'}</i>
+                    </div>`;
             }
 
             const descPct = parseFloat(document.getElementById('fpUniDesc').value || 0); const igvPct = parseFloat(document.getElementById('fpUniIGV').value || 0);
@@ -876,7 +986,8 @@ const API_URL = '/api';
             const selloPago = saldo <= 0 ? `<div style="color: #166534; font-weight: bold; font-size: 20px; border: 3px solid #166534; padding: 10px; text-align: center; margin-top: 15px; border-radius: 8px; transform: rotate(-5deg); width: fit-content; margin-left: auto; margin-right: auto;">CANCELADO / PAGADO</div>` : '';
 
             const v = window.open('', '_blank');
-            v.document.write(`<!DOCTYPE html><html lang="es"><head><title>Proforma - ${docNum}</title><style>body { font-family: Arial; font-size: 13px; margin: 40px; } .cabecera-titulo { text-align: center; font-size: 16px; font-weight: bold; color: #7c3aed; } .fr-box { border: 2px solid #0f172a; padding: 5px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; margin-top: 10px; margin-bottom: 20px; } .seccion { margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 4px; } .seccion-titulo { background-color: #f1f5f9; font-weight: bold; padding: 8px 12px; border-bottom: 1px solid #cbd5e1; color: #0f172a; } .seccion-contenido { padding: 12px; } table.costos { width: 100%; border-collapse: collapse; margin-top: 10px; } table.costos th, table.costos td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; } table.costos th { background: #f8fafc; color: #0f172a; } table.costos tr.total-row th { background: #7c3aed; color: white; font-size: 15px; text-align: right; } table.costos tr.total-row td { background: #f3e8ff; font-weight: bold; font-size: 16px; color: #7c3aed; text-align: right; }</style></head><body>${encabezadoEmpresaHTML}<div style="text-align: center;"><div class="cabecera-titulo">FACTURA PROFORMA COMERCIAL</div><div class="fr-box">REF DOC N° ${docNum}</div></div><div class="seccion"><div class="seccion-titulo">📋 DATOS DEL CLIENTE Y OPERACIÓN</div><div class="seccion-contenido"><strong>Cliente:</strong> ${cli}<br><strong>Equipo Comercial:</strong> ${eq}<br><strong>Detalles:</strong> ${periodoStr}</div></div><div class="seccion" style="border-color: #8b5cf6;"><div class="seccion-titulo" style="background-color: #f3e8ff; color: #6d28d9; border-bottom-color: #d8b4fe;">💰 DETALLE DE COSTOS Y FACTURACIÓN</div><div class="seccion-contenido"><table class="costos"><tr><th>Concepto</th><th style="width: 160px; text-align: right;">Importe</th></tr><tr><td>${tipoCalc}</td><td style="text-align: right;">${sim} ${bruto.toFixed(2)}</td></tr>${htmlDescuento}<tr><td style="text-align: right; font-weight: bold;">Subtotal Neto:</td><td style="text-align: right; font-weight: bold;">${sim} ${neto.toFixed(2)}</td></tr><tr><td style="text-align: right;">Impuesto IGV (${igvPct}%):</td><td style="text-align: right;">${sim} ${mIGV.toFixed(2)}</td></tr><tr class="total-row"><th>TOTAL A PAGAR:</th><td>${sim} ${total.toFixed(2)} ${conv}</td></tr><tr><td style="text-align: right; color:#059669;"><strong>Abonado a la fecha:</strong></td><td style="text-align: right; color:#059669;"><strong>- ${sim} ${montoPagadoHistorico.toFixed(2)}</strong></td></tr><tr><td style="text-align: right; color:#dc2626;"><strong>SALDO RESTANTE:</strong></td><td style="text-align: right; color:#dc2626;"><strong>${sim} ${saldo > 0 ? saldo.toFixed(2) : '0.00'}</strong></td></tr></table>${selloPago}<p style="font-size: 11px; color: #64748b; margin-top: 15px; font-style: italic;">${valGtia}</p></div></div><div style="margin-top: 60px; text-align: center; font-weight: bold; border-top: 1px solid #333; width: 250px; margin-left: auto; margin-right: auto; padding-top: 5px;">Administración - Innova Electronics SAC</div><script>window.onload=function(){window.print();}<\/script></body></html>`);
+            // CORRECCIÓN: Se inyectó ${obsHTML} justo después de ${periodoStr}
+            v.document.write(`<!DOCTYPE html><html lang="es"><head><title>Proforma - ${docNum}</title><style>body { font-family: Arial; font-size: 13px; margin: 40px; } .cabecera-titulo { text-align: center; font-size: 16px; font-weight: bold; color: #7c3aed; } .fr-box { border: 2px solid #0f172a; padding: 5px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; margin-top: 10px; margin-bottom: 20px; } .seccion { margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 4px; } .seccion-titulo { background-color: #f1f5f9; font-weight: bold; padding: 8px 12px; border-bottom: 1px solid #cbd5e1; color: #0f172a; } .seccion-contenido { padding: 12px; } table.costos { width: 100%; border-collapse: collapse; margin-top: 10px; } table.costos th, table.costos td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; } table.costos th { background: #f8fafc; color: #0f172a; } table.costos tr.total-row th { background: #7c3aed; color: white; font-size: 15px; text-align: right; } table.costos tr.total-row td { background: #f3e8ff; font-weight: bold; font-size: 16px; color: #7c3aed; text-align: right; }</style></head><body>${encabezadoEmpresaHTML}<div style="text-align: center;"><div class="cabecera-titulo">FACTURA PROFORMA COMERCIAL</div><div class="fr-box">REF DOC N° ${docNum}</div></div><div class="seccion"><div class="seccion-titulo">📋 DATOS DEL CLIENTE Y OPERACIÓN</div><div class="seccion-contenido"><strong>Cliente:</strong> ${cli}<br><strong>Equipo Comercial:</strong> ${eq}<br><strong>Detalles:</strong> ${periodoStr}${obsHTML}</div></div><div class="seccion" style="border-color: #8b5cf6;"><div class="seccion-titulo" style="background-color: #f3e8ff; color: #6d28d9; border-bottom-color: #d8b4fe;">💰 DETALLE DE COSTOS Y FACTURACIÓN</div><div class="seccion-contenido"><table class="costos"><tr><th>Concepto</th><th style="width: 160px; text-align: right;">Importe</th></tr><tr><td>${tipoCalc}</td><td style="text-align: right;">${sim} ${bruto.toFixed(2)}</td></tr>${htmlDescuento}<tr><td style="text-align: right; font-weight: bold;">Subtotal Neto:</td><td style="text-align: right; font-weight: bold;">${sim} ${neto.toFixed(2)}</td></tr><tr><td style="text-align: right;">Impuesto IGV (${igvPct}%):</td><td style="text-align: right;">${sim} ${mIGV.toFixed(2)}</td></tr><tr class="total-row"><th>TOTAL A PAGAR:</th><td>${sim} ${total.toFixed(2)} ${conv}</td></tr><tr><td style="text-align: right; color:#059669;"><strong>Abonado a la fecha:</strong></td><td style="text-align: right; color:#059669;"><strong>- ${sim} ${montoPagadoHistorico.toFixed(2)}</strong></td></tr><tr><td style="text-align: right; color:#dc2626;"><strong>SALDO RESTANTE:</strong></td><td style="text-align: right; color:#dc2626;"><strong>${sim} ${saldo > 0 ? saldo.toFixed(2) : '0.00'}</strong></td></tr></table>${selloPago}<p style="font-size: 11px; color: #64748b; margin-top: 15px; font-style: italic;">${valGtia}</p></div></div><div style="margin-top: 60px; text-align: center; font-weight: bold; border-top: 1px solid #333; width: 250px; margin-left: auto; margin-right: auto; padding-top: 5px;">Administración - Innova Electronics SAC</div><script>window.onload=function(){window.print();}<\/script></body></html>`);
             v.document.close();
         }
 
