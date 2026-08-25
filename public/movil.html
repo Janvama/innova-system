@@ -59,6 +59,20 @@
     </style>
 </head>
 <body>
+
+    <!-- PANTALLA DE LOGIN MÓVIL -->
+    <div id="loginScreenMovil" style="display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: #0f172a; z-index: 2000; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box;">
+        <div style="background: white; padding: 30px; border-radius: 12px; width: 100%; max-width: 400px; text-align: center;">
+            <h1 style="color: #0f172a; margin-bottom: 10px; font-size: 1.5rem;">📱 Innova Móvil</h1>
+            <p style="color: #64748b; margin-bottom: 25px; font-size: 0.9rem;">Ingresa tus credenciales</p>
+            <form id="formLoginMovil" style="display: flex; flex-direction: column; gap: 15px;">
+                <input type="text" id="loginNombreMovil" placeholder="Tu Nombre Completo" required style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box;">
+                <input type="password" id="loginPasswordMovil" placeholder="Contraseña" required style="padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; width: 100%; box-sizing: border-box;">
+                <button type="submit" style="background: #2563eb; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; cursor: pointer; width: 100%;">Ingresar</button>
+            </form>
+        </div>
+    </div>
+
     <div class="header">
         <h1>📱 Innova Móvil</h1>
         <div class="user-info" id="userInfo">Cargando...</div>
@@ -216,21 +230,60 @@
         // ==========================================
         // 1. SEGURIDAD Y CARGA INICIAL
         // ==========================================
+        // ==========================================
+        // 1. SEGURIDAD, LOGIN MÓVIL Y CARGA INICIAL
+        // ==========================================
         document.addEventListener("DOMContentLoaded", () => {
             const userGuardado = sessionStorage.getItem('innova_user');
             if (!userGuardado) {
-                window.location.href = 'index.html';
+                // En lugar de botar al usuario a index.html, mostramos el login móvil
+                document.getElementById('loginScreenMovil').style.display = 'flex';
+                document.getElementById('vistaMenu').style.display = 'none';
             } else {
-                usuarioActual = JSON.parse(userGuardado);
-                document.getElementById('userInfo').innerText = '👤 ' + usuarioActual.nombre_completo;
-                document.getElementById('nombreTecnico').value = usuarioActual.nombre_completo;
-                cargarListasBase();
+                iniciarAppMovil(JSON.parse(userGuardado));
             }
         });
 
+        // Evento para procesar el login directamente en la app
+        document.getElementById('formLoginMovil').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const nombre = document.getElementById('loginNombreMovil').value.trim();
+            const password = document.getElementById('loginPasswordMovil').value.trim();
+            const boton = e.target.querySelector('button');
+            boton.innerText = "⏳ Entrando...";
+            
+            try {
+                const res = await fetch(`${API_URL}/login`, { 
+                    method: 'POST', 
+                    headers: { 'Content-Type': 'application/json' }, 
+                    body: JSON.stringify({ nombre, password }) 
+                });
+                if(res.ok) {
+                    const data = await res.json(); 
+                    sessionStorage.setItem('innova_user', JSON.stringify(data.user)); 
+                    iniciarAppMovil(data.user);
+                } else { 
+                    alert("❌ Nombre o contraseña incorrectos."); 
+                    boton.innerText = "Ingresar";
+                }
+            } catch(error) {
+                alert("Error de conexión al servidor.");
+                boton.innerText = "Ingresar";
+            }
+        });
+
+        function iniciarAppMovil(usuario) {
+            usuarioActual = usuario;
+            document.getElementById('loginScreenMovil').style.display = 'none';
+            document.getElementById('vistaMenu').style.display = 'block';
+            document.getElementById('userInfo').innerText = '👤 ' + usuarioActual.nombre_completo;
+            document.getElementById('nombreTecnico').value = usuarioActual.nombre_completo;
+            cargarListasBase();
+        }
+
         function cerrarSesion() {
             sessionStorage.removeItem('innova_user');
-            window.location.href = 'index.html';
+            window.location.reload(); // Recarga la app móvil mostrando el login
         }
 
         function ocultarVistas() {
