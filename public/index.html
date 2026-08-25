@@ -825,50 +825,145 @@ function iniciarAplicacion() {
         }
 
         // ================= VISOR Y PRINTS FR =================
-        async function abrirVisorFR(idTicket) {
-            const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return;
 
-            // 🚀 NUEVO: Traer fotos del servidor
-            const resFotos = await fetch(`${API_URL}/tickets/${idTicket}/fotos`);
-            const dataFotos = await resFotos.json();
-            t.fotos_fr = dataFotos.fotos_fr || [];
+function abrirImagenZoom(urlBase64) {
+    const ventana = window.open('', '_blank');
+    ventana.document.write(`
+        <!DOCTYPE html>
+        <html>
+        <head><title>Visor de Foto</title></head>
+        <body style="margin:0; background:#0f172a; display:flex; justify-content:center; align-items:center; height:100vh;">
+            <img src="${urlBase64}" style="max-width:100%; max-height:100vh; object-fit:contain;">
+        </body>
+        </html>
+    `);
+    ventana.document.close();
+}
 
-            const rucStr = t.ruc_cliente ? `<br><strong>RUC:</strong> ${t.ruc_cliente}` : '';
-            let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); 
+
+async function abrirVisorFR(idTicket) {
+    const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return;
+    
+    // Descarga de fotos diferida
+    const resFotos = await fetch(`${API_URL}/tickets/${idTicket}/fotos`);
+    const dataFotos = await resFotos.json();
+    t.fotos_fr = dataFotos.fotos_fr || [];
+
+    const rucStr = t.ruc_cliente ? `<br><strong>RUC:</strong> ${t.ruc_cliente}` : '';
+    let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); 
+    
+    // Generar bloque de fotos
+    let htmlFotos = '';
+    if (t.fotos_fr.length > 0) {
+        htmlFotos = `<div style="margin-top:15px; border-top:1px dashed #cbd5e1; padding-top:10px;"><strong>📸 Evidencia Fotográfica (Clic para expandir):</strong><div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">`;
+        t.fotos_fr.forEach(f => {
+            htmlFotos += `<div style="width:120px; text-align:center; cursor:pointer;" onclick="abrirImagenZoom('${f.url}')">
+                <img src="${f.url}" style="width:100%; height:80px; object-fit:cover; border-radius:4px; border:1px solid #cbd5e1; transition: transform 0.2s;" onmouseover="this.style.transform='scale(1.05)'" onmouseout="this.style.transform='scale(1)'">
+                <p style="font-size:0.7rem; color:#64748b; margin-top:4px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap;">${f.descripcion || 'Sin descripción'}</p>
+            </div>`;
+        });
+        htmlFotos += `</div></div>`;
+    }
+
+    document.getElementById('verFRContenido').innerHTML = `
+        <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px; border-radius:4px; border:1px solid #e2e8f0;">
+            <div><strong>FR N°:</strong> ${t.numero_fr}</div>
+            <div><strong>Fecha:</strong> ${new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
+        </div>
+        <div style="margin-top:15px;"><strong>Cliente:</strong> ${t.cliente} ${rucStr}</div>
+        <div style="margin-top:10px;"><strong>Equipo:</strong> ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})</div>
+        <div style="margin-top:10px; color:#b91c1c;"><strong>Falla Reportada:</strong> <i>${t.problema_reportado}</i></div>
+        <div style="margin-top:10px; padding:10px; background:#f1f5f9; border-left:3px solid #3b82f6;"><strong>Accesorios e Inspección:</strong><br>${accs}</div>
+        <div style="margin-top:10px; color:#475569;"><strong>Recibido por:</strong> ${t.empleado_receptor || '-'}</div>
+        ${htmlFotos}
+    `;
+    
+    let htmlBotones = '';
+    if(usuarioActual.rol === 'Administración') {
+        htmlBotones += `<button onclick='document.getElementById("modalVerFR").style.display="none"; eliminarTicket(${t.id_ticket})' class="btn-danger" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px;">🗑️ Eliminar</button>`;
+        htmlBotones += `<button onclick='document.getElementById("modalVerFR").style.display="none"; abrirModalEdit("ticket", ${t.id_ticket})' class="btn-success" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px; border:none; color:white;">✏️ Editar FR</button>`;
+    }
+    htmlBotones += `<button onclick="imprimirFR(${t.id_ticket})" class="btn-print" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px;">🖨️ Imprimir FR</button>`;
+    
+    document.getElementById('frBotonesAccion').innerHTML = htmlBotones;
+    document.getElementById('modalVerFR').style.display = 'flex';
+}
+
+async function imprimirFR(idTicket) { 
+    const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return; 
+    
+    // Traer las fotos si no están en memoria
+    const resFotos = await fetch(`${API_URL}/tickets/${idTicket}/fotos`);
+    const dataFotos = await resFotos.json();
+    const fotos = dataFotos.fotos_fr || [];
+
+    const fechaFormat = new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); 
+    let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); 
+    const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : '';
+    
+    // Cálculo de páginas totales (Página 1 + las necesarias para grupos de 4 fotos)
+    const totalPaginas = 1 + Math.ceil(fotos.length / 4);
+    
+    // Construcción de la Página 1 (Datos Principales)
+    let htmlPaginas = `
+    <div class="pagina">
+        ${encabezadoEmpresaHTML}
+        <h2 class="doc-title">FICHA DE RECEPCIÓN (FR)</h2>
+        <div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">N°: ${t.numero_fr}</div>
+        <div class="seccion"><div class="titulo">GENERALES</div><div class="contenido">Cliente: ${t.cliente}${rucHtml}<br>Fecha de Ingreso: ${fechaFormat}<br>Recibido por: ${t.empleado_receptor || '-'}</div></div>
+        <div class="seccion"><div class="titulo">EQUIPO</div><div class="contenido">Marca: ${t.marca} - Modelo: ${t.modelo} - S/N: ${t.numero_serie || '-'}</div></div>
+        <div class="seccion"><div class="titulo">FALLA REPORTADA POR CLIENTE</div><div class="contenido"><i>${t.problema_reportado}</i></div></div>
+        <div class="seccion"><div class="titulo">ACCESORIOS E INSPECCIÓN INICIAL</div><div class="contenido">${accs}</div></div>
+        <div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;">
+            <div style="width:200px; border-top:1px solid #000;">Firma Cliente (Conformidad)</div>
+            <div style="width:200px; border-top:1px solid #000;">Firma Recepción (Innova Electronics)</div>
+        </div>
+        <div class="footer-pag">Página 1 de ${totalPaginas}</div>
+    </div>`;
+
+    // Construcción de las Páginas de Anexos (Si hay fotos)
+    if (fotos.length > 0) {
+        for (let i = 0; i < fotos.length; i += 4) {
+            const numPag = 2 + Math.floor(i / 4);
+            const fotosLote = fotos.slice(i, i + 4);
             
-            document.getElementById('verFRContenido').innerHTML = `
-                <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px; border-radius:4px; border:1px solid #e2e8f0;">
-                    <div><strong>FR N°:</strong> ${t.numero_fr}</div>
-                    <div><strong>Fecha:</strong> ${new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric' })}</div>
-                </div>
-                <div style="margin-top:15px;"><strong>Cliente:</strong> ${t.cliente} ${rucStr}</div>
-                <div style="margin-top:10px;"><strong>Equipo:</strong> ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})</div>
-                <div style="margin-top:10px; color:#b91c1c;"><strong>Falla Reportada:</strong> <i>${t.problema_reportado}</i></div>
-                <div style="margin-top:10px; padding:10px; background:#f1f5f9; border-left:3px solid #3b82f6;"><strong>Accesorios e Inspección:</strong><br>${accs}</div>
-                <div style="margin-top:10px; color:#475569;"><strong>Recibido por:</strong> ${t.empleado_receptor || '-'}</div>
-            `;
+            let loteHtml = `<div class="pagina"><h2 class="doc-title" style="margin-top:20px;">ANEXO FOTOGRÁFICO - FR N°: ${t.numero_fr}</h2><div class="grid-fotos">`;
             
-            let htmlBotones = '';
-            if(usuarioActual.rol === 'Administración') {
-                htmlBotones += `<button onclick='document.getElementById("modalVerFR").style.display="none"; eliminarTicket(${t.id_ticket})' class="btn-danger" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px;">🗑️ Eliminar</button>`;
-                htmlBotones += `<button onclick='document.getElementById("modalVerFR").style.display="none"; abrirModalEdit("ticket", ${t.id_ticket})' class="btn-success" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px; border:none; color:white;">✏️ Editar FR</button>`;
-            }
-            htmlBotones += `<button onclick="imprimirFR(${t.id_ticket})" class="btn-print" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px;">🖨️ Imprimir FR</button>`;
+            fotosLote.forEach(f => {
+                loteHtml += `<div class="foto-box"><img src="${f.url}"><div class="foto-desc">${f.descripcion || 'Sin descripción'}</div></div>`;
+            });
             
-            document.getElementById('frBotonesAccion').innerHTML = htmlBotones;
-            document.getElementById('modalVerFR').style.display = 'flex';
+            loteHtml += `</div><div class="footer-pag">Página ${numPag} de ${totalPaginas}</div></div>`;
+            htmlPaginas += loteHtml;
         }
+    }
 
-        function imprimirFR(idTicket) { 
-            const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return; 
-            const fechaFormat = new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); 
-            let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); 
-            const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : '';
-            
-            let htmlFotos = ''; if (t.fotos_fr && t.fotos_fr.length > 0) { htmlFotos = `<div class="seccion"><div class="titulo">EVIDENCIA FOTOGRÁFICA DE RECEPCIÓN</div><div class="contenido" style="display:flex; gap:10px; flex-wrap:wrap;">`; t.fotos_fr.forEach(f => { htmlFotos += `<div style="border:1px solid #ccc; padding:5px; text-align:center; width:200px;"><img src="${f.url}" style="width:100%; max-height:150px; object-fit:contain;"><br><small>${f.descripcion}</small></div>`; }); htmlFotos += `</div></div>`; }
-            const ventana = window.open('', '_blank'); 
-            ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>FR - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} h2.doc-title{text-align:center; font-size:18px; margin-top:0;} .seccion{border:1px solid #ccc; margin-bottom:15px;} .titulo{background:#f1f5f9; font-weight:bold; padding:5px;} .contenido{padding:10px;}</style></head><body>${encabezadoEmpresaHTML}<h2 class="doc-title">FICHA DE RECEPCIÓN (FR)</h2><div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">N°: ${t.numero_fr}</div><div class="seccion"><div class="titulo">GENERALES</div><div class="contenido">Cliente: ${t.cliente}${rucHtml}<br>Fecha de Ingreso: ${fechaFormat}<br>Recibido por: ${t.empleado_receptor || '-'}</div></div><div class="seccion"><div class="titulo">EQUIPO</div><div class="contenido">Marca: ${t.marca} - Modelo: ${t.modelo} - S/N: ${t.numero_serie || '-'}</div></div><div class="seccion"><div class="titulo">FALLA REPORTADA POR CLIENTE</div><div class="contenido"><i>${t.problema_reportado}</i></div></div><div class="seccion"><div class="titulo">ACCESORIOS E INSPECCIÓN INICIAL</div><div class="contenido">${accs}</div></div>${htmlFotos}<div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;"><div style="width:200px; border-top:1px solid #000;">Firma Cliente (Conformidad)</div><div style="width:200px; border-top:1px solid #000;">Firma Recepción (Innova Electronics)</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); 
-        }
+    const ventana = window.open('', '_blank'); 
+    ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>FR - ${t.numero_fr}</title>
+    <style>
+        @page { size: A4 portrait; margin: 0; }
+        body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; background: #525659; }
+        /* Simulación de hojas en pantalla y cortes al imprimir */
+        .pagina { width: 21cm; height: 29.7cm; padding: 1.5cm; margin: 1cm auto; background: white; box-sizing: border-box; position: relative; page-break-after: always; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+        @media print { body { background: white; margin: 0; } .pagina { margin: 0; box-shadow: none; } }
+        h2.doc-title { text-align: center; font-size: 18px; margin-top: 0; }
+        .seccion { border: 1px solid #ccc; margin-bottom: 15px; }
+        .titulo { background: #f1f5f9; font-weight: bold; padding: 5px; }
+        .contenido { padding: 10px; }
+        .footer-pag { position: absolute; bottom: 1.5cm; right: 1.5cm; font-size: 10px; color: #64748b; font-weight: bold; }
+        
+        /* Grilla de 4 fotos */
+        .grid-fotos { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 15px; height: 23cm; margin-top: 15px; }
+        .foto-box { border: 1px solid #cbd5e1; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #f8fafc; border-radius: 6px; overflow: hidden; }
+        .foto-box img { max-width: 100%; max-height: 90%; object-fit: contain; border-radius: 4px; }
+        .foto-desc { margin-top: 8px; font-weight: bold; font-size: 11px; color: #333; }
+    </style>
+    </head><body>
+    ${htmlPaginas}
+    <script>window.onload=function(){ setTimeout(() => window.print(), 500); }<\/script>
+    </body></html>`); 
+    ventana.document.close(); 
+}
 
         // ================= CREACION FR Y MAESTROS =================
         function agregarFotoFR() { const archivo = document.getElementById('frFotoFile').files[0]; const desc = document.getElementById('frFotoDesc').value.trim(); if(!archivo) return alert("Selecciona una foto primero."); const lector = new FileReader(); lector.onload = function(e) { fotosFRGlobal.push({ url: e.target.result, descripcion: desc }); document.getElementById('frFotoFile').value = ''; document.getElementById('frFotoDesc').value = ''; renderFotosFR(); }; lector.readAsDataURL(archivo); }

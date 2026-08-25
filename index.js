@@ -114,7 +114,7 @@ app.get('/api/tickets', async (req, res) => {
         }
 
         // Paginación: Limit y Offset
-        queryStr += ` ORDER BY t.id_ticket DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+        queryStr += ` ORDER BY t.fecha_ingreso DESC, t.id_ticket DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
         params.push(limit, offset);
 
         const r = await pool.query(queryStr, params); 
