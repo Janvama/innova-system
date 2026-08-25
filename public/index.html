@@ -218,17 +218,17 @@
                 <div class="card">
                     <h2 style="display: flex; justify-content: space-between; align-items: center;">
                         Panel de Control y Búsqueda
-                        <button class="btn-secondary" onclick="cargarTickets()" style="margin:0; padding: 5px 10px;">🔄 Actualizar</button>
+                        <button class="btn-secondary" onclick="cargarTickets(true)" style="margin:0; padding: 5px 10px;">🔄 Actualizar</button>
                     </h2>
                     
                     <div class="filter-bar">
                         <div class="filter-group" style="flex: 2;">
                             <label>Buscar Cliente, Equipo o N° FR:</label>
-                            <input type="text" id="filtroTexto" placeholder="Ej: Juan Perez, Dell, FR-001..." oninput="renderTablaTickets()">
+                            <input type="text" id="filtroTexto" placeholder="Ej: Numero de documento, marca, modelo ..." oninput="cargarTickets(true)">
                         </div>
                         <div class="filter-group">
                             <label>Estado Técnico:</label>
-                            <select id="filtroEstado" onchange="renderTablaTickets()">
+                            <select id="filtroEstado" onchange="cargarTickets(true)">
                                 <option value="">Todos los Estados</option>
                                 <option value="En Recepción">En Recepción</option>
                                 <option value="OTM en proceso">OTM en proceso</option>
@@ -238,11 +238,11 @@
                         </div>
                         <div class="filter-group">
                             <label>Fecha Desde:</label>
-                            <input type="date" id="filtroFechaD" onchange="renderTablaTickets()">
+                            <input type="date" id="filtroFechaD" onchange="cargarTickets(true)">
                         </div>
                         <div class="filter-group">
                             <label>Fecha Hasta:</label>
-                            <input type="date" id="filtroFechaH" onchange="renderTablaTickets()">
+                            <input type="date" id="filtroFechaH" onchange="cargarTickets(true)">
                         </div>
                     </div>
 
@@ -261,6 +261,13 @@
                         </thead>
                         <tbody id="tablaTickets"></tbody>
                     </table>
+
+                    <div id="contenedorCargarMas" style="text-align: center; margin-top: 15px; display: none;">
+                        <button type="button" onclick="cargarMasTickets()" style="padding: 10px 20px; font-size: 0.9rem; font-weight: bold; background-color: #e2e8f0; color: #0f172a; border: 1px solid #cbd5e1; border-radius: 6px; cursor: pointer;">
+                        ⬇️ Ver más registros
+                        </button>
+                    </div>
+
                 </div>
             </div>
         </div>
@@ -687,34 +694,55 @@ function iniciarAplicacion() {
         }
 
         // ================= VISTA Y RENDER DE TICKETS =================
-        async function cargarTickets() {
-            const res = await fetch(`${API_URL}/tickets`); 
-            ticketsCargados = await res.json(); renderTablaTickets();
+
+        let offsetActual = 0;
+        const LIMIT_TICKETS = 20;
+
+        async function cargarTickets(reset = false) {
+            if (reset) {
+                offsetActual = 0;
+                document.getElementById('tablaTickets').innerHTML = '<tr><td colspan="8" style="text-align:center; padding: 20px; color:#64748b;">Buscando registros... ⏳</td></tr>';
+            }
+
+            const q = document.getElementById('filtroTexto').value;
+            const estado = document.getElementById('filtroEstado').value;
+            const d = document.getElementById('filtroFechaD').value;
+            const h = document.getElementById('filtroFechaH').value;
+
+            let url = `${API_URL}/tickets?limit=${LIMIT_TICKETS}&offset=${offsetActual}`;
+            if(q) url += `&q=${encodeURIComponent(q)}`;
+            if(estado) url += `&estado=${encodeURIComponent(estado)}`;
+            if(d) url += `&fechaD=${encodeURIComponent(d)}`;
+            if(h) url += `&fechaH=${encodeURIComponent(h)}`;
+
+            try {
+                const res = await fetch(url); 
+                const nuevosTickets = await res.json();
+                
+                if (reset) ticketsCargados = nuevosTickets;
+                else ticketsCargados = ticketsCargados.concat(nuevosTickets);
+                
+                renderTablaTickets();
+
+                // Mostrar u ocultar el botón de "Ver más"
+                const btnMas = document.getElementById('contenedorCargarMas');
+                if (nuevosTickets.length === LIMIT_TICKETS) btnMas.style.display = 'block';
+                else btnMas.style.display = 'none';
+
+            } catch (error) { console.error("Error cargando tabla:", error); }
+        }
+
+        function cargarMasTickets() {
+            offsetActual += LIMIT_TICKETS;
+            cargarTickets(false);
         }
 
         function renderTablaTickets() {
             const tabla = document.getElementById('tablaTickets'); tabla.innerHTML = '';
-            const filtroTexto = document.getElementById('filtroTexto').value.toLowerCase();
-            const filtroEstado = document.getElementById('filtroEstado').value;
-            const filtroD = document.getElementById('filtroFechaD').value; const filtroH = document.getElementById('filtroFechaH').value;
+            
+            if(ticketsCargados.length === 0) return tabla.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#64748b;">No se encontraron registros.</td></tr>`;
 
-            const ticketsFiltrados = ticketsCargados.filter(t => {
-                const textoCompleto = `${t.numero_fr} ${t.cliente} ${t.marca} ${t.modelo} ${t.numero_serie || ''} ${t.ruc_cliente||''}`.toLowerCase();
-                if (filtroTexto && !textoCompleto.includes(filtroTexto)) return false;
-                if (filtroEstado && t.estado_equipo !== filtroEstado) return false;
-                if (filtroD || filtroH) {
-                    const fechaIngresoStr = t.fecha_ingreso ? t.fecha_ingreso.split('T')[0] : null; 
-                    const fechaEntregaStr = (t.entrega_data && t.entrega_data.fecha_entrega) ? t.entrega_data.fecha_entrega.split('T')[0] : null;
-                    let pasaFiltroFecha = false; const fechasAComprobar = [fechaIngresoStr, fechaEntregaStr].filter(f => f !== null);
-                    for (let f of fechasAComprobar) { let ok = true; if (filtroD && f < filtroD) ok = false; if (filtroH && f > filtroH) ok = false; if (ok) { pasaFiltroFecha = true; break; } }
-                    if (!pasaFiltroFecha) return false;
-                }
-                return true;
-            });
-
-            if(ticketsFiltrados.length === 0) return tabla.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#64748b;">No se encontraron registros.</td></tr>`;
-
-            ticketsFiltrados.forEach(t => {
+            ticketsCargados.forEach(t => {
                 let accHTML = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accHTML = `<details><summary>Accesorios</summary><div class="text-preline">${t.accesorios_incluidos.replace(/\(([^)]+)\)/g, '<span class="obs-highlight">$1</span>')}</div></details>`;
                 
                 let estadoBadge = `<span class="badge" style="background-color: #e0f2fe; color: #0369a1;">${t.estado_equipo}</span>`;
@@ -797,8 +825,14 @@ function iniciarAplicacion() {
         }
 
         // ================= VISOR Y PRINTS FR =================
-        function abrirVisorFR(idTicket) {
+        async function abrirVisorFR(idTicket) {
             const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); if (!t) return;
+
+            // 🚀 NUEVO: Traer fotos del servidor
+            const resFotos = await fetch(`${API_URL}/tickets/${idTicket}/fotos`);
+            const dataFotos = await resFotos.json();
+            t.fotos_fr = dataFotos.fotos_fr || [];
+
             const rucStr = t.ruc_cliente ? `<br><strong>RUC:</strong> ${t.ruc_cliente}` : '';
             let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); 
             
@@ -1041,8 +1075,13 @@ async function guardarFP() {
             const estaPagado = document.getElementById('fpPagado').checked; const selloPago = estaPagado ? `<div style="color: #166534; font-weight: bold; font-size: 20px; border: 3px solid #166534; padding: 10px; text-align: center; margin-top: 15px; border-radius: 8px; transform: rotate(-5deg); width: fit-content; margin-left: auto; margin-right: auto;">CANCELADO / PAGADO</div>` : ''; let htmlDescuento = descPct > 0 ? `<tr><td>Descuento Promocional en Servicio (${descPct}%)</td><td style="text-align: right; color: #dc2626;">- ${simboloMoneda} ${montoDescuento.toFixed(2)}</td></tr>` : ''; let htmlRepuestosCosto = cRepuestos > 0 ? `<tr><td>Repuestos, Componentes y Materiales Utilizados</td><td style="text-align: right;">${simboloMoneda} ${cRepuestos.toFixed(2)}</td></tr>` : ''; const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; const ventana = window.open('', '_blank', 'width=800,height=900'); ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>Proforma - ${t.numero_fr}</title><style>@page { size: A4 portrait; margin: 1.5cm; } body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; margin: 0; color: #333; line-height: 1.4; } .cabecera-titulo { text-align: center; font-size: 16px; font-weight: bold; color: #7c3aed; margin-top: 5px; margin-bottom: 10px;} .fr-box { border: 2px solid #0f172a; padding: 5px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; margin-top: 10px; margin-bottom: 20px; } .seccion { margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; } .seccion-titulo { background-color: #f1f5f9; font-weight: bold; padding: 8px 12px; border-bottom: 1px solid #cbd5e1; color: #0f172a; font-size: 13px; } .seccion-contenido { padding: 12px; } table.costos { width: 100%; border-collapse: collapse; margin-top: 10px; } table.costos th, table.costos td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; } table.costos th { background: #f8fafc; color: #0f172a; } table.costos tr.total-row th { background: #7c3aed; color: white; font-size: 15px; text-align: right; } table.costos tr.total-row td { background: #f3e8ff; font-weight: bold; font-size: 16px; color: #7c3aed; text-align: right; } .fila { display: flex; margin-bottom: 5px; } .etiq { font-weight: bold; width: 150px; color: #475569; } .val { flex: 1; }</style></head><body>${encabezadoEmpresaHTML}<div style="text-align: center;"><div class="cabecera-titulo">FACTURA PROFORMA (PRESUPUESTO TÉCNICO)</div><div class="fr-box">REF FR N° ${t.numero_fr}</div></div><div style="text-align: right; margin-bottom: 10px; font-weight: bold; color: #64748b;">Fecha de emisión: ${fechaHoy}</div><div class="seccion"><div class="seccion-titulo">📋 DATOS DEL CLIENTE Y EQUIPO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Cliente / Empresa:</div><div class="val"><strong>${t.cliente}</strong>${rucHtml}</div></div><div class="fila"><div class="etiq">Equipo:</div><div class="val">${t.marca} ${t.modelo}</div></div><div class="fila"><div class="etiq">Número de Serie:</div><div class="val">${t.numero_serie || 'No Especificado'}</div></div></div></div><div class="seccion"><div class="seccion-titulo">🛠️ INFORME TÉCNICO RESUMIDO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Falla Reportada:</div><div class="val"><i>${t.problema_reportado}</i></div></div><div class="fila"><div class="etiq">Diagnóstico Original:</div><div class="val">${otm.diagnostico || '-'}</div></div><div class="fila"><div class="etiq" style="color: #7c3aed;">Trabajo Realizado:</div><div class="val"><strong>${resumenTareas}</strong></div></div><div class="fila"><div class="etiq">Repuestos Usados:</div><div class="val">${otm.repuestos || 'No se requirieron repuestos.'}</div></div><div class="fila" style="margin-top: 10px;"><div class="etiq" style="color:#16a34a;">Estado Unidad:</div><div class="val"><strong>${otm.resultado || '-'}</strong></div></div></div></div><div class="seccion" style="border-color: #8b5cf6;"><div class="seccion-titulo" style="background-color: #f3e8ff; color: #6d28d9; border-bottom-color: #d8b4fe;">💰 DETALLE DE COSTOS Y FACTURACIÓN</div><div class="seccion-contenido"><table class="costos"><tr><th>Concepto de Servicio / Producto</th><th style="width: 160px; text-align: right;">Importe</th></tr><tr><td>Servicio de Reparación y Mano de Obra Técnica</td><td style="text-align: right;">${simboloMoneda} ${cReparacion.toFixed(2)}</td></tr>${htmlDescuento}${htmlRepuestosCosto}<tr><td style="text-align: right; font-weight: bold;">Subtotal Neto:</td><td style="text-align: right; font-weight: bold;">${simboloMoneda} ${subtotalNeto.toFixed(2)}</td></tr><tr><td style="text-align: right;">Impuesto de Ley (IGV ${igvPct}%):</td><td style="text-align: right;">${simboloMoneda} ${montoIGV.toFixed(2)}</td></tr><tr class="total-row"><th>TOTAL A PAGAR:</th><td>${simboloMoneda} ${totalPagar.toFixed(2)} ${txtTC}</td></tr></table>${selloPago}<p style="font-size: 11px; color: #64748b; margin-top: 15px; font-style: italic;">* Este documento es una proforma y detalla los costos incurridos en la Ficha de Recepción (FR) adjunta.</p></div></div><div style="margin-top: 60px; text-align: center; font-weight: bold; border-top: 1px solid #333; width: 250px; margin-left: auto; margin-right: auto; padding-top: 5px;">Administración - Innova Electronics SAC</div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); }
 
         // ================= MODALES OTM Y ENTREGA (FE) =================
-        function abrirModalOTM(idTicket) { 
+        async function abrirModalOTM(idTicket) { 
             otmActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
+
+            // 🚀 NUEVO: Traer fotos del servidor
+            const resFotos = await fetch(`${API_URL}/tickets/${idTicket}/fotos`);
+            const dataFotos = await resFotos.json();
+
             document.getElementById('otmHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} | <strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo} <br><strong style="color:red">Falla:</strong> ${t.problema_reportado}`; 
             const otm = t.otm_data || {}; 
             
@@ -1053,8 +1092,12 @@ async function guardarFP() {
             document.getElementById('otmDiagnostico').value = otm.diagnostico || ''; 
             document.getElementById('otmRepuestos').value = otm.repuestos || ''; 
             document.getElementById('otmResultado').value = otm.resultado || ''; 
-            actividadesGlobal = otm.actividades || []; fotosGlobal = otm.fotos || []; 
-            renderActividadesOTM(); renderFotosOTM(); 
+
+            actividadesGlobal = otm.actividades || []; 
+            fotosGlobal = dataFotos.fotos_otm || []; 
+
+            renderActividadesOTM(); 
+            renderFotosOTM(); 
             document.getElementById('btnImprimirOTM').onclick = function() { generarReporteOTM(idTicket); };
             document.getElementById('modalOTM').style.display = 'flex'; 
         }

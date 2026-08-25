@@ -75,9 +75,54 @@ app.post('/api/tickets', async (req, res) => {
 });
 
 app.get('/api/tickets', async (req, res) => {
-    const c = `SELECT t.id_ticket, t.numero_fr, c.nombre_completo AS cliente, c.ruc AS ruc_cliente, e.marca, e.modelo, e.numero_serie, t.problema_reportado, t.accesorios_incluidos, t.estado_equipo, t.estado_pago, t.fecha_ingreso, emp.nombre_completo AS empleado_receptor, t.otm_data, t.entrega_data, t.fp_data, t.fotos_fr 
-               FROM tickets_servicio t JOIN equipos e ON t.id_equipo = e.id_equipo JOIN clientes c ON e.id_cliente = c.id_cliente LEFT JOIN empleados emp ON t.id_empleado_recepcion = emp.id_empleado ORDER BY t.id_ticket DESC;`;
-    const r = await pool.query(c); res.json(r.rows);
+    try {
+        const { q, estado, fechaD, fechaH, limit = 20, offset = 0 } = req.query;
+        
+        let queryStr = `SELECT t.id_ticket, t.numero_fr, c.nombre_completo AS cliente, c.ruc AS ruc_cliente, e.marca, e.modelo, e.numero_serie, t.problema_reportado, t.accesorios_incluidos, t.estado_equipo, t.estado_pago, t.fecha_ingreso, emp.nombre_completo AS empleado_receptor, 
+                        (t.otm_data - 'fotos') AS otm_data, t.entrega_data, t.fp_data 
+                        FROM tickets_servicio t 
+                        JOIN equipos e ON t.id_equipo = e.id_equipo 
+                        JOIN clientes c ON e.id_cliente = c.id_cliente 
+                        LEFT JOIN empleados emp ON t.id_empleado_recepcion = emp.id_empleado 
+                        WHERE 1=1`;
+        
+        const params = [];
+        let paramIdx = 1;
+
+        // Búsqueda Inteligente (Texto)
+        if (q) {
+            queryStr += ` AND (t.numero_fr ILIKE $${paramIdx} OR c.nombre_completo ILIKE $${paramIdx} OR e.marca ILIKE $${paramIdx} OR e.modelo ILIKE $${paramIdx} OR e.numero_serie ILIKE $${paramIdx})`;
+            params.push(`%${q}%`);
+            paramIdx++;
+        }
+        // Filtro por Estado
+        if (estado) {
+            queryStr += ` AND t.estado_equipo = $${paramIdx}`;
+            params.push(estado);
+            paramIdx++;
+        }
+        // Filtro por Fechas
+        if (fechaD) {
+            queryStr += ` AND t.fecha_ingreso >= $${paramIdx}`;
+            params.push(fechaD);
+            paramIdx++;
+        }
+        if (fechaH) {
+            queryStr += ` AND t.fecha_ingreso <= $${paramIdx}::timestamp + interval '1 day' - interval '1 second'`;
+            params.push(fechaH);
+            paramIdx++;
+        }
+
+        // Paginación: Limit y Offset
+        queryStr += ` ORDER BY t.id_ticket DESC LIMIT $${paramIdx} OFFSET $${paramIdx + 1}`;
+        params.push(limit, offset);
+
+        const r = await pool.query(queryStr, params); 
+        res.json(r.rows);
+    } catch (e) {
+        console.error(e);
+        res.status(500).send(e.message);
+    }
 });
 
 // EDITAR DATOS BÁSICOS DE FR E ACCESORIOS INCLUIDOS (Editar FR)
@@ -113,6 +158,16 @@ app.put('/api/tickets/:id/basico', async (req, res) => {
     } catch (err) {
         console.error("Error al actualizar en DB:", err.message);
         res.status(500).json({ error: 'Error del servidor al actualizar FR' });
+    }
+});
+
+// Ruta especial: Descarga las fotos SOLO cuando se abre un modal
+app.get('/api/tickets/:id/fotos', async (req, res) => {
+    try {
+        const r = await pool.query("SELECT fotos_fr, otm_data->'fotos' AS fotos_otm FROM tickets_servicio WHERE id_ticket = $1", [req.params.id]);
+        res.json(r.rows[0]);
+    } catch (e) {
+        res.status(500).send(e.message);
     }
 });
 
