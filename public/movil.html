@@ -1,0 +1,546 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="theme-color" content="#0f172a">
+    <link rel="manifest" href="manifest.json">
+    <link rel="apple-touch-icon" href="icono-innova.png">
+    <title>Innova Móvil</title>
+    <style>
+        /* Estilos base (Mobile-First) */
+        body { font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif; margin: 0; background-color: #f8fafc; color: #334155; }
+        .header { background-color: #0f172a; color: white; padding: 15px 20px; text-align: center; position: sticky; top: 0; z-index: 100; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .header h1 { margin: 0; font-size: 1.2rem; }
+        .user-info { font-size: 0.85rem; color: #94a3b8; margin-top: 5px; font-weight: bold; }
+        .container { padding: 15px; padding-bottom: 40px; }
+        
+        /* Menú Principal */
+        .section-title { font-size: 1rem; color: #475569; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-top: 20px; margin-bottom: 15px; font-weight: bold; }
+        .grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+        .btn-app { background: white; border: 1px solid #cbd5e1; border-radius: 12px; padding: 20px 10px; text-align: center; box-shadow: 0 4px 6px rgba(0,0,0,0.05); text-decoration: none; color: #0f172a; display: flex; flex-direction: column; align-items: center; justify-content: center; -webkit-tap-highlight-color: transparent; }
+        .btn-app:active { background: #f1f5f9; transform: scale(0.97); }
+        .btn-app .icon { font-size: 2.2rem; margin-bottom: 8px; }
+        .btn-app .label { font-size: 0.85rem; font-weight: 600; }
+        
+        /* Formularios Móviles */
+        .form-group { margin-bottom: 15px; }
+        label { display: block; font-size: 0.85rem; font-weight: bold; color: #0f172a; margin-bottom: 5px; }
+        input[type="text"], input[type="number"], input[type="datetime-local"], select, textarea { width: 100%; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; box-sizing: border-box; background: white; }
+        input:read-only, textarea:read-only { background-color: #e2e8f0; color: #64748b; }
+        
+        .btn-primary { background: #2563eb; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; }
+        .btn-primary:active { background: #1d4ed8; }
+        .btn-secondary { background: #64748b; color: white; border: none; padding: 10px; border-radius: 8px; font-size: 0.9rem; width: 100%; cursor: pointer; margin-top: 5px; }
+        .btn-print { background: #10b981; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; width: 100%; cursor: pointer; margin-top: 15px; display: block; }
+        .btn-warning { background: #f59e0b; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; width: 100%; cursor: pointer; margin-top: 10px; }
+        
+        .logout-btn { display: block; width: 100%; background: #ef4444; color: white; border: none; padding: 12px; border-radius: 8px; font-size: 1rem; font-weight: bold; margin-top: 30px; }
+        
+        /* Accesorios y Fotos (FR) */
+        .item-accesorio { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; background: white; padding: 10px; border-radius: 6px; border: 1px solid #e2e8f0; }
+        .item-accesorio input[type="checkbox"] { width: 20px; height: 20px; }
+        .item-accesorio input[type="text"] { padding: 8px; font-size: 0.9rem; }
+        .btn-mini-danger { background: #ef4444; color: white; border: none; border-radius: 4px; padding: 8px; font-weight: bold; }
+        
+        .foto-galeria { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 10px; }
+        .foto-item { width: 45%; position: relative; border: 1px solid #cbd5e1; border-radius: 6px; padding: 5px; background: white; text-align: center; }
+        .foto-item img { width: 100%; height: 100px; object-fit: cover; border-radius: 4px; }
+        .btn-eliminar-foto { position: absolute; top: 0px; right: 0px; background: #ef4444; color: white; border: none; border-radius: 50%; width: 24px; height: 24px; font-size: 12px; }
+        
+        /* Modal de Éxito */
+        #successModal { display: none; position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(0,0,0,0.8); z-index: 200; justify-content: center; align-items: center; padding: 20px; box-sizing: border-box; }
+        .success-box { background: white; padding: 25px; border-radius: 12px; width: 100%; text-align: center; }
+        
+        /* Caja de info resaltada */
+        .info-box { background: #fef3c7; border: 1px solid #f59e0b; padding: 12px; border-radius: 8px; margin-bottom: 15px; font-size: 0.9rem; color: #b45309; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>📱 Innova Móvil</h1>
+        <div class="user-info" id="userInfo">Cargando...</div>
+    </div>
+    
+    <!-- MENÚ PRINCIPAL -->
+    <div class="container" id="vistaMenu">
+        <div class="section-title">🛠️ Mantenimiento</div>
+        <div class="grid">
+            <a href="#" class="btn-app" onclick="abrirFR()"><div class="icon">📝</div><div class="label">Nueva FR</div></a>
+            <a href="#" class="btn-app" onclick="abrirFE()"><div class="icon">📦</div><div class="label">Entrega (FE)</div></a>
+        </div>
+
+        <div class="section-title">🤝 Alquileres</div>
+        <div class="grid">
+            <a href="#" class="btn-app"><div class="icon">📤</div><div class="label">Entrega (FAE)</div></a>
+            <a href="#" class="btn-app"><div class="icon">📥</div><div class="label">Recep. (FAR)</div></a>
+        </div>
+
+        <div class="section-title">💰 Finanzas y Más</div>
+        <div class="grid">
+            <a href="#" class="btn-app"><div class="icon">💸</div><div class="label">Nuevo Egreso</div></a>
+        </div>
+        <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+    </div>
+
+    <!-- --------------------------------------------------- -->
+    <!-- FORMULARIO 1: FICHA DE RECEPCIÓN (FR) (Oculto)      -->
+    <!-- --------------------------------------------------- -->
+    <div class="container" id="vistaFR" style="display: none;">
+        <button onclick="volverAlMenu()" style="margin-bottom: 15px; padding: 10px; background: #e2e8f0; border: none; border-radius: 6px; font-weight: bold; width: 100%; text-align: left;">⬅️ Volver al Menú</button>
+        <h2 style="margin-top: 0; color: #0f172a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">📝 Generar Ficha de Recepción</h2>
+        
+        <form id="formFR">
+            <div class="form-group">
+                <label>👤 Técnico / Receptor:</label>
+                <input type="text" id="nombreTecnico" readonly>
+            </div>
+            
+            <div class="form-group">
+                <label>🏢 Cliente:</label>
+                <select id="selectCliente" required><option value="">Cargando clientes...</option></select>
+            </div>
+            
+            <div class="form-group">
+                <label>📄 N° de FR (No borrar letras):</label>
+                <input type="text" id="numFR" value="FR" required style="font-weight: bold; color: #2563eb;">
+            </div>
+            
+            <div class="form-group">
+                <label>⚙️ Plantilla de Equipo:</label>
+                <select id="plantillaEquipo" required onchange="cambiarPlantilla()">
+                    <option value="generico">-- Genérico / Otro Equipo --</option>
+                </select>
+            </div>
+            
+            <div class="grid">
+                <div class="form-group">
+                    <label>Marca:</label>
+                    <input type="text" id="marcaEquipo" placeholder="Ej: Dell" required>
+                </div>
+                <div class="form-group">
+                    <label>Modelo:</label>
+                    <input type="text" id="modeloEquipo" placeholder="Ej: Inspiron" required>
+                </div>
+            </div>
+            
+            <div class="form-group">
+                <label>N° de Serie (S/N):</label>
+                <input type="text" id="serieEquipo" placeholder="Opcional">
+            </div>
+            
+            <div class="form-group">
+                <label>🛠️ Accesorios e Inspección:</label>
+                <div id="contenedorAccesorios" style="background: #f1f5f9; padding: 10px; border-radius: 8px;"></div>
+            </div>
+            
+            <div class="form-group">
+                <label>⚠️ Problema / Falla Reportada:</label>
+                <textarea id="problema" rows="3" required placeholder="Escriba la falla que indica el cliente..."></textarea>
+            </div>
+            
+            <div style="border: 2px dashed #cbd5e1; padding: 15px; border-radius: 8px; background: white; margin-bottom: 20px;">
+                <label style="color: #2563eb; margin-top: 0;">📸 Evidencia Fotográfica (Opcional):</label>
+                <input type="file" id="frFotoFile" accept="image/*" capture="environment" style="margin-bottom: 10px;">
+                <input type="text" id="frFotoDesc" placeholder="Descripción (Ej: Pantalla rota)">
+                <button type="button" class="btn-secondary" onclick="agregarFotoFR()">+ Añadir Foto a la FR</button>
+                <div id="galeriaFotosFR" class="foto-galeria"></div>
+            </div>
+
+            <button type="submit" class="btn-primary" id="btnGuardarFR">💾 Guardar Ficha de Recepción</button>
+        </form>
+    </div>
+
+    <!-- --------------------------------------------------- -->
+    <!-- FORMULARIO 2: FICHA DE ENTREGA (FE) (Oculto)        -->
+    <!-- --------------------------------------------------- -->
+    <div class="container" id="vistaFE" style="display: none;">
+        <button onclick="volverAlMenu()" style="margin-bottom: 15px; padding: 10px; background: #e2e8f0; border: none; border-radius: 6px; font-weight: bold; width: 100%; text-align: left;">⬅️ Volver al Menú</button>
+        <h2 style="margin-top: 0; color: #d97706; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">📦 Ficha de Entrega (FE)</h2>
+        
+        <form id="formFE">
+            <div class="form-group">
+                <label>🔍 Buscar Equipo a Entregar:</label>
+                <select id="selectTicketFE" required onchange="cargarDatosTicketFE()">
+                    <option value="">Cargando equipos listos...</option>
+                </select>
+            </div>
+            
+            <!-- Info dinámica del ticket seleccionado -->
+            <div id="infoTicketFE" class="info-box" style="display: none;">
+                <strong>Cliente:</strong> <span id="lblFECliente"></span><br>
+                <strong>Equipo:</strong> <span id="lblFEEquipo"></span><br>
+                <strong>FR N°:</strong> <span id="lblFEFR"></span>
+            </div>
+
+            <div class="form-group">
+                <label>📅 Fecha de Entrega Definitiva:</label>
+                <input type="datetime-local" id="feFecha" required>
+            </div>
+
+            <div class="form-group">
+                <label>📝 Observaciones de Salida:</label>
+                <textarea id="feObservaciones" rows="4" required placeholder="Ej: Equipo probado y entregado conforme..."></textarea>
+            </div>
+            
+            <button type="submit" class="btn-warning" id="btnGuardarFE">💾 Guardar Ficha de Entrega</button>
+        </form>
+    </div>
+
+    <!-- --------------------------------------------------- -->
+    <!-- MODAL DE ÉXITO GENERAL                              -->
+    <!-- --------------------------------------------------- -->
+    <div id="successModal">
+        <div class="success-box">
+            <div style="font-size: 3rem; margin-bottom: 10px;">✅</div>
+            <h2 id="successTitulo" style="color: #10b981; margin-top: 0;">¡Éxito!</h2>
+            <p id="successMensaje" style="color: #64748b; font-size: 0.9rem;">Documento registrado correctamente.</p>
+            <div id="successAcciones"></div>
+            <button class="btn-secondary" onclick="cerrarSuccessModal()" style="margin-top: 15px; background: #e2e8f0; color: #333;">Volver al Menú</button>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = '/api'; 
+        let usuarioActual = null;
+        let accesoriosCargadosTemporalmente = []; 
+        let fotosFRGlobal = [];
+        let ultimaFRGenerada = null; 
+        let ticketsGlobales = []; // Guarda todos los tickets para el buscador de FE
+        let ticketFESeleccionado = null; // Guarda los datos del ticket escogido para FE
+
+        const encabezadoEmpresaHTML = `<div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #0f172a; padding-bottom: 15px;"><h1 style="margin: 0; font-size: 24px; color: #0f172a;">INNOVA Electronics SAC.</h1><p style="margin: 8px 0 0 0; font-size: 13px; color: #475569; line-height: 1.5;"><strong>RUC:</strong> 20522316556 &nbsp;|&nbsp; <strong>Teléfonos:</strong> 986629193 / 987740312<br>administracion@innovaelectronicsperu.com &nbsp;|&nbsp; gerencia@innovaelectronicsperu.com<br>Calle Andalucia Mz.E Lt.25 Urb. La Capilla. La Molina. Lima.</p></div>`;
+
+        // ==========================================
+        // 1. SEGURIDAD Y CARGA INICIAL
+        // ==========================================
+        document.addEventListener("DOMContentLoaded", () => {
+            const userGuardado = sessionStorage.getItem('innova_user');
+            if (!userGuardado) {
+                window.location.href = 'index.html';
+            } else {
+                usuarioActual = JSON.parse(userGuardado);
+                document.getElementById('userInfo').innerText = '👤 ' + usuarioActual.nombre_completo;
+                document.getElementById('nombreTecnico').value = usuarioActual.nombre_completo;
+                cargarListasBase();
+            }
+        });
+
+        function cerrarSesion() {
+            sessionStorage.removeItem('innova_user');
+            window.location.href = 'index.html';
+        }
+
+        function ocultarVistas() {
+            document.getElementById('vistaMenu').style.display = 'none';
+            document.getElementById('vistaFR').style.display = 'none';
+            document.getElementById('vistaFE').style.display = 'none';
+        }
+
+        function volverAlMenu() {
+            ocultarVistas();
+            document.getElementById('vistaMenu').style.display = 'block';
+        }
+
+        async function cargarListasBase() {
+            try {
+                // Clientes
+                const resCli = await fetch(`${API_URL}/clientes`); 
+                const clientes = await resCli.json(); 
+                const selectCli = document.getElementById('selectCliente'); 
+                selectCli.innerHTML = '<option value="">-- Seleccione Cliente --</option>';
+                clientes.forEach(c => selectCli.innerHTML += `<option value="${c.id_cliente}">${c.nombre_completo}</option>`);
+                
+                // Plantillas
+                const resPla = await fetch(`${API_URL}/plantillas`); 
+                const plantillas = await resPla.json(); 
+                const selectPla = document.getElementById('plantillaEquipo'); 
+                plantillas.forEach(p => selectPla.innerHTML += `<option value="${p.id_plantilla}" data-marca="${p.marca_defecto || ''}" data-modelo="${p.modelo_defecto || ''}">${p.nombre_plantilla}</option>`);
+                cambiarPlantilla();
+            } catch(e) { console.error("Error cargando listas:", e); }
+        }
+
+        function mostrarExito(titulo, mensaje, botonHtml) {
+            document.getElementById('successTitulo').innerText = titulo;
+            document.getElementById('successMensaje').innerText = mensaje;
+            document.getElementById('successAcciones').innerHTML = botonHtml;
+            document.getElementById('successModal').style.display = 'flex';
+        }
+
+        function cerrarSuccessModal() {
+            document.getElementById('successModal').style.display = 'none';
+            volverAlMenu();
+        }
+
+        // ==========================================
+        // 2. MÓDULO: FICHA DE RECEPCIÓN (FR)
+        // ==========================================
+        function abrirFR() {
+            ocultarVistas();
+            document.getElementById('vistaFR').style.display = 'block';
+        }
+
+        async function cambiarPlantilla() { 
+            const sel = document.getElementById('plantillaEquipo'); 
+            const id = sel.value; 
+            const cont = document.getElementById('contenedorAccesorios'); 
+            document.getElementById('marcaEquipo').value = ""; 
+            document.getElementById('modeloEquipo').value = ""; 
+            cont.innerHTML = ''; 
+            accesoriosCargadosTemporalmente = []; 
+            
+            if (id === 'generico') { 
+                cont.innerHTML = `<div id="listaGenerica"></div><button type="button" class="btn-secondary" onclick="agregarLineaExtra()">＋ Añadir Accesorio Manual</button>`; 
+                agregarLineaExtra(); 
+            } else { 
+                const opt = sel.options[sel.selectedIndex]; 
+                document.getElementById('marcaEquipo').value = opt.getAttribute('data-marca'); 
+                document.getElementById('modeloEquipo').value = opt.getAttribute('data-modelo'); 
+                
+                const res = await fetch(`${API_URL}/plantillas/${id}/accesorios`); 
+                const accs = await res.json(); 
+                accesoriosCargadosTemporalmente = accs; 
+                
+                let h = ''; 
+                accs.forEach((a, i) => { 
+                    h += `<div class="item-accesorio">
+                            <input type="checkbox" id="chk_acc_${i}">
+                            <label for="chk_acc_${i}" style="flex:1; margin:0;">${a.nombre_accesorio}</label>
+                            <input type="text" id="obs_acc_${i}" placeholder="Obs" style="width:35%;">
+                          </div>`; 
+                }); 
+                h += `<div id="listaGenerica"></div><button type="button" class="btn-secondary" onclick="agregarLineaExtra()">＋ Añadir Extra</button>`;
+                cont.innerHTML = h; 
+            } 
+        }
+
+        function agregarLineaExtra() { 
+            const div = document.createElement('div'); div.className = 'item-accesorio'; 
+            div.innerHTML = `<input type="text" class="acc-gen-nombre" placeholder="Accesorio..." style="flex:1;">
+                             <input type="text" class="acc-gen-obs" placeholder="Obs..." style="width:30%;">
+                             <button type="button" class="btn-mini-danger" onclick="this.parentElement.remove()">✕</button>`; 
+            document.getElementById('listaGenerica').appendChild(div); 
+        }
+
+        function obtenerTextoAccesorios() { 
+            let l = []; 
+            if (document.getElementById('plantillaEquipo').value !== 'generico') { 
+                accesoriosCargadosTemporalmente.forEach((a, i) => { 
+                    if (document.getElementById(`chk_acc_${i}`)?.checked) { 
+                        const obs = document.getElementById(`obs_acc_${i}`).value.trim(); 
+                        l.push(`✔ ${a.nombre_accesorio}${obs ? ` (${obs})` : ''}`); 
+                    } 
+                }); 
+            }
+            document.querySelectorAll('.acc-gen-nombre').forEach((inp, i) => { 
+                const obs = document.querySelectorAll('.acc-gen-obs')[i].value.trim(); 
+                if(inp.value.trim()) l.push(`• ${inp.value.trim()}${obs ? ` (${obs})` : ''}`); 
+            }); 
+            return l.length ? l.join('\n') : 'Sin accesorios reportados'; 
+        }
+
+        document.getElementById('numFR').addEventListener('input', function() {
+            if (!this.value.startsWith('FR')) this.value = 'FR';
+        });
+
+        function agregarFotoFR() { 
+            const archivo = document.getElementById('frFotoFile').files[0]; 
+            const desc = document.getElementById('frFotoDesc').value.trim(); 
+            if(!archivo) return alert("Por favor, toma una foto primero."); 
+            const lector = new FileReader(); 
+            lector.onload = function(e) { 
+                fotosFRGlobal.push({ url: e.target.result, descripcion: desc }); 
+                document.getElementById('frFotoFile').value = ''; document.getElementById('frFotoDesc').value = ''; renderFotosFR(); 
+            }; 
+            lector.readAsDataURL(archivo); 
+        }
+        function eliminarFotoFR(index) { fotosFRGlobal.splice(index, 1); renderFotosFR(); }
+        function renderFotosFR() { 
+            document.getElementById('galeriaFotosFR').innerHTML = fotosFRGlobal.length ? fotosFRGlobal.map((f, i) => `
+                <div class="foto-item"><button type="button" class="btn-eliminar-foto" onclick="eliminarFotoFR(${i})">✕</button>
+                <img src="${f.url}"><p style="font-size:10px; margin:4px 0 0 0;">${f.descripcion || 'Sin descripción'}</p></div>`).join('') : ''; 
+        }
+
+        document.getElementById('formFR').addEventListener('submit', async (e) => { 
+            e.preventDefault(); 
+            document.getElementById('btnGuardarFR').disabled = true; document.getElementById('btnGuardarFR').innerText = "⏳ Guardando...";
+            const numFR = document.getElementById('numFR').value.trim();
+            if (numFR === 'FR' || numFR === '') {
+                document.getElementById('btnGuardarFR').disabled = false; document.getElementById('btnGuardarFR').innerText = "💾 Guardar Ficha de Recepción";
+                return alert('⚠️ Ingrese un número correlativo (Ej: FR001)');
+            }
+            const selPla = document.getElementById('plantillaEquipo');
+            const tipoFinal = selPla.value === 'generico' ? 'Genérico' : selPla.options[selPla.selectedIndex].text;
+            const marcaConTipo = tipoFinal + " - " + document.getElementById('marcaEquipo').value;
+            const selCliente = document.getElementById('selectCliente');
+
+            const dataFR = { 
+                id_empleado: usuarioActual.id_empleado, id_cliente: selCliente.value, numero_fr: numFR, 
+                marca: marcaConTipo, modelo: document.getElementById('modeloEquipo').value, 
+                numero_serie: document.getElementById('serieEquipo').value, accesorios: obtenerTextoAccesorios(), 
+                problema_reportado: document.getElementById('problema').value, fotos_fr: fotosFRGlobal 
+            }; 
+            
+            try {
+                const req = await fetch(`${API_URL}/tickets`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataFR) }); 
+                if (!req.ok) { throw new Error('Error al guardar en servidor'); } 
+                ultimaFRGenerada = { ...dataFR, cliente: selCliente.options[selCliente.selectedIndex].text, fecha_ingreso: new Date().toISOString(), empleado_receptor: usuarioActual.nombre_completo };
+                
+                document.getElementById('formFR').reset(); document.getElementById('numFR').value = 'FR';
+                fotosFRGlobal = []; renderFotosFR(); cambiarPlantilla(); 
+                
+                mostrarExito('¡FR Creada Exitosamente!', 'El equipo se registró en la base de datos central.', `<button class="btn-print" onclick="imprimirUltimaFR()">🖨️ Imprimir / Ver FR</button>`);
+            } catch(e) { alert("Error de conexión al guardar."); } finally {
+                document.getElementById('btnGuardarFR').disabled = false; document.getElementById('btnGuardarFR').innerText = "💾 Guardar Ficha de Recepción";
+            }
+        });
+
+        // ==========================================
+        // 3. MÓDULO: FICHA DE ENTREGA (FE)
+        // ==========================================
+        async function abrirFE() {
+            ocultarVistas();
+            document.getElementById('vistaFE').style.display = 'block';
+            document.getElementById('infoTicketFE').style.display = 'none';
+            document.getElementById('formFE').reset();
+            
+            // Cargar fecha actual por defecto
+            const ahora = new Date(); ahora.setMinutes(ahora.getMinutes() - ahora.getTimezoneOffset());
+            document.getElementById('feFecha').value = ahora.toISOString().slice(0,16);
+
+            // Cargar tickets de la base de datos
+            try {
+                const res = await fetch(`${API_URL}/tickets`);
+                ticketsGlobales = await res.json();
+                
+                // Filtrar solo los listos para entrega o ya entregados (para reimprimir o actualizar)
+                const ticketsParaEntrega = ticketsGlobales.filter(t => t.estado_equipo === 'OTM finalizado' || t.estado_equipo === 'Entregado');
+                
+                const selectFE = document.getElementById('selectTicketFE');
+                selectFE.innerHTML = '<option value="">-- Seleccione FR a Entregar --</option>';
+                
+                ticketsParaEntrega.forEach(t => {
+                    const statusTag = t.estado_equipo === 'Entregado' ? ' (Ya entregado)' : '';
+                    selectFE.innerHTML += `<option value="${t.id_ticket}">${t.numero_fr} - ${t.cliente}${statusTag}</option>`;
+                });
+            } catch(e) { alert("Error cargando tickets pendientes."); }
+        }
+
+        function cargarDatosTicketFE() {
+            const idSel = document.getElementById('selectTicketFE').value;
+            const cajaInfo = document.getElementById('infoTicketFE');
+            if(!idSel) { cajaInfo.style.display = 'none'; ticketFESeleccionado = null; return; }
+            
+            ticketFESeleccionado = ticketsGlobales.find(t => t.id_ticket == idSel);
+            document.getElementById('lblFECliente').innerText = ticketFESeleccionado.cliente;
+            document.getElementById('lblFEEquipo').innerText = `${ticketFESeleccionado.marca} ${ticketFESeleccionado.modelo}`;
+            document.getElementById('lblFEFR').innerText = ticketFESeleccionado.numero_fr;
+            cajaInfo.style.display = 'block';
+
+            // Si ya fue entregado antes, recargar sus datos de entrega en el formulario
+            if(ticketFESeleccionado.entrega_data && ticketFESeleccionado.entrega_data.fecha_entrega) {
+                document.getElementById('feFecha').value = ticketFESeleccionado.entrega_data.fecha_entrega.slice(0,16);
+                document.getElementById('feObservaciones').value = ticketFESeleccionado.entrega_data.observaciones || '';
+            }
+        }
+
+        document.getElementById('formFE').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!ticketFESeleccionado) return alert("Seleccione un equipo primero.");
+            
+            document.getElementById('btnGuardarFE').disabled = true; document.getElementById('btnGuardarFE').innerText = "⏳ Guardando...";
+            
+            const fecha_entrega = document.getElementById('feFecha').value;
+            const observaciones = document.getElementById('feObservaciones').value.trim();
+            
+            try {
+                const req = await fetch(`${API_URL}/tickets/${ticketFESeleccionado.id_ticket}/entrega`, { 
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ fecha_entrega, observaciones }) 
+                });
+                if(!req.ok) throw new Error("Error en servidor");
+                
+                // Actualizar objeto local para imprimir enseguida
+                ticketFESeleccionado.entrega_data = { fecha_entrega, observaciones };
+                
+                mostrarExito('¡Ficha de Entrega Guardada!', 'El estado del equipo cambió a Entregado.', `<button class="btn-print" onclick="imprimirFEActiva()">🖨️ Imprimir / Ver FE</button>`);
+                
+            } catch (error) {
+                alert("Ocurrió un error al guardar.");
+            } finally {
+                document.getElementById('btnGuardarFE').disabled = false; document.getElementById('btnGuardarFE').innerText = "💾 Guardar Ficha de Entrega";
+            }
+        });
+
+        // ==========================================
+        // 4. SISTEMA DE IMPRESIÓN MÓVIL
+        // ==========================================
+        // Imprimir Ficha de Recepción (FR) con cuadrícula fotográfica 4x4
+        function imprimirUltimaFR() {
+            if(!ultimaFRGenerada) return;
+            const t = ultimaFRGenerada;
+            const fechaFormat = new Date(t.fecha_ingreso).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }); 
+            let accs = t.accesorios.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047; padding:2px;">$1</span>'); 
+            const fotos = t.fotos_fr || [];
+            const totalPaginas = 1 + Math.ceil(fotos.length / 4);
+            
+            let htmlPaginas = `<div class="pagina">${encabezadoEmpresaHTML}<h2 class="doc-title">FICHA DE RECEPCIÓN (FR)</h2><div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">N°: ${t.numero_fr}</div><div class="seccion"><div class="titulo">GENERALES</div><div class="contenido">Cliente: ${t.cliente}<br>Fecha de Ingreso: ${fechaFormat}<br>Recibido por: ${t.empleado_receptor}</div></div><div class="seccion"><div class="titulo">EQUIPO</div><div class="contenido">Marca/Tipo: ${t.marca} - Modelo: ${t.modelo} - S/N: ${t.numero_serie || '-'}</div></div><div class="seccion"><div class="titulo">FALLA REPORTADA POR CLIENTE</div><div class="contenido"><i>${t.problema_reportado}</i></div></div><div class="seccion"><div class="titulo">ACCESORIOS E INSPECCIÓN INICIAL</div><div class="contenido">${accs}</div></div><div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;"><div style="width:40%; border-top:1px solid #000; font-size:11px;">Firma Cliente</div><div style="width:40%; border-top:1px solid #000; font-size:11px;">Innova Electronics</div></div><div class="footer-pag">Página 1 de ${totalPaginas}</div></div>`;
+
+            if (fotos.length > 0) {
+                for (let i = 0; i < fotos.length; i += 4) {
+                    const numPag = 2 + Math.floor(i / 4);
+                    const fotosLote = fotos.slice(i, i + 4);
+                    let loteHtml = `<div class="pagina"><h2 class="doc-title" style="margin-top:20px;">ANEXO FOTOGRÁFICO - FR N°: ${t.numero_fr}</h2><div class="grid-fotos">`;
+                    fotosLote.forEach(f => { loteHtml += `<div class="foto-box"><img src="${f.url}"><div class="foto-desc">${f.descripcion || 'Sin descripción'}</div></div>`; });
+                    loteHtml += `</div><div class="footer-pag">Página ${numPag} de ${totalPaginas}</div></div>`;
+                    htmlPaginas += loteHtml;
+                }
+            }
+            abrirVentanaImpresion(htmlPaginas, 'Imprimir FR');
+        }
+
+        // Imprimir Ficha de Entrega (FE) - Diseño limpio basado en escritorio
+        function imprimirFEActiva() {
+            if (!ticketFESeleccionado) return;
+            const t = ticketFESeleccionado;
+            const fechaCruda = t.entrega_data ? t.entrega_data.fecha_entrega : document.getElementById('feFecha').value;
+            const obs = t.entrega_data ? t.entrega_data.observaciones : document.getElementById('feObservaciones').value;
+            
+            const fechaEntregaFormato = fechaCruda ? new Date(fechaCruda).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Pendiente';
+            let accs = 'Ninguno'; 
+            if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047; padding:2px;">$1</span>'); 
+            const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; 
+            
+            const htmlPaginas = `<div class="pagina">${encabezadoEmpresaHTML}<h2 class="doc-title">FICHA DE ENTREGA DE EQUIPO</h2><div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">FR N°: ${t.numero_fr}</div><div class="seccion"><div class="titulo">CLIENTE Y EQUIPO</div><div class="contenido">Cliente: ${t.cliente}${rucHtml}<br>Equipo: ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})</div></div><div class="seccion"><div class="titulo">ACCESORIOS ENTREGADOS</div><div class="contenido">${accs}</div></div><div class="seccion" style="border-color:#f59e0b;"><div class="titulo" style="background:#fef3c7; color:#b45309;">CONDICIONES DE SALIDA</div><div class="contenido">Fecha de Entrega Definitiva: <strong>${fechaEntregaFormato}</strong><br><br><i>Observaciones: ${obs || 'Ninguna.'}</i></div></div><div style="display:flex; justify-content:space-between; margin-top:80px; text-align:center;"><div style="width:40%; border-top:1px solid #000; font-size:11px;">Firma Cliente (Conformidad)</div><div style="width:40%; border-top:1px solid #000; font-size:11px;">Innova Electronics</div></div></div>`;
+            
+            abrirVentanaImpresion(htmlPaginas, 'Imprimir FE');
+        }
+
+        function abrirVentanaImpresion(contenidoHtml, tituloDoc) {
+            const ventana = window.open('', '_blank'); 
+            ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>${tituloDoc}</title>
+            <style>
+                @page { size: A4 portrait; margin: 0; }
+                body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; background: #525659; }
+                .pagina { width: 21cm; height: 29.7cm; padding: 1.5cm; margin: 1cm auto; background: white; box-sizing: border-box; position: relative; page-break-after: always; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+                @media print { body { background: white; margin: 0; } .pagina { margin: 0; box-shadow: none; } }
+                h2.doc-title { text-align: center; font-size: 18px; margin-top: 0; }
+                .seccion { border: 1px solid #ccc; margin-bottom: 15px; }
+                .titulo { background: #f1f5f9; font-weight: bold; padding: 5px; }
+                .contenido { padding: 10px; line-height: 1.4; }
+                .footer-pag { position: absolute; bottom: 1.5cm; right: 1.5cm; font-size: 10px; color: #64748b; font-weight: bold; }
+                .grid-fotos { display: grid; grid-template-columns: 1fr 1fr; grid-template-rows: 1fr 1fr; gap: 15px; height: 23cm; margin-top: 15px; }
+                .foto-box { border: 1px solid #cbd5e1; padding: 10px; text-align: center; display: flex; flex-direction: column; justify-content: center; align-items: center; background: #f8fafc; border-radius: 6px; overflow: hidden; page-break-inside: avoid; }
+                .foto-box img { max-width: 100%; max-height: 90%; object-fit: contain; border-radius: 4px; }
+                .foto-desc { margin-top: 8px; font-weight: bold; font-size: 11px; color: #333; }
+            </style>
+            </head><body>
+            ${contenidoHtml}
+            <script>window.onload=function(){ setTimeout(() => window.print(), 500); }<\/script>
+            </body></html>`); 
+            ventana.document.close(); 
+        }
+    </script>
+</body>
+</html>
