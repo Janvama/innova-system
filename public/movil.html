@@ -398,17 +398,55 @@
             if (!this.value.startsWith('FR')) this.value = 'FR';
         });
 
+        // ==========================================
+        // COMPRESOR DE IMÁGENES (ESCUDO PROTECTOR)
+        // ==========================================
+        function comprimirImagen(archivo, maxWidth, maxHeight, quality, callback) {
+            const lector = new FileReader();
+            lector.onload = function(e) {
+                const img = new Image();
+                img.onload = function() {
+                    let canvas = document.createElement('canvas');
+                    let ctx = canvas.getContext('2d');
+                    let width = img.width;
+                    let height = img.height;
+
+                    // Ajustar tamaño manteniendo proporción
+                    if (width > height) {
+                        if (width > maxWidth) { height = Math.round(height *= maxWidth / width); width = maxWidth; }
+                    } else {
+                        if (height > maxHeight) { width = Math.round(width *= maxHeight / height); height = maxHeight; }
+                    }
+
+                    canvas.width = width; canvas.height = height;
+                    ctx.drawImage(img, 0, 0, width, height);
+
+                    // Convertir a JPEG ligero
+                    const dataUrl = canvas.toDataURL('image/jpeg', quality);
+                    callback(dataUrl);
+                };
+                img.src = e.target.result;
+            };
+            lector.readAsDataURL(archivo);
+        }
+
+        // ==========================================
+        // CAPTURA DE FOTOS FR CON COMPRESIÓN
+        // ==========================================
         function agregarFotoFR() { 
             const archivo = document.getElementById('frFotoFile').files[0]; 
             const desc = document.getElementById('frFotoDesc').value.trim(); 
             if(!archivo) return alert("Por favor, toma una foto primero."); 
-            const lector = new FileReader(); 
-            lector.onload = function(e) { 
-                fotosFRGlobal.push({ url: e.target.result, descripcion: desc }); 
-                document.getElementById('frFotoFile').value = ''; document.getElementById('frFotoDesc').value = ''; renderFotosFR(); 
-            }; 
-            lector.readAsDataURL(archivo); 
+            
+            // Pasamos la foto gigante de la cámara por nuestro compresor
+            comprimirImagen(archivo, 1200, 1200, 0.6, function(imagenLigera) {
+                fotosFRGlobal.push({ url: imagenLigera, descripcion: desc }); 
+                document.getElementById('frFotoFile').value = ''; 
+                document.getElementById('frFotoDesc').value = ''; 
+                renderFotosFR(); 
+            });
         }
+
         function eliminarFotoFR(index) { fotosFRGlobal.splice(index, 1); renderFotosFR(); }
         function renderFotosFR() { 
             document.getElementById('galeriaFotosFR').innerHTML = fotosFRGlobal.length ? fotosFRGlobal.map((f, i) => `

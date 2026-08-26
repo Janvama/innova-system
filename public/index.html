@@ -171,11 +171,11 @@
                                 <option value="generico">-- Genérico / Otro Equipo --</option>
                             </select>
                             <!-- Este campo solo aparecerá cuando sea Genérico -->
-                            <input type="text" id="nombreEquipoGenerico" placeholder="Especifique qué equipo es..." style="flex: 1; display: none;">
+                            <input type="text" id="nombreEquipoGenerico" maxlength="30" placeholder="Nombre Equipo" style="flex: 1; display: none;">
                         </div>
                         <label>Marca y Modelo:</label>
                         <div style="display: flex; gap: 10px;">
-                            <input type="text" id="marcaEquipo" placeholder="Marca" required>
+                            <input type="text" id="marcaEquipo" maxlength="20" placeholder="Marca" required>
                             <input type="text" id="modeloEquipo" placeholder="Modelo" required>
                         </div>
                         <label>N° de Serie:</label>
@@ -966,7 +966,52 @@ async function imprimirFR(idTicket) {
 }
 
         // ================= CREACION FR Y MAESTROS =================
-        function agregarFotoFR() { const archivo = document.getElementById('frFotoFile').files[0]; const desc = document.getElementById('frFotoDesc').value.trim(); if(!archivo) return alert("Selecciona una foto primero."); const lector = new FileReader(); lector.onload = function(e) { fotosFRGlobal.push({ url: e.target.result, descripcion: desc }); document.getElementById('frFotoFile').value = ''; document.getElementById('frFotoDesc').value = ''; renderFotosFR(); }; lector.readAsDataURL(archivo); }
+// ================= CREACION FR Y MAESTROS =================
+
+// NUEVO: Motor de compresión de imágenes
+function comprimirImagen(archivo, maxWidth, maxHeight, quality, callback) {
+    const lector = new FileReader();
+    lector.onload = function(e) {
+        const img = new Image();
+        img.onload = function() {
+            let canvas = document.createElement('canvas');
+            let ctx = canvas.getContext('2d');
+            let width = img.width;
+            let height = img.height;
+
+            // Calcular nuevas dimensiones manteniendo la proporción
+            if (width > height) {
+                if (width > maxWidth) { height = Math.round(height *= maxWidth / width); width = maxWidth; }
+            } else {
+                if (height > maxHeight) { width = Math.round(width *= maxHeight / height); height = maxHeight; }
+            }
+
+            canvas.width = width; canvas.height = height;
+            ctx.drawImage(img, 0, 0, width, height);
+
+            // Exportar a JPEG ligero (0.6 = 60% de calidad)
+            const dataUrl = canvas.toDataURL('image/jpeg', quality);
+            callback(dataUrl); // Devolvemos la imagen ya comprimida
+        };
+        img.src = e.target.result;
+    };
+    lector.readAsDataURL(archivo);
+}
+
+    function agregarFotoFR() { 
+    const archivo = document.getElementById('frFotoFile').files[0]; 
+    const desc = document.getElementById('frFotoDesc').value.trim(); 
+    if(!archivo) return alert("Selecciona una foto primero."); 
+    
+    // Usamos el compresor antes de guardar
+    comprimirImagen(archivo, 1200, 1200, 0.6, function(imagenLigera) {
+        fotosFRGlobal.push({ url: imagenLigera, descripcion: desc }); 
+        document.getElementById('frFotoFile').value = ''; 
+        document.getElementById('frFotoDesc').value = ''; 
+        renderFotosFR();
+    });
+    }
+
         function eliminarFotoFR(index) { fotosFRGlobal.splice(index, 1); renderFotosFR(); }
         function renderFotosFR() { document.getElementById('galeriaFotosFR').innerHTML = fotosFRGlobal.length ? fotosFRGlobal.map((f, i) => `<div class="foto-item"><button type="button" class="btn-eliminar-foto" onclick="eliminarFotoFR(${i})">✕</button><img src="${f.url}"><p>${f.descripcion}</p></div>`).join('') : ''; }
 
@@ -988,6 +1033,8 @@ async function imprimirFR(idTicket) {
         tipoEquipoFinal = selPlantilla.options[selPlantilla.selectedIndex].text;
     }
     const marcaConTipo = tipoEquipoFinal + " - " + document.getElementById('marcaEquipo').value;
+
+    if (marcaConTipo.length > 50) return alert("El nombre combinado del equipo supera el límite de 50 letras. Por favor, utilice un nombre más corto.");
 
     // 3. PREPARACIÓN Y ENVÍO DE DATOS
     const dataFR = { 
@@ -1199,7 +1246,22 @@ async function guardarFP() {
         function cerrarModalOTM() { document.getElementById('modalOTM').style.display = 'none'; }
         function agregarActividadOTM() { const texto = document.getElementById('otmTxtActividad').value.trim(); if(!texto) return alert("Escribe una actividad."); const fecha = new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}); actividadesGlobal.push({ fecha, texto }); document.getElementById('otmTxtActividad').value = ''; renderActividadesOTM(); }
         function renderActividadesOTM() { document.getElementById('listaActividadesOTM').innerHTML = actividadesGlobal.length ? actividadesGlobal.map(a => `<div class="actividad-item"><span class="actividad-fecha">🗓️ ${a.fecha}</span>${a.texto}</div>`).join('') : '<p style="color:gray; font-size:0.8rem;">No hay actividades registradas.</p>'; }
-        function agregarFotoOTM() { const archivo = document.getElementById('otmFotoFile').files[0]; const desc = document.getElementById('otmFotoDesc').value.trim(); if(!archivo || !desc) return alert("Falta foto o descripción."); const lector = new FileReader(); lector.onload = function(e) { fotosGlobal.push({ url: e.target.result, descripcion: desc }); document.getElementById('otmFotoFile').value = ''; document.getElementById('otmFotoDesc').value = ''; renderFotosOTM(); }; lector.readAsDataURL(archivo); }
+        
+        
+       function agregarFotoOTM() { 
+            const archivo = document.getElementById('otmFotoFile').files[0]; 
+            const desc = document.getElementById('otmFotoDesc').value.trim(); 
+            if(!archivo || !desc) return alert("Falta foto o descripción."); 
+    
+            // Usamos el compresor antes de guardar
+            comprimirImagen(archivo, 1200, 1200, 0.6, function(imagenLigera) {
+            fotosGlobal.push({ url: imagenLigera, descripcion: desc }); 
+            document.getElementById('otmFotoFile').value = ''; 
+            document.getElementById('otmFotoDesc').value = ''; 
+            renderFotosOTM(); 
+            });
+        }
+        
         function eliminarFotoOTM(index) { if(confirm("¿Eliminar foto?")) { fotosGlobal.splice(index, 1); renderFotosOTM(); } }
         function renderFotosOTM() { 
             if (fotosGlobal.length) {

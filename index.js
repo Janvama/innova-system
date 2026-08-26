@@ -125,6 +125,26 @@ app.get('/api/tickets', async (req, res) => {
     }
 });
 
+
+
+
+// Ruta temporal para investigar la estructura de la base de datos
+app.get('/api/investigar-db', async (req, res) => {
+    try {
+        const queryStr = `
+            SELECT column_name, data_type, character_maximum_length 
+            FROM information_schema.columns 
+            WHERE table_name = 'tickets_servicio';
+        `;
+        const resultado = await pool.query(queryStr);
+        res.json(resultado.rows);
+    } catch (e) {
+        res.status(500).send(e.message);
+    }
+});
+
+
+
 // EDITAR DATOS BÁSICOS DE FR E ACCESORIOS INCLUIDOS (Editar FR)
 // Ruta de actualización básica (Editar FR)
 app.put('/api/tickets/:id/basico', async (req, res) => {
