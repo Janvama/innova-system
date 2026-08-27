@@ -77,6 +77,7 @@
     
     <!-- MENÚ PRINCIPAL -->
     <div class="container" id="vistaMenu">
+
         <div class="section-title">🛠️ Mantenimiento</div>
         <div class="grid">
             <a href="#" class="btn-app" onclick="abrirFR()"><div class="icon">📝</div><div class="label">Nueva FR</div></a>
@@ -88,9 +89,10 @@
         </div>
         <div class="section-title">🤝 Alquileres</div>
         <div class="grid">
-            <a href="#" class="btn-app"><div class="icon">📤</div><div class="label">Entrega (FAE)</div></a>
-            <a href="#" class="btn-app"><div class="icon">📥</div><div class="label">Recep. (FAR)</div></a>
+            <a href="#" class="btn-app" onclick="abrirFAE()"><div class="icon">📤</div><div class="label">Entrega (FAE)</div></a>
+            <a href="#" class="btn-app" onclick="abrirFAR()"><div class="icon">📥</div><div class="label">Recep. (FAR)</div></a>
         </div>
+
         <div class="section-title">💰 Finanzas y Más</div>
         <div class="grid">
             <a href="#" class="btn-app"><div class="icon">💸</div><div class="label">Nuevo Egreso</div></a>
@@ -223,6 +225,143 @@
             <button type="submit" class="btn-warning" id="btnGuardarFE">💾 Guardar Ficha de Entrega</button>
         </form>
     </div>
+
+    <!-- NUEVO: FORMULARIO ALQUILERES - FAE -->
+    <div class="container" id="vistaFAE" style="display: none;">
+        <button onclick="volverAlMenu()" style="margin-bottom: 15px; padding: 10px; background: #e2e8f0; border: none; border-radius: 6px; font-weight: bold; width: 100%; text-align: left;">⬅️ Volver al Menú</button>
+        <h2 style="margin-top: 0; color: #1e3a8a; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">📤 Entrega de Alquiler (FAE)</h2>
+        
+        <form id="formFAEMovil">
+            <div class="grid">
+                <div class="form-group">
+                    <label>FAE N°:</label>
+                    <input type="text" id="faeNum" value="FAE" required style="font-weight: bold; color: #1e3a8a;">
+                </div>
+                <div class="form-group">
+                    <label>👤 Gestor:</label>
+                    <input type="text" id="faeGestorNombre" readonly>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>🏢 Cliente:</label>
+                <select id="faeCliente" required><option value="">Cargando clientes...</option></select>
+            </div>
+            
+            <div style="background: #f8fafc; padding: 12px; border-radius: 8px; border: 1px dashed #cbd5e1; margin-bottom: 15px;">
+                <div class="form-group">
+                    <label>⚙️ Plantilla / Equipo:</label>
+                    <select id="faePlantilla" required onchange="cambiarPlantillaFAE()">
+                        <option value="generico">-- Genérico / Otro Equipo --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Nombre del Equipo:</label>
+                    <input type="text" id="faeEquipo" required placeholder="Ej: Magnetómetro">
+                </div>
+                
+                <div class="grid">
+                    <div class="form-group">
+                        <label>Marca:</label>
+                        <input type="text" id="faeMarca" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Modelo:</label>
+                        <input type="text" id="faeModelo" required>
+                    </div>
+                </div>
+                
+                <div class="form-group">
+                    <label>N° de Serie (S/N):</label>
+                    <input type="text" id="faeSerie" required>
+                </div>
+                
+                <label style="display: block; font-size: 0.85rem; font-weight: bold; margin-top: 10px;">🛠️ Accesorios a Entregar:</label>
+                <div id="contenedorAccesoriosFAE"></div>
+            </div>
+            
+            <div class="grid">
+                <div class="form-group">
+                    <label>📅 Inicio:</label>
+                    <input type="date" id="faeInicio" required>
+                </div>
+                <div class="form-group">
+                    <label>📅 Fin Tentativo:</label>
+                    <input type="date" id="faeFin" required>
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label>📝 Notas y Observaciones de Salida:</label>
+                <textarea id="faeNotas" rows="3" placeholder="Estado del equipo, acuerdos..."></textarea>
+            </div>
+            
+            <div style="border: 2px dashed #3b82f6; padding: 15px; border-radius: 8px; background: white; margin-bottom: 20px;">
+                <label style="color: #3b82f6; margin-top: 0;">📸 Evidencia de Entrega:</label>
+                <input type="file" id="faeFotoFile" accept="image/*" capture="environment" style="margin-bottom: 10px;">
+                <input type="text" id="faeFotoDesc" placeholder="Descripción (Ej: Equipo sin rayones)">
+                <button type="button" class="btn-secondary" onclick="agregarFotoFAE()">+ Añadir Foto a FAE</button>
+                <div id="galeriaFotosFAE" class="foto-galeria"></div>
+            </div>
+
+            <button type="submit" class="btn-submit" style="background: #3b82f6; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; width: 100%; cursor: pointer;">💾 Generar FAE (Alquiler)</button>
+        </form>
+    </div>
+
+<!-- NUEVO: FORMULARIO ALQUILERES - FAR -->
+    <div class="container" id="vistaFAR" style="display: none;">
+        <button onclick="volverAlMenu()" style="margin-bottom: 15px; padding: 10px; background: #e2e8f0; border: none; border-radius: 6px; font-weight: bold; width: 100%; text-align: left;">⬅️ Volver al Menú</button>
+        <h2 style="margin-top: 0; color: #b45309; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px;">📥 Recepción de Alquiler (FAR)</h2>
+        
+        <form id="formFARMovil">
+            <div class="form-group">
+                <label>🔍 Buscar FAE (Alquiler en Curso):</label>
+                <select id="selectFAEPendiente" required onchange="cargarDatosFAR()"></select>
+            </div>
+
+            <!-- Bloque Informativo de la FAE Original (Solo lectura) -->
+            <div id="infoFAEPendiente" style="display: none;">
+                <div style="background: #fffbeb; padding: 12px; border-radius: 8px; border: 1px dashed #fcd34d; margin-bottom: 15px;">
+                    <p style="margin: 0 0 5px 0; font-size: 0.9rem;"><strong>Cliente:</strong> <span id="farClienteTxt"></span></p>
+                    <p style="margin: 0 0 5px 0; font-size: 0.9rem;"><strong>Equipo:</strong> <span id="farEquipoTxt"></span></p>
+                    <p style="margin: 0 0 5px 0; font-size: 0.9rem; color: #1e3a8a;"><strong>Inicio (FAE):</strong> <span id="farInicioTxt"></span></p>
+                    
+                    <label style="margin-top: 10px; color: #b45309;">Accesorios a Retornar (Según FAE):</label>
+                    <div id="farAccesoriosTxt" style="white-space: pre-line; font-size: 0.85rem; padding: 8px; background: white; border: 1px solid #cbd5e1; border-radius: 4px; min-height: 40px;"></div>
+                    
+                    <label style="margin-top: 10px; color: #1e3a8a;">Observaciones Originales (Salida FAE):</label>
+                    <div id="farObsFAETxt" style="white-space: pre-line; font-size: 0.85rem; padding: 8px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px;"></div>
+                </div>
+
+                <div class="grid" style="margin-bottom: 15px;">
+                    <div class="form-group">
+                        <label>📅 Fecha Real Devolución:</label>
+                        <input type="date" id="farFechaReal" required onchange="calcularDiasFARMovil()">
+                    </div>
+                    <div class="form-group" style="display: flex; flex-direction: column; align-items: center; justify-content: center; background: white; border: 2px dashed #b45309; border-radius: 8px;">
+                        <span style="font-size: 0.75rem; color: #64748b; font-weight: bold; margin-bottom: 2px;">Total Días:</span>
+                        <span id="farDiasTexto" style="font-size: 1.2rem; font-weight: bold; color: #b45309;">0</span>
+                        <input type="hidden" id="farDiasValor">
+                    </div>
+                </div>
+
+                <!-- Visor de Fotos Originales de la FAE -->
+                <div style="margin-bottom: 15px;">
+                    <label style="color: #1e3a8a;">📷 Fotos de Entrega Inicial (FAE):</label>
+                    <div id="farFotosFAEVisualizador" class="foto-galeria" style="background:#f8fafc; padding:10px; border-radius:6px; border:1px solid #e2e8f0; min-height: 60px;"></div>
+                </div>
+
+                <div class="form-group">
+                    <label>📝 Observaciones de Recepción Técnica:</label>
+                    <textarea id="farObservaciones" rows="3" required placeholder="Estado en el que retorna el equipo..."></textarea>
+                </div>
+
+                <button type="submit" class="btn-submit" style="background: #f59e0b; color: white; border: none; padding: 15px; border-radius: 8px; font-size: 1rem; font-weight: bold; width: 100%; cursor: pointer;">💾 Confirmar Recepción (FAR)</button>
+            </div>
+        </form>
+    </div>
+
 
     <!-- MODAL DE ÉXITO GENERAL -->
     <div id="successModal">
@@ -436,52 +575,84 @@
         }
 
         // ==========================================
-        // GUARDAR FR
+        // GUARDAR FR (CON VALIDACIÓN ANTIDUPLICADOS)
         // ==========================================
         document.getElementById('formFR').addEventListener('submit', async (e) => { 
             e.preventDefault(); 
-            document.getElementById('btnGuardarFR').disabled = true; document.getElementById('btnGuardarFR').innerText = "⏳ Guardando...";
+            document.getElementById('btnGuardarFR').disabled = true; 
+            document.getElementById('btnGuardarFR').innerText = "⏳ Verificando...";
+            
             const numFR = document.getElementById('numFR').value.trim();
             if (numFR === 'FR' || numFR === '') {
-                document.getElementById('btnGuardarFR').disabled = false; document.getElementById('btnGuardarFR').innerText = "💾 Guardar Ficha de Recepción";
+                document.getElementById('btnGuardarFR').disabled = false; 
+                document.getElementById('btnGuardarFR').innerText = "💾 Guardar Ficha de Recepción";
                 return alert('⚠️ Ingrese un número correlativo (Ej: FR001)');
             }
             
-            const selPla = document.getElementById('plantillaEquipo');
-            let tipoEquipoFinal = "";
-            if (selPla.value === 'generico') {
-                tipoEquipoFinal = document.getElementById('nombreEquipoGenerico').value.trim();
-            } else {
-                tipoEquipoFinal = selPla.options[selPla.selectedIndex].text;
-            }
-            const marcaConTipo = tipoEquipoFinal + " - " + document.getElementById('marcaEquipo').value.trim();
-
-            if (marcaConTipo.length > 55) {
-                document.getElementById('btnGuardarFR').disabled = false; document.getElementById('btnGuardarFR').innerText = "💾 Guardar Ficha de Recepción";
-                return alert("El nombre combinado supera el límite. Por favor abrevie el nombre del equipo o la marca.");
-            }
-
-            const selCliente = document.getElementById('selectCliente');
-            const dataFR = { 
-                id_empleado: usuarioActual.id_empleado, id_cliente: selCliente.value, numero_fr: numFR, 
-                marca: marcaConTipo, modelo: document.getElementById('modeloEquipo').value, 
-                numero_serie: document.getElementById('serieEquipo').value, accesorios: obtenerTextoAccesorios(), 
-                problema_reportado: document.getElementById('problema').value, fotos_fr: fotosFRGlobal 
-            }; 
-            
             try {
+                // 1. EL GUARDIÁN: Consultamos si la FR ya existe en el servidor
+                const resConsulta = await fetch(`${API_URL}/tickets`);
+                const ticketsActuales = await resConsulta.json();
+                
+                const existeDoc = ticketsActuales.some(t => t.numero_fr.toUpperCase() === numFR.toUpperCase());
+                if (existeDoc) {
+                    document.getElementById('btnGuardarFR').disabled = false; 
+                    document.getElementById('btnGuardarFR').innerText = "💾 Guardar Ficha de Recepción";
+                    return alert(`⚠️ ERROR: El documento ${numFR} ya existe en el sistema. Por favor ingrese un número diferente.`);
+                }
+
+                // 2. PROCESO DE GUARDADO NORMAL
+                document.getElementById('btnGuardarFR').innerText = "⏳ Guardando...";
+
+                const selPla = document.getElementById('plantillaEquipo');
+                let tipoEquipoFinal = "";
+                if (selPla.value === 'generico') {
+                    tipoEquipoFinal = document.getElementById('nombreEquipoGenerico').value.trim();
+                } else {
+                    tipoEquipoFinal = selPla.options[selPla.selectedIndex].text;
+                }
+                const marcaConTipo = tipoEquipoFinal + " - " + document.getElementById('marcaEquipo').value.trim();
+
+                if (marcaConTipo.length > 55) {
+                    document.getElementById('btnGuardarFR').disabled = false; 
+                    document.getElementById('btnGuardarFR').innerText = "💾 Guardar Ficha de Recepción";
+                    return alert("El nombre combinado supera el límite. Por favor abrevie el nombre del equipo o la marca.");
+                }
+
+                const selCliente = document.getElementById('selectCliente');
+                const dataFR = { 
+                    id_empleado: usuarioActual.id_empleado, 
+                    id_cliente: selCliente.value, 
+                    numero_fr: numFR, 
+                    marca: marcaConTipo, 
+                    modelo: document.getElementById('modeloEquipo').value, 
+                    numero_serie: document.getElementById('serieEquipo').value, 
+                    accesorios: obtenerTextoAccesorios(), 
+                    problema_reportado: document.getElementById('problema').value, 
+                    fotos_fr: fotosFRGlobal 
+                }; 
+                
                 const req = await fetch(`${API_URL}/tickets`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(dataFR) }); 
                 if (!req.ok) throw new Error('Error al guardar');
+                
                 ultimaFRGenerada = { ...dataFR, cliente: selCliente.options[selCliente.selectedIndex].text, fecha_ingreso: new Date().toISOString(), empleado_receptor: usuarioActual.nombre_completo };
                 
-                document.getElementById('formFR').reset(); document.getElementById('numFR').value = 'FR';
+                document.getElementById('formFR').reset(); 
+                document.getElementById('numFR').value = 'FR';
                 const inputGen = document.getElementById('nombreEquipoGenerico');
                 if(inputGen) inputGen.style.display = 'none';
-                fotosFRGlobal = []; renderFotosFR(); cambiarPlantilla(); 
+                
+                fotosFRGlobal = []; 
+                renderFotosFR(); 
+                cambiarPlantilla(); 
                 
                 mostrarExito('¡FR Creada Exitosamente!', 'El equipo se registró en la base de datos central.', `<button class="btn-print" onclick="imprimirUltimaFR()">🖨️ Imprimir / Ver FR</button>`);
-            } catch(e) { alert("Error de conexión al guardar."); } finally {
-                document.getElementById('btnGuardarFR').disabled = false; document.getElementById('btnGuardarFR').innerText = "💾 Guardar Ficha de Recepción";
+                
+            } catch(e) { 
+                alert("Error de conexión al guardar."); 
+            } finally {
+                document.getElementById('btnGuardarFR').disabled = false; 
+                document.getElementById('btnGuardarFR').innerText = "💾 Guardar Ficha de Recepción";
             }
         });
 
@@ -669,6 +840,449 @@
             </head><body>${contenidoHtml}<script>window.onload=function(){ setTimeout(() => window.print(), 500); }<\/script></body></html>`); 
             ventana.document.close(); 
         }
+
+        // ==========================================
+        // MÓDULO ALQUILERES: FAE (MÓVIL)
+        // ==========================================
+        let fotosFAEMovil = [];
+        let accesoriosCargadosFAE = [];
+
+        // Asegurar prefijo FAE
+        document.getElementById('faeNum').addEventListener('input', function() { 
+            if (!this.value.startsWith('FAE')) this.value = 'FAE'; 
+        });
+
+        // Modificamos ocultarVistas para incluir FAE
+        const originalOcultarVistas = ocultarVistas;
+        ocultarVistas = function() {
+            originalOcultarVistas();
+            document.getElementById('vistaFAE').style.display = 'none';
+        }
+
+        async function abrirFAE() {
+            ocultarVistas(); 
+            document.getElementById('vistaFAE').style.display = 'block';
+            document.getElementById('formFAEMovil').reset();
+            document.getElementById('faeNum').value = 'FAE';
+            document.getElementById('faeGestorNombre').value = usuarioActual.nombre_completo;
+            
+            // Setear fecha de inicio automática a HOY
+            const hoy = new Date();
+            hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
+            document.getElementById('faeInicio').value = hoy.toISOString().split('T')[0];
+            
+            fotosFAEMovil = [];
+            renderFotosFAEMovil();
+            
+            // Reutilizamos las listas globales cargadas al iniciar sesión
+            const selectCli = document.getElementById('faeCliente');
+            selectCli.innerHTML = document.getElementById('selectCliente').innerHTML; 
+            
+            const selectPla = document.getElementById('faePlantilla');
+            selectPla.innerHTML = document.getElementById('plantillaEquipo').innerHTML;
+            
+            cambiarPlantillaFAE();
+        }
+
+        async function cambiarPlantillaFAE() { 
+            const sel = document.getElementById('faePlantilla'); 
+            const id = sel.value; 
+            const cont = document.getElementById('contenedorAccesoriosFAE'); 
+            
+            document.getElementById('faeEquipo').value = ""; 
+            document.getElementById('faeMarca').value = ""; 
+            document.getElementById('faeModelo').value = ""; 
+            cont.innerHTML = ''; 
+            accesoriosCargadosFAE = []; 
+            
+            if (id === 'generico') { 
+                cont.innerHTML = `<div id="listaGenericaFAE"></div><button type="button" class="btn-secondary" onclick="agregarLineaExtraFAE()">＋ Añadir Accesorio Manual</button>`; 
+                agregarLineaExtraFAE(); 
+            } else { 
+                const opt = sel.options[sel.selectedIndex]; 
+                document.getElementById('faeEquipo').value = opt.text; 
+                document.getElementById('faeMarca').value = opt.getAttribute('data-marca') || ""; 
+                document.getElementById('faeModelo').value = opt.getAttribute('data-modelo') || ""; 
+                
+                try {
+                    const res = await fetch(`${API_URL}/plantillas/${id}/accesorios`); 
+                    const accs = await res.json(); 
+                    accesoriosCargadosFAE = accs; 
+                    
+                    let h = ''; 
+                    accs.forEach((a, i) => { 
+                        h += `<div class="item-accesorio">
+                                <input type="checkbox" id="chk_fae_acc_${i}" checked>
+                                <label for="chk_fae_acc_${i}" style="flex:1; margin:0;">${a.nombre_accesorio}</label>
+                                <input type="text" id="obs_fae_acc_${i}" placeholder="Estado" style="width:35%;">
+                              </div>`; 
+                    }); 
+                    h += `<div id="listaGenericaFAE"></div><button type="button" class="btn-secondary" onclick="agregarLineaExtraFAE()">＋ Añadir Extra</button>`;
+                    cont.innerHTML = h; 
+                } catch(e) { console.error("Error cargando accesorios FAE", e); }
+            } 
+        }
+
+        function agregarLineaExtraFAE() { 
+            const div = document.createElement('div'); div.className = 'item-accesorio'; 
+            div.innerHTML = `<input type="text" class="fae-acc-gen-nombre" placeholder="Accesorio..." style="flex:1;"><input type="text" class="fae-acc-gen-obs" placeholder="Obs..." style="width:30%;"><button type="button" class="btn-mini-danger" onclick="this.parentElement.remove()">✕</button>`; 
+            document.getElementById('listaGenericaFAE').appendChild(div); 
+        }
+
+        function obtenerTextoAccesoriosFAE() { 
+            let l = []; 
+            if (document.getElementById('faePlantilla').value !== 'generico') { 
+                accesoriosCargadosFAE.forEach((a, i) => { 
+                    if (document.getElementById(`chk_fae_acc_${i}`)?.checked) { 
+                        const obs = document.getElementById(`obs_fae_acc_${i}`).value.trim(); 
+                        l.push(`✔ ${a.nombre_accesorio}${obs ? ` (${obs})` : ''}`); 
+                    } 
+                }); 
+            }
+            document.querySelectorAll('.fae-acc-gen-nombre').forEach((inp, i) => { 
+                const obs = document.querySelectorAll('.fae-acc-gen-obs')[i].value.trim(); 
+                if(inp.value.trim()) l.push(`• ${inp.value.trim()}${obs ? ` (${obs})` : ''}`); 
+            }); 
+            return l.length ? l.join('\n') : 'Sin accesorios.'; 
+        }
+
+        // Fotos FAE Móvil (Reutiliza el compresor de movil.html)
+        function agregarFotoFAE() { 
+            const archivo = document.getElementById('faeFotoFile').files[0]; 
+            const desc = document.getElementById('faeFotoDesc').value.trim(); 
+            if(!archivo) return alert("Por favor, toma una foto primero."); 
+            comprimirImagen(archivo, 1200, 1200, 0.6, function(imagenLigera) {
+                fotosFAEMovil.push({ url: imagenLigera, descripcion: desc }); 
+                document.getElementById('faeFotoFile').value = ''; document.getElementById('faeFotoDesc').value = ''; renderFotosFAEMovil(); 
+            });
+        }
+        function eliminarFotoFAE(index) { fotosFAEMovil.splice(index, 1); renderFotosFAEMovil(); }
+        function renderFotosFAEMovil() { 
+            document.getElementById('galeriaFotosFAE').innerHTML = fotosFAEMovil.length ? fotosFAEMovil.map((f, i) => `
+                <div class="foto-item"><button type="button" class="btn-eliminar-foto" onclick="eliminarFotoFAE(${i})">✕</button><img src="${f.url}"><p style="font-size:10px; margin:4px 0 0 0;">${f.descripcion || 'Sin descripción'}</p></div>`).join('') : ''; 
+        }
+
+        // GUARDAR FAE (CON VALIDACIÓN DE DUPLICADOS)
+        document.getElementById('formFAEMovil').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const btn = e.target.querySelector('button[type="submit"]');
+            
+            const numDoc = document.getElementById('faeNum').value.trim();
+            if (numDoc === 'FAE' || numDoc === 'FAE-') return alert('⚠️ Ingrese un número correlativo (Ej: FAE-001)');
+
+            btn.disabled = true; btn.innerText = "⏳ Verificando...";
+
+            try {
+                // 1. NUEVA VALIDACIÓN: Consultamos si el código ya existe
+                const resConsulta = await fetch(`${API_URL}/alquileres`);
+                const alquileresActuales = await resConsulta.json();
+                
+                const existeDoc = alquileresActuales.some(a => a.numero_contrato.toUpperCase() === numDoc.toUpperCase());
+                if (existeDoc) {
+                    btn.disabled = false; btn.innerText = "💾 Generar FAE (Alquiler)";
+                    return alert(`⚠️ ERROR: El documento ${numDoc} ya existe en el sistema. Por favor ingrese un número diferente.`);
+                }
+
+                btn.innerText = "⏳ Guardando...";
+
+                // 2. Proceso de guardado si no hay duplicados
+                const data = { 
+                    numero_contrato: numDoc, 
+                    id_cliente: document.getElementById('faeCliente').value, 
+                    id_empleado_gestor: usuarioActual.id_empleado, 
+                    nombre_equipo: document.getElementById('faeEquipo').value, 
+                    marca: document.getElementById('faeMarca').value, 
+                    modelo: document.getElementById('faeModelo').value, 
+                    numero_serie: document.getElementById('faeSerie').value, 
+                    accesorios: obtenerTextoAccesoriosFAE(), 
+                    fecha_inicio: document.getElementById('faeInicio').value, 
+                    fecha_fin: document.getElementById('faeFin').value, 
+                    fotos_fae: fotosFAEMovil,
+                    notas_observaciones: document.getElementById('faeNotas').value.trim() 
+                }; 
+
+                const req = await fetch(`${API_URL}/alquileres`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) }); 
+                if(!req.ok) throw new Error("Error en servidor");
+                
+                const selCliente = document.getElementById('faeCliente');
+                ultimaFAEGenerada = { 
+                    ...data, 
+                    cliente_nombre: selCliente.options[selCliente.selectedIndex].text,
+                    gestor_nombre: document.getElementById('faeGestorNombre').value
+                };
+                
+                mostrarExito(
+                    '¡Alquiler Registrado!', 
+                    'La FAE ha sido generada correctamente.', 
+                    `<button class="btn-print" onclick="imprimirUltimaFAE()">🖨️ Imprimir / Ver FAE</button>`
+                );
+
+            } catch (error) {
+                alert("Ocurrió un error al conectarse con el servidor.");
+            } finally {
+                btn.disabled = false; btn.innerText = "💾 Generar FAE (Alquiler)";
+            }
+        });
+
+// ==========================================
+        // MÓDULO ALQUILERES: FAR (MÓVIL)
+        // ==========================================
+        let alquileresActivosMovil = [];
+        let alquilerSeleccionadoMovil = null;
+        let ultimaFARGenerada = null; // Para la impresión
+
+        // Añadimos vistaFAR al limpiador de vistas
+        const originalOcultarVistasFAR = ocultarVistas;
+        ocultarVistas = function() {
+            originalOcultarVistasFAR();
+            document.getElementById('vistaFAR').style.display = 'none';
+        }
+
+        async function abrirFAR() {
+            ocultarVistas();
+            document.getElementById('vistaFAR').style.display = 'block';
+            document.getElementById('formFARMovil').reset();
+            document.getElementById('infoFAEPendiente').style.display = 'none';
+            alquilerSeleccionadoMovil = null;
+
+            try {
+                // Descargar alquileres y filtrar solo los que NO han sido devueltos
+                const res = await fetch(`${API_URL}/alquileres`);
+                const alquileres = await res.json();
+                alquileresActivosMovil = alquileres.filter(a => a.estado_alquiler !== 'Devuelto');
+
+                const selectFAE = document.getElementById('selectFAEPendiente');
+                selectFAE.innerHTML = '<option value="">-- Seleccione Alquiler en Curso --</option>';
+                
+                alquileresActivosMovil.forEach(a => {
+                    selectFAE.innerHTML += `<option value="${a.id_contrato}">${a.numero_contrato} - ${a.cliente}</option>`;
+                });
+            } catch (error) {
+                alert("Error al cargar alquileres pendientes.");
+            }
+        }
+
+        function cargarDatosFAR() {
+            const idSel = document.getElementById('selectFAEPendiente').value;
+            const cajaInfo = document.getElementById('infoFAEPendiente');
+            
+            if(!idSel) {
+                cajaInfo.style.display = 'none';
+                alquilerSeleccionadoMovil = null;
+                return;
+            }
+
+            alquilerSeleccionadoMovil = alquileresActivosMovil.find(a => a.id_contrato == idSel);
+            const t = alquilerSeleccionadoMovil;
+
+            // Autocompletar textos
+            document.getElementById('farClienteTxt').innerText = t.cliente;
+            document.getElementById('farEquipoTxt').innerText = `${t.nombre_equipo} ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})`;
+            document.getElementById('farAccesoriosTxt').innerText = t.accesorios || 'Sin accesorios registrados';
+            document.getElementById('farObsFAETxt').innerText = t.notas_observaciones || t.observaciones_fae || 'Ninguna observación registrada en la salida.';
+            
+            // Fechas y cálculos automáticos
+            const fInicio = new Date(t.fecha_inicio);
+            document.getElementById('farInicioTxt').innerText = fInicio.toLocaleDateString('es-PE');
+            
+            const hoy = new Date();
+            hoy.setMinutes(hoy.getMinutes() - hoy.getTimezoneOffset());
+            document.getElementById('farFechaReal').value = hoy.toISOString().split('T')[0];
+            
+            calcularDiasFARMovil();
+
+            // Renderizar Fotos de la FAE para contraste
+            const fotosFAE = typeof t.fotos_fae === 'string' ? JSON.parse(t.fotos_fae) : (t.fotos_fae || []);
+            document.getElementById('farFotosFAEVisualizador').innerHTML = fotosFAE.length ? fotosFAE.map(f => `
+                <div class="foto-item" style="width: 45%;">
+                    <img src="${f.url}">
+                    <p style="font-size:9px; margin:2px 0 0 0;">${f.descripcion || ''}</p>
+                </div>`).join('') : '<span style="font-size:0.8rem; color:#64748b;">No se subieron fotos en la salida.</span>';
+
+            cajaInfo.style.display = 'block';
+        }
+
+        function calcularDiasFARMovil() {
+            if(!alquilerSeleccionadoMovil) return;
+            const inicio = new Date(alquilerSeleccionadoMovil.fecha_inicio);
+            inicio.setHours(0,0,0,0); 
+            const fin = new Date(document.getElementById('farFechaReal').value + 'T00:00:00'); 
+            fin.setHours(0,0,0,0); 
+            
+            let dias = Math.ceil((fin.getTime() - inicio.getTime()) / (1000 * 60 * 60 * 24)); 
+            if (dias <= 0) dias = 1;
+            
+            document.getElementById('farDiasTexto').innerText = dias; 
+            document.getElementById('farDiasValor').value = dias; 
+        }
+
+        // GUARDAR FAR (Devolución)
+        document.getElementById('formFARMovil').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            if(!alquilerSeleccionadoMovil) return alert("Seleccione un alquiler primero.");
+            
+            const btn = e.target.querySelector('button[type="submit"]');
+            btn.disabled = true; btn.innerText = "⏳ Guardando...";
+
+            const bodyData = { 
+                fecha_devolucion_real: document.getElementById('farFechaReal').value, 
+                estado_retorno_equipo: document.getElementById('farObservaciones').value.trim(), 
+                dias_cobro: document.getElementById('farDiasValor').value 
+            }; 
+
+            try {
+                const req = await fetch(`${API_URL}/alquileres/${alquilerSeleccionadoMovil.id_contrato}/devolver`, { 
+                    method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyData) 
+                }); 
+                if(!req.ok) throw new Error("Error en servidor");
+                
+                // Preparar data para impresión
+                ultimaFARGenerada = {
+                    ...alquilerSeleccionadoMovil,
+                    ...bodyData
+                };
+
+                mostrarExito(
+                    '¡Equipo Recepcionado!', 
+                    'El alquiler ha concluido operativamente.', 
+                    `<button class="btn-print" onclick="imprimirUltimaFAR()">🖨️ Imprimir / Ver FAR</button>`
+                );
+            } catch (error) {
+                alert("Ocurrió un error al procesar la devolución.");
+            } finally {
+                btn.disabled = false; btn.innerText = "💾 Confirmar Recepción (FAR)";
+            }
+        });
+
+        // ==========================================
+        // IMPRESIÓN DE LA FAR (MÓVIL A4 PAGINADA)
+        // ==========================================
+        function imprimirUltimaFAR() {
+            if(!ultimaFARGenerada) return;
+            const t = ultimaFARGenerada;
+
+            const fechaReal = t.fecha_devolucion_real ? new Date(t.fecha_devolucion_real).toLocaleDateString('es-PE') : 'Pendiente';
+            const accs = t.accesorios ? t.accesorios.replace(/\n/g, '<br>') : 'Ninguno';
+            const obsSalida = t.notas_observaciones || t.observaciones_fae || 'Ninguna observación registrada en la salida.';
+            const obsRetorno = t.estado_retorno_equipo || 'Ninguna';
+
+            const fotosArray = typeof t.fotos_fae === 'string' ? JSON.parse(t.fotos_fae) : (t.fotos_fae || []);
+            const totalPaginas = 1 + Math.ceil(fotosArray.length / 4);
+
+            let htmlPaginas = `
+            <div class="pagina">
+                ${encabezadoEmpresaHTML}
+                <h2 class="doc-title">FICHA DE ARRENDAMIENTO DE RECEPCIÓN (FAR)</h2>
+                <div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">Contrato Ref: ${t.numero_contrato}</div>
+                
+                <div class="seccion">
+                    <div class="titulo">DATOS GENERALES</div>
+                    <div class="contenido">
+                        <strong>Cliente:</strong> ${t.cliente}<br>
+                        <strong>Retorno Real:</strong> ${fechaReal} (Total: ${t.dias_cobro} Días)<br><br>
+                        <strong style="color:#1e3a8a;">1. Observaciones Iniciales de Salida (Según FAE):</strong><br>
+                        <i>${obsSalida}</i><br><br>
+                        <strong style="color:#b45309;">2. Condiciones y Observaciones de Retorno Final (FAR):</strong><br>
+                        <i>${obsRetorno}</i>
+                    </div>
+                </div>
+                
+                <div class="seccion">
+                    <div class="titulo">EQUIPO Y ACCESORIOS RETORNADOS</div>
+                    <div class="contenido">
+                        <strong>Equipo:</strong> ${t.nombre_equipo} ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})<br><br>
+                        <strong>Accesorios Declarados:</strong><br>${accs}
+                    </div>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;">
+                    <div style="width:45%; border-top:1px solid #000; font-size:11px; padding-top:5px;">Firma de Conformidad Cliente</div>
+                    <div style="width:45%; border-top:1px solid #000; font-size:11px; padding-top:5px;">Innova Electronics SAC</div>
+                </div>
+                <div class="footer-pag">Página 1 de ${totalPaginas}</div>
+            </div>`;
+
+            if (fotosArray.length > 0) {
+                for (let i = 0; i < fotosArray.length; i += 4) {
+                    const numPag = 2 + Math.floor(i / 4);
+                    const fotosLote = fotosArray.slice(i, i + 4);
+                    
+                    let loteHtml = `<div class="pagina"><h2 class="doc-title" style="margin-top:20px;">ANEXO FOTOGRÁFICO - CONDICIÓN DE SALIDA (FAE)</h2><div class="grid-fotos">`;
+                    fotosLote.forEach(fot => {
+                        loteHtml += `<div class="foto-box"><img src="${fot.url}"><div class="foto-desc">${fot.descripcion || 'Sin descripción'}</div></div>`;
+                    });
+                    loteHtml += `</div><div class="footer-pag">Página ${numPag} de ${totalPaginas}</div></div>`;
+                    htmlPaginas += loteHtml;
+                }
+            }
+
+            abrirVentanaImpresion(htmlPaginas, 'Imprimir FAR');
+        }
+
+
+let ultimaFAEGenerada = null; // Variable global para la impresión FAE
+
+        function imprimirUltimaFAE() {
+            if(!ultimaFAEGenerada) return; 
+            const t = ultimaFAEGenerada;
+            
+            // Formateo de fechas y accesorios
+            const fInicio = new Date(t.fecha_inicio).toLocaleDateString('es-PE');
+            const fFin = new Date(t.fecha_fin).toLocaleDateString('es-PE');
+            let accs = t.accesorios.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047; padding:2px;">$1</span>'); 
+            
+            const fotos = t.fotos_fae || []; 
+            const totalPaginas = 1 + Math.ceil(fotos.length / 4);
+            
+            // Construcción de la primera página
+            let htmlPaginas = `
+            <div class="pagina">
+                ${encabezadoEmpresaHTML}
+                <h2 class="doc-title">FICHA DE ARRENDAMIENTO Y ENTREGA (FAE)</h2>
+                <div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">N°: ${t.numero_contrato}</div>
+                
+                <div class="seccion">
+                    <div class="titulo">DATOS GENERALES</div>
+                    <div class="contenido">
+                        <strong>Cliente:</strong> ${t.cliente_nombre}<br>
+                        <strong>Gestor/Asesor:</strong> ${t.gestor_nombre}<br>
+                        <strong>Inicio del Alquiler:</strong> ${fInicio}<br>
+                        <strong>Fin Tentativo:</strong> ${fFin}<br><br>
+                        <strong>Observaciones de Salida:</strong><br><i>${t.notas_observaciones || 'Ninguna'}</i>
+                    </div>
+                </div>
+                
+                <div class="seccion">
+                    <div class="titulo">EQUIPO Y ACCESORIOS INVOLUCRADOS</div>
+                    <div class="contenido">
+                        <strong>Equipo:</strong> ${t.nombre_equipo} ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})<br><br>
+                        <strong>Accesorios Declarados:</strong><br>${accs}
+                    </div>
+                </div>
+                
+                <div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;">
+                    <div style="width:45%; border-top:1px solid #000; font-size:11px; padding-top:5px;">Firma de Conformidad Cliente</div>
+                    <div style="width:45%; border-top:1px solid #000; font-size:11px; padding-top:5px;">Innova Electronics SAC</div>
+                </div>
+                <div class="footer-pag">Página 1 de ${totalPaginas}</div>
+            </div>`;
+            
+            // Construcción de las páginas fotográficas (si existen)
+            if (fotos.length > 0) {
+                for (let i = 0; i < fotos.length; i += 4) {
+                    const numPag = 2 + Math.floor(i / 4); 
+                    const fotosLote = fotos.slice(i, i + 4);
+                    let loteHtml = `<div class="pagina"><h2 class="doc-title" style="margin-top:20px;">ANEXO FOTOGRÁFICO - FAE N°: ${t.numero_contrato}</h2><div class="grid-fotos">`;
+                    fotosLote.forEach(f => { loteHtml += `<div class="foto-box"><img src="${f.url}"><div class="foto-desc">${f.descripcion || 'Sin descripción'}</div></div>`; });
+                    loteHtml += `</div><div class="footer-pag">Página ${numPag} de ${totalPaginas}</div></div>`;
+                    htmlPaginas += loteHtml;
+                }
+            }
+            
+            abrirVentanaImpresion(htmlPaginas, 'Imprimir FAE');
+        }
+
+
     </script>
 </body>
 </html>
