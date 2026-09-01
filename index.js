@@ -482,26 +482,27 @@ app.get('/api/ventas', async (req, res) => {
 // 2. TÉCNICOS: Crear FAE (Alquiler salida con fotos)
 // 2. TÉCNICOS: Crear FAE (Alquiler salida con fotos y observaciones)
 app.post('/api/alquileres', async (req, res) => {
-    const { numero_contrato, id_cliente, id_empleado_gestor, nombre_equipo, marca, modelo, numero_serie, accesorios, fecha_inicio, fecha_fin, fotos_fae, observaciones_fae } = req.body;
+    const { numero_contrato, id_cliente, id_empleado_gestor, usuario_fae, nombre_equipo, marca, modelo, numero_serie, accesorios, fecha_inicio, fecha_fin, fotos_fae, observaciones_fae } = req.body;
     try {
         const query = `
             INSERT INTO contratos_alquiler 
-            (numero_contrato, id_cliente, id_empleado_gestor, nombre_equipo, marca, modelo, numero_serie, accesorios, fecha_inicio, fecha_fin, tarifa_total, deposito_garantia, fotos_fae, observaciones_fae)
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, 0, 0, $11, $12) RETURNING id_contrato;
+            (numero_contrato, id_cliente, id_empleado_gestor, usuario_fae, nombre_equipo, marca, modelo, numero_serie, accesorios, fecha_inicio, fecha_fin, tarifa_total, deposito_garantia, fotos_fae, observaciones_fae)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, 0, 0, $12, $13) RETURNING id_contrato;
         `;
-        await pool.query(query, [numero_contrato, id_cliente, id_empleado_gestor, nombre_equipo, marca, modelo, numero_serie, accesorios, fecha_inicio, fecha_fin, JSON.stringify(fotos_fae || []), observaciones_fae]);
+        await pool.query(query, [numero_contrato, id_cliente, id_empleado_gestor, usuario_fae, nombre_equipo, marca, modelo, numero_serie, accesorios, fecha_inicio, fecha_fin, JSON.stringify(fotos_fae || []), observaciones_fae]);
         res.json({ mensaje: 'FAE registrado con éxito' });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
 // 2. Crear nueva Ficha de Venta (FV)
 app.post('/api/ventas', async (req, res) => {
-    const { numero_fv, cliente, equipo_nombre, marca, modelo, serie, accesorios, observaciones } = req.body;
+    const { numero_fv, cliente, usuario_fv, equipo_nombre, marca, modelo, serie, accesorios, observaciones } = req.body;
     try {
         await pool.query(
-            `INSERT INTO ventas_fv (numero_fv, cliente, equipo_nombre, marca, modelo, serie, accesorios, observaciones, estado) 
-             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'Pendiente Entrega')`,
-            [numero_fv, cliente, equipo_nombre, marca, modelo, serie, accesorios, observaciones]
+            // Corrección: Ahora hay 9 variables ($1 al $9) alineadas con las 9 columnas antes de 'Pendiente Entrega'
+            `INSERT INTO ventas_fv (numero_fv, cliente, usuario_fv, equipo_nombre, marca, modelo, serie, accesorios, observaciones, estado) 
+             VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'Pendiente Entrega')`,
+            [numero_fv, cliente, usuario_fv, equipo_nombre, marca, modelo, serie, accesorios, observaciones]
         );
         res.json({ mensaje: 'FV creada exitosamente' });
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -536,11 +537,11 @@ app.put('/api/alquileres/:id/fp', async (req, res) => {
 // 6. TÉCNICOS/ADMIN: Concretar Logística (Generar FAR con fotos)
 // 6. TÉCNICOS/ADMIN: Concretar Logística (Generar FAR, calcular días)
 app.put('/api/alquileres/:id/devolver', async (req, res) => {
-    const { fecha_devolucion_real, estado_retorno_equipo, fotos_far, dias_cobro } = req.body;
+    const { usuario_far, fecha_devolucion_real, estado_retorno_equipo, fotos_far, dias_cobro } = req.body;
     try {
         await pool.query(
-            "UPDATE contratos_alquiler SET estado_alquiler = 'Devuelto', fecha_devolucion_real = $1, estado_retorno_equipo = $2, fotos_far = $3, dias_cobro = $4 WHERE id_contrato = $5", 
-            [fecha_devolucion_real, estado_retorno_equipo, JSON.stringify(fotos_far || []), dias_cobro, req.params.id]
+            "UPDATE contratos_alquiler SET usuario_far = $1, estado_alquiler = 'Devuelto', fecha_devolucion_real = $2, estado_retorno_equipo = $3, fotos_far = $4, dias_cobro = $5 WHERE id_contrato = $6", 
+            [usuario_far, fecha_devolucion_real, estado_retorno_equipo, JSON.stringify(fotos_far || []), dias_cobro, req.params.id]
         );
         res.json({ mensaje: 'FAR generada y equipo devuelto' });
     } catch (err) { res.status(500).json({ error: err.message }); }
@@ -549,11 +550,12 @@ app.put('/api/alquileres/:id/devolver', async (req, res) => {
 // 4. Guardar Ficha de Entrega (FE)
 // Guardar Ficha de Entrega (FE) - Incluye fotos
 app.put('/api/ventas/:id/entregar', async (req, res) => {
-    const { fecha_entrega, observaciones_fe, fotos_fe } = req.body;
+    const { usuario_fe, fecha_entrega, observaciones_fe, fotos_fe } = req.body;
     try {
         await pool.query(
-            "UPDATE ventas_fv SET estado = 'Entregado', fecha_entrega = $1, observaciones_fe = $2, fotos_fe = $3 WHERE id_fv = $4", 
-            [fecha_entrega, observaciones_fe, fotos_fe ? JSON.stringify(fotos_fe) : '[]', req.params.id]
+            // Corrección: Sintaxis limpia sin WHEREs repetidos
+            "UPDATE ventas_fv SET usuario_fe = $1, estado = 'Entregado', fecha_entrega = $2, observaciones_fe = $3, fotos_fe = $4 WHERE id_fv = $5", 
+            [usuario_fe, fecha_entrega, observaciones_fe, fotos_fe ? JSON.stringify(fotos_fe) : '[]', req.params.id]
         );
         res.json({ mensaje: 'Ficha de Entrega generada' });
     } catch (err) { res.status(500).json({ error: err.message }); }

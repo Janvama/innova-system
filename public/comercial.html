@@ -189,6 +189,16 @@
                     <label>Cliente:</label>
                     <div class="readonly-text" id="farCliente"></div>
                 </div>
+                <div style="display: flex; gap: 10px; margin-top: 10px;">
+                    <div style="flex: 1;">
+                        <label style="color:#1e3a8a;">Despachado por (FAE):</label>
+                        <div class="readonly-text" id="farUsuarioFAE"></div>
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="color:#b45309;">Recibido por (FAR):</label>
+                        <div class="readonly-text" id="farUsuarioFAR"></div>
+                    </div>
+                </div>
             </div>
                 <label>Equipo Retornado:</label><div class="readonly-text" id="farEquipo"></div>
                 <label style="margin-top: 10px; color: #b45309;">Accesorios a Retornar (Según FAE):</label>
@@ -269,6 +279,8 @@
                 <div style="background:#f0fdf4; padding:10px; border-radius:4px; margin-bottom:10px; font-size:0.85rem;">
                     <strong>FV N°:</strong> <span id="feVenNum"></span><br>
                     <strong>Cliente:</strong> <span id="feVenCli"></span><br>
+                    <strong>Vendido por (FV):</strong> <span id="feUsuarioFV" style="color:#047857;"></span><br>
+                    <strong>Entregado por (FE):</strong> <span id="feUsuarioFE" style="color:#059669;"></span><br>
                     <strong>Equipo:</strong> <span id="feVenEq"></span><br>
                     <strong style="margin-top:8px; display:inline-block; color:#047857;">Accesorios a Entregar:</strong> 
                     <div id="feVenAcc" style="white-space: pre-line; margin-top:2px; font-weight: normal;"></div>
@@ -470,7 +482,8 @@ const API_URL = '/api';
 
             const data = { 
                 numero_contrato: document.getElementById('alqContrato').value, 
-                id_cliente: document.getElementById('alqCliente').value, 
+                id_cliente: document.getElementById('alqCliente').value,
+                usuario_fae: usuarioActual.nombre_completo, 
                 id_empleado_gestor: document.getElementById('alqGestor').value, 
                 nombre_equipo: document.getElementById('alqEquipo').value, 
                 marca: document.getElementById('alqMarca').value, 
@@ -505,6 +518,8 @@ const API_URL = '/api';
             document.getElementById('farNumContrato').innerText = t.numero_contrato; 
             document.getElementById('farCliente').innerText = t.cliente; 
             document.getElementById('farEquipo').innerText = `${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})`; 
+            document.getElementById('farUsuarioFAE').innerText = t.usuario_fae || 'No registrado';
+            document.getElementById('farUsuarioFAR').innerText = t.usuario_far || 'Pendiente / En uso';
 
             // PROYECTA LA OBSERVACIÓN EN PANTALLA
             document.getElementById('farObsFAE').innerText = t.observaciones_fae || 'Ninguna observación registrada en la salida.';
@@ -543,7 +558,12 @@ const API_URL = '/api';
             }
 
             document.getElementById('formFAR').addEventListener('submit', async (e) => { e.preventDefault(); 
-                const bodyData = { fecha_devolucion_real: document.getElementById('farFechaReal').value, estado_retorno_equipo: document.getElementById('farObservaciones').value.trim(), dias_cobro: document.getElementById('farDiasValor').value }; 
+                const bodyData = { 
+                    usuario_far: usuarioActual.nombre_completo,
+                    fecha_devolucion_real: document.getElementById('farFechaReal').value, 
+                    estado_retorno_equipo: document.getElementById('farObservaciones').value.trim(), 
+                    dias_cobro: document.getElementById('farDiasValor').value 
+                }; 
                 await fetch(`${API_URL}/alquileres/${itemSeleccionado.id}/devolver`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(bodyData) }); 
                 cerrarModal('modalFAR'); 
                 cargarDatosGlobales(); 
@@ -588,6 +608,7 @@ const API_URL = '/api';
             const data = {
                 numero_fv: document.getElementById('fvNumero').value.trim(),
                 cliente: document.getElementById('fvCliente').value,
+                usuario_fv: usuarioActual.nombre_completo,
                 equipo_nombre: document.getElementById('fvEquipo').value.trim(),
                 marca: document.getElementById('fvMarca').value.trim(),
                 modelo: document.getElementById('fvModelo').value.trim(),
@@ -608,6 +629,8 @@ const API_URL = '/api';
             document.getElementById('feVenCli').innerText = t.cliente;
             document.getElementById('feVenEq').innerText = `${t.equipo_nombre} ${t.marca} ${t.modelo}`;
             document.getElementById('feVenAcc').innerText = t.accesorios || 'Sin accesorios registrados';
+            document.getElementById('feUsuarioFV').innerText = t.usuario_fv || 'No registrado';
+            document.getElementById('feUsuarioFE').innerText = t.usuario_fe || 'Pendiente de entrega';
             const fechaRef = t.fecha_entrega ? new Date(t.fecha_entrega) : new Date();
             fechaRef.setMinutes(fechaRef.getMinutes() - fechaRef.getTimezoneOffset());
             document.getElementById('feVenFecha').value = fechaRef.toISOString().split('T')[0];
@@ -615,13 +638,6 @@ const API_URL = '/api';
             abrirModal('modalFEVenta');
         }
 
-        document.getElementById('formFEVenta').addEventListener('submit', async (e) => {
-            e.preventDefault();
-            const payload = { fecha_entrega: document.getElementById('feVenFecha').value, observaciones_fe: document.getElementById('feVenObs').value };
-            await fetch(`${API_URL}/ventas/${itemSeleccionado.id}/entregar`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) });
-            alert("FE registrada. Equipo entregado al cliente."); cerrarModal('modalFEVenta'); 
-            cargarDatosGlobales();
-        });
 
 
         // ================= TABLA PRINCIPAL COMERCIAL =================
@@ -713,12 +729,11 @@ const API_URL = '/api';
 
             function abrirVisorComercial(tipo, id) {
             let html = '';
-                if (tipo === 'Alquiler') {
+            if (tipo === 'Alquiler') {
                 const t = dataAlquileres.find(a => a.id_contrato === id);
                 document.getElementById('visorComercialTitulo').innerHTML = `👁️ Ficha de Arrendamiento (FAE)`;
                 document.querySelector('#modalVisorComercial .modal-content').style.borderTopColor = '#3b82f6';
                 
-                // Extraer fotos
                 let fotosHTML = '';
                 if(t.fotos_fae && t.fotos_fae.length > 0) {
                     fotosHTML = `<div style="margin-top:15px; padding:10px; background:#f8fafc; border:1px solid #e2e8f0;"><strong>📷 Evidencia Fotográfica de Entrega:</strong><div style="display:flex; gap:10px; flex-wrap:wrap; margin-top:10px;">` + t.fotos_fae.map(f => `<div style="width:120px; border:1px solid #ccc; padding:5px; background:white; text-align:center;"><img src="${f.url}" style="width:100%; height:80px; object-fit:cover;"><p style="font-size:10px; margin:2px 0;">${f.descripcion}</p></div>`).join('') + `</div></div>`;
@@ -729,12 +744,17 @@ const API_URL = '/api';
                         <div><strong>FAE N°:</strong> ${t.numero_contrato}</div>
                         <div><strong>Inicio:</strong> ${new Date(t.fecha_inicio).toLocaleDateString('es-PE')}</div>
                     </div>
-                    <div style="margin-top:15px;"><strong>Cliente:</strong> ${t.cliente}</div>
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <div style="flex:1;"><strong>Cliente:</strong> ${t.cliente}</div>
+                        <div style="flex:1;"><strong>Generado por:</strong> <span style="color:#3b82f6; font-weight:bold;">${t.usuario_fae || 'No registrado'}</span></div>
+                    </div>
                     <div style="margin-top:10px;"><strong>Equipo:</strong> ${t.nombre_equipo} ${t.marca} ${t.modelo} <small>(S/N: ${t.numero_serie || 'N/A'})</small></div>
-                    <div style="margin-top:10px;"><strong>Observaciones de Entrega:</strong> <i>${t.observaciones_fae || 'Ninguna'}</i></div>
+                    <div style="margin-top:10px;"><strong>Observaciones de Entrega:</strong> <i>${t.notas_observaciones || t.observaciones_fae || 'Ninguna'}</i></div>
                     <div style="margin-top:10px; padding:10px; background:#f1f5f9; border-left:3px solid #3b82f6;"><strong>Accesorios Entregados:</strong><br><div style="white-space:pre-line;">${t.accesorios || 'Ninguno'}</div></div>
                     ${fotosHTML}
                 `;
+                // Inyectamos el botón de imprimir directamente aquí
+                document.getElementById('visorBotonesAccion').innerHTML = `<button onclick="imprimirDocOperativo('FAE', ${id})" class="btn-print" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px; border:none; cursor:pointer;">🖨️ Imprimir FAE</button>`;
             }
             else {
                 const t = dataVentas.find(v => v.id_fv === id);
@@ -745,11 +765,16 @@ const API_URL = '/api';
                         <div><strong>FV N°:</strong> ${t.numero_fv}</div>
                         <div><strong>Fecha:</strong> ${new Date(t.fecha_creacion).toLocaleDateString('es-PE')}</div>
                     </div>
-                    <div style="margin-top:15px;"><strong>Cliente:</strong> ${t.cliente}</div>
+                    <div style="margin-top:15px; display:flex; gap:10px;">
+                        <div style="flex:1;"><strong>Cliente:</strong> ${t.cliente}</div>
+                        <div style="flex:1;"><strong>Generado por:</strong> <span style="color:#10b981; font-weight:bold;">${t.usuario_fv || 'No registrado'}</span></div>
+                    </div>
                     <div style="margin-top:10px;"><strong>Equipo:</strong> ${t.equipo_nombre} ${t.marca} ${t.modelo} <small>(S/N: ${t.serie || 'N/A'})</small></div>
                     <div style="margin-top:10px;"><strong>Observaciones:</strong> ${t.observaciones || 'Ninguna'}</div>
                     <div style="margin-top:10px; padding:10px; background:#f1f5f9; border-left:3px solid #10b981;"><strong>Accesorios Incluidos:</strong><br><div style="white-space:pre-line;">${t.accesorios || 'Ninguno'}</div></div>
                 `;
+                // Inyectamos el botón de imprimir directamente aquí
+                document.getElementById('visorBotonesAccion').innerHTML = `<button onclick="imprimirDocOperativo('FV', ${id})" class="btn-print" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px; border:none; cursor:pointer;">🖨️ Imprimir FV</button>`;
             }
             document.getElementById('visorComercialContenido').innerHTML = html;
             abrirModal('modalVisorComercial');
@@ -1062,12 +1087,7 @@ function imprimirFPComercial() {
             document.getElementById('farFotosFAE').innerHTML = fotos.length ? fotos.map(f => `<div style="width:120px; border:1px solid #ccc; padding:5px; text-align:center; background:white;"><img src="${f.url}" style="width:100%; height:80px; object-fit:cover;"><p style="font-size:10px; margin:2px 0;">${f.descripcion}</p></div>`).join('') : '<span style="font-size:0.8rem; color:#64748b;">No se subieron fotos en la FAE.</span>';
         };
 
-        // Actualiza el visor para incluir los botones de impresión:
-        const originalAbrirVisorComercial = abrirVisorComercial;
-        abrirVisorComercial = function(tipo, id) {
-            originalAbrirVisorComercial(tipo, id);
-            document.getElementById('visorBotonesAccion').innerHTML = `<button onclick="imprimirDocOperativo('${tipo === 'Alquiler' ? 'FAE' : 'FV'}', ${id})" class="btn-print" style="font-size: 1rem; padding: 10px 20px; border-radius: 4px; border:none; cursor:pointer;">🖨️ Imprimir ${tipo === 'Alquiler' ? 'FAE' : 'FV'}</button>`;
-        };
+
 
         // LÓGICA FOTOGRÁFICA PARA FE (VENTAS)
         let fotosFEGlobal = [];
@@ -1096,6 +1116,7 @@ function imprimirFPComercial() {
         document.getElementById('formFEVenta').addEventListener('submit', async (e) => {
             e.preventDefault();
             const payload = { 
+                usuario_fe: usuarioActual.nombre_completo,
                 fecha_entrega: document.getElementById('feVenFecha').value, 
                 observaciones_fe: document.getElementById('feVenObs').value,
                 fotos_fe: fotosFEGlobal
@@ -1110,7 +1131,7 @@ function imprimirFPComercial() {
 
 
 
-        // =======================================================
+// =======================================================
         // 3. CENTRAL UNIVERSAL DE IMPRESIONES OPERATIVAS (PAGINADAS)
         // =======================================================
         function imprimirDocOperativo(tipoDoc, idDirecto = null) {
@@ -1134,16 +1155,26 @@ function imprimirFPComercial() {
 
                     contenidoEspecifico = `<strong>Fecha de Inicio Alquiler:</strong> ${fechaInicioFmt}<br>
                                            <strong>Retorno Real:</strong> ${fechaReal}<br>
-                                           <strong>Total de Días de Arrendamiento:</strong> ${totalDiasCalc}<br><br>
+                                           <strong>Total de Días de Arrendamiento:</strong> ${totalDiasCalc}<br>
+                                           <br>
                                            <strong style="color:#1e3a8a;">1. Observaciones Iniciales de Salida (Según FAE):</strong><br>
-                                           <i>${t.notas_observaciones || t.observaciones_fae || 'Ninguna observación registrada en la salida.'}</i><br><br>
+                                           <i>${t.notas_observaciones || t.observaciones_fae || 'Ninguna observación registrada en la salida.'}</i><br>
+                                           <br>
                                            <strong style="color:#b45309;">2. Condiciones y Observaciones de Retorno Final (FAR):</strong><br>
                                            <i>${obs}</i>`;
                     // En la FAR usamos las fotos de la FAE original para el contraste
                     fotosArray = t.fotos_fae || []; 
                 }
 
-                contenidoEspecifico = `<div class="seccion"><div class="titulo">DATOS GENERALES</div><div class="contenido"><strong>Documento Referencia:</strong> ${t.numero_contrato}<br><strong>Cliente:</strong> ${t.cliente}<br>${contenidoEspecifico}</div></div>
+                // INYECCIÓN SEGURA DEL USUARIO ALQUILERES
+                let firmaUsuarioAlq = tipoDoc === 'FAE' ? (t.usuario_fae || 'Usuario no registrado') : (t.usuario_far || 'Usuario no registrado');
+
+                contenidoEspecifico = `<div class="seccion">
+                                            <div class="titulo">DATOS GENERALES</div>
+                                            <div class="contenido"><strong>Documento Referencia:</strong> ${t.numero_contrato}<br>
+                                                <strong>Cliente:</strong> ${t.cliente}<br>
+                                                <strong style="color:#1e3a8a;">Generado / Procesado por:</strong> ${firmaUsuarioAlq}<br><br>
+                                                ${contenidoEspecifico}</div></div>
                                        <div class="seccion"><div class="titulo">EQUIPO Y ACCESORIOS INVOLUCRADOS</div><div class="contenido"><strong>Equipo:</strong> ${t.nombre_equipo} ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})<br><br><strong>Accesorios Declarados:</strong><br>${accHtml}</div></div>`;
             
             } else if (tipoDoc === 'FV' || tipoDoc === 'FE') {
@@ -1152,7 +1183,7 @@ function imprimirFPComercial() {
                 
                 if (tipoDoc === 'FV') {
                     titulo = `FICHA DE VENTA Y ORDEN (FV)`;
-                    contenidoEspecifico = `<strong>Fecha Orden:</strong> ${new Date(t.fecha_creacion).toLocaleDateString('es-PE')}<br><strong>Observaciones:</strong> ${t.observaciones || 'Ninguna'}`;
+                    contenidoEspecifico = `<strong>Fecha Orden:</strong> ${new Date(t.fecha_creacion).toLocaleDateString('es-PE')}<br><strong>Observaciones:</strong><br> ${t.observaciones || 'Ninguna'}`;
                     fotosArray = [];
                 } else {
                     titulo = `FICHA DE ENTREGA DEFINITIVA DE VENTA (FE)`;
@@ -1162,7 +1193,10 @@ function imprimirFPComercial() {
                     fotosArray = t.fotos_fe || [];
                 }
 
-                contenidoEspecifico = `<div class="seccion"><div class="titulo">DATOS DE LA VENTA</div><div class="contenido"><strong>Documento Referencia:</strong> ${t.numero_fv}<br><strong>Cliente:</strong> ${t.cliente}<br>${contenidoEspecifico}</div></div>
+                // INYECCIÓN SEGURA DEL USUARIO VENTAS
+                let firmaUsuarioVen = tipoDoc === 'FV' ? (t.usuario_fv || 'Usuario no registrado') : (t.usuario_fe || 'Usuario no registrado');
+
+                contenidoEspecifico = `<div class="seccion"><div class="titulo">DATOS DE LA VENTA</div><div class="contenido"><strong>Documento Referencia:</strong> ${t.numero_fv}<br><strong>Cliente:</strong> ${t.cliente}<br><strong style="color:#047857;">Generado / Procesado por:</strong> ${firmaUsuarioVen}<br><br>${contenidoEspecifico}</div></div>
                                        <div class="seccion"><div class="titulo">EQUIPO A DESPACHAR</div><div class="contenido"><strong>Equipo:</strong> ${t.equipo_nombre} ${t.marca} ${t.modelo} (S/N: ${t.serie || 'N/A'})<br><br><strong>Accesorios Incluidos:</strong><br>${accHtml}</div></div>`;
             }
 

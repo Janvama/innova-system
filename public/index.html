@@ -1390,8 +1390,90 @@ async function guardarFP() {
             alert('¡Ficha de Entrega guardada/actualizada exitosamente!'); cerrarModalEntrega(); cargarTickets(); 
         }
 
-        function imprimirFichaEntrega() { const t = ticketsCargados.find(ticket => ticket.id_ticket === entregaActualId); if (!t) return; const fechaCruda = document.getElementById('entregaFecha').value; const fechaEntregaFormato = fechaCruda ? new Date(fechaCruda).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Pendiente'; const obs = document.getElementById('entregaObservaciones').value.trim() || 'Ninguna.'; let accs = 'Ninguno'; if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047;">$1</span>'); const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; const ventana = window.open('', '_blank'); ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>Entrega - ${t.numero_fr}</title><style>body{font-family:Arial; font-size:12px; margin:40px;} h2.doc-title{text-align:center; font-size:18px; margin-top:0;} .seccion{border:1px solid #ccc; margin-bottom:15px;} .titulo{background:#f1f5f9; font-weight:bold; padding:5px;} .contenido{padding:10px;}</style></head><body>${encabezadoEmpresaHTML}<h2 class="doc-title">FICHA DE ENTREGA DE EQUIPO</h2><div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">FR N°: ${t.numero_fr}</div><div class="seccion"><div class="titulo">CLIENTE Y EQUIPO</div><div class="contenido">Cliente: ${t.cliente}${rucHtml}<br>Equipo: ${t.marca} ${t.modelo} (S/N: ${t.numero_serie || 'N/A'})</div></div><div class="seccion"><div class="titulo">ACCESORIOS ENTREGADOS</div><div class="contenido">${accs}</div></div><div class="seccion" style="border-color:#f59e0b;"><div class="titulo" style="background:#fef3c7; color:#b45309;">CONDICIONES DE SALIDA</div><div class="contenido">Fecha de Entrega Definitiva: <strong>${fechaEntregaFormato}</strong><br><br><i>Observaciones: ${obs}</i></div></div><div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;"><div style=\"width:200px; border-top:1px solid #000;\">Firma Cliente (Conformidad)</div><div style=\"width:200px; border-top:1px solid #000;\">Innova Electronics</div></div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); }
+        function imprimirFichaEntrega() { 
+            const t = ticketsCargados.find(ticket => ticket.id_ticket === entregaActualId); 
+            if (!t) return; 
 
+            const fechaCruda = document.getElementById('entregaFecha').value; 
+            const fechaEntregaFormato = fechaCruda ? new Date(fechaCruda).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : 'Pendiente'; 
+            const obs = document.getElementById('entregaObservaciones').value.trim() || 'Ninguna.'; 
+            
+            let accs = 'Ninguno'; 
+            if (t.accesorios_incluidos && t.accesorios_incluidos !== 'Sin accesorios reportados') {
+                accs = t.accesorios_incluidos.replace(/\n/g, '<br>').replace(/\(([^)]+)\)/g, '<span style="background:#fef08a; font-weight:bold; font-size:11px; border:1px solid #fde047; padding:2px;">$1</span>'); 
+            }
+            const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; 
+            const usuarioGenerador = (t.entrega_data && t.entrega_data.usuario_entrega) ? t.entrega_data.usuario_entrega : usuarioActual.nombre_completo;
+
+            // Envolvemos todo el contenido dentro de <div class="pagina">
+            const htmlPaginas = `
+            <div class="pagina">
+                ${encabezadoEmpresaHTML}
+                <h2 class="doc-title">FICHA DE ENTREGA DE EQUIPO (FE)</h2>
+                <div style="text-align:center; font-weight:bold; margin-bottom:20px; font-size:16px;">FR N°: ${t.numero_fr}</div>
+                
+                <div class="seccion">
+                    <div class="titulo">GENERALES</div>
+                    <div class="contenido">
+                        <strong>Cliente:</strong> ${t.cliente}${rucHtml}<br>
+                        <strong style="color:#1e3a8a;">Generado / Procesado por:</strong> ${usuarioGenerador}<br>
+                        <strong>Fecha y Hora de Entrega:</strong> ${fechaEntregaFormato}
+                    </div>
+                </div>
+
+                <div class="seccion">
+                    <div class="titulo">EQUIPO</div>
+                    <div class="contenido">Marca/Tipo: ${t.marca} - Modelo: ${t.modelo} - S/N: ${t.numero_serie || '-'}</div>
+                </div>
+
+                <div class="seccion">
+                    <div class="titulo">ACCESORIOS ENTREGADOS</div>
+                    <div class="contenido">${accs}</div>
+                </div>
+                
+                <div class="seccion">
+                    <div class="titulo">FALLA REPORTADA INICIALMENTE</div>
+                    <div class="contenido"><i>${t.problema_reportado || 'No registrada'}</i></div>
+                </div>
+
+                <div class="seccion" style="border-color:#f59e0b;">
+                    <div class="titulo" style="background:#fef3c7; color:#b45309;">CONDICIONES DE SALIDA</div>
+                    <div class="contenido">
+                        <i>${obs}</i>
+                    </div>
+                </div>
+
+                <div style="display:flex; justify-content:space-between; margin-top:60px; text-align:center;">
+                    <div style="width:200px; border-top:1px solid #000; padding-top:5px;">Firma Cliente (Conformidad)</div>
+                    <div style="width:200px; border-top:1px solid #000; padding-top:5px;">Innova Electronics</div>
+                </div>
+            </div>`;
+
+            const ventana = window.open('', '_blank'); 
+            ventana.document.write(`<!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <title>Entrega - ${t.numero_fr}</title>
+                <style>
+                    /* Agregamos las reglas CSS exactas que usa la FR para simular la hoja A4 */
+                    @page { size: A4 portrait; margin: 0; }
+                    body { font-family: Arial, sans-serif; font-size: 12px; margin: 0; background: #525659; }
+                    .pagina { width: 21cm; height: 29.7cm; padding: 1.5cm; margin: 1cm auto; background: white; box-sizing: border-box; position: relative; page-break-after: always; box-shadow: 0 0 10px rgba(0,0,0,0.5); }
+                    @media print { body { background: white; margin: 0; } .pagina { margin: 0; box-shadow: none; } }
+                    
+                    h2.doc-title { text-align: center; font-size: 18px; margin-top: 0; } 
+                    .seccion { border: 1px solid #ccc; margin-bottom: 15px; } 
+                    .titulo { background: #f1f5f9; font-weight: bold; padding: 5px; } 
+                    .contenido { padding: 10px; line-height: 1.4; }
+                </style>
+            </head>
+            <body>
+                ${htmlPaginas}
+                <script>window.onload=function(){ setTimeout(() => window.print(), 500); }<\/script>
+            </body>
+            </html>`); 
+            ventana.document.close(); 
+        }
         // ==========================================
         // SEGURO PARA MANTENER EL PREFIJO EN LA FR
         // ==========================================
