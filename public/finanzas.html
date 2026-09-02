@@ -629,7 +629,7 @@
 
             flujo.forEach(item => {
                 const tr = document.createElement('tr');
-                const fechaStr = item.fecha.toLocaleDateString('es-PE');
+                const fechaStr = item.fecha.toLocaleDateString('es-PE', {timeZone: 'UTC'});
                 
                 let tagClase = '';
                 if (item.tipo_registro === 'INGRESO') tagClase = 'tag-ingreso';
@@ -806,6 +806,7 @@
                 if(response.ok) {
                     alert("¡Gasto registrado con éxito!");
                     document.getElementById('form-egreso').reset();
+                    const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
                     document.getElementById('fecha_egreso').value = new Date().toISOString().split('T')[0];
                     cargarDatosDashboard();
                 }
@@ -871,7 +872,8 @@
         window.onload = function() {
             const accesoPermitido = verificarSeguridad();
             if (accesoPermitido) {
-                document.getElementById('fecha_egreso').value = new Date().toISOString().split('T')[0];
+                const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                document.getElementById('fecha_egreso').value = d.toISOString().split('T')[0];
                 
                 // 👈 NUEVO: Bloqueamos las casillas de TC por defecto al cargar la página
                 document.getElementById('egreso_tc').disabled = true;
