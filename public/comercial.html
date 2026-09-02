@@ -527,12 +527,18 @@ const API_URL = '/api';
             document.getElementById('farFotosFAE').innerHTML = fotos.length ? fotos.map(f => `<div style="width:120px; border:1px solid #ccc; padding:5px; text-align:center; background:white;"><img src="${f.url}" style="width:100%; height:80px; object-fit:cover;"><p style="font-size:10px; margin:2px 0;">${f.descripcion}</p></div>`).join('') : '<span style="font-size:0.8rem; color:#64748b;">No se subieron fotos en la FAE.</span>';
 
             // SE MUESTRA LA FECHA DE INICIO DE ALQUILER EN FORMATO LEGIBLE (ES-PE)
-            document.getElementById('farFechaInicio').innerText = new Date(t.fecha_inicio).toLocaleDateString('es-PE'); 
+            document.getElementById('farFechaInicio').innerText = new Date(t.fecha_inicio).toLocaleDateString('es-PE', {timeZone: 'UTC'}); 
             
-            const fRef = t.fecha_devolucion_real ? new Date(t.fecha_devolucion_real) : new Date(); 
-            fRef.setMinutes(fRef.getMinutes() - fRef.getTimezoneOffset()); 
+            let fechaAsignadaFAR = '';
+            if (t.fecha_devolucion_real) {
+                fechaAsignadaFAR = t.fecha_devolucion_real.split('T')[0];
+            } else {
+                const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                fechaAsignadaFAR = d.toISOString().split('T')[0];
+            }
+            document.getElementById('farFechaReal').value = fechaAsignadaFAR; 
+
             document.getElementById('farAccesorios').innerText = t.accesorios || 'Sin accesorios registrados';
-            document.getElementById('farFechaReal').value = fRef.toISOString().split('T')[0]; 
             document.getElementById('farObservaciones').value = t.estado_retorno_equipo === 'En uso' ? '' : (t.estado_retorno_equipo || ''); 
             
             // CALCULAMOS LOS DÍAS TRANSCURRIDOS USANDO LA FECHA DE INICIO DEL CONTRATO
@@ -631,9 +637,16 @@ const API_URL = '/api';
             document.getElementById('feVenAcc').innerText = t.accesorios || 'Sin accesorios registrados';
             document.getElementById('feUsuarioFV').innerText = t.usuario_fv || 'No registrado';
             document.getElementById('feUsuarioFE').innerText = t.usuario_fe || 'Pendiente de entrega';
-            const fechaRef = t.fecha_entrega ? new Date(t.fecha_entrega) : new Date();
-            fechaRef.setMinutes(fechaRef.getMinutes() - fechaRef.getTimezoneOffset());
-            document.getElementById('feVenFecha').value = fechaRef.toISOString().split('T')[0];
+
+            let fechaAsignada = '';
+            if (t.fecha_entrega) {
+                fechaAsignada = t.fecha_entrega.split('T')[0];
+            } else {
+                const d = new Date(); d.setMinutes(d.getMinutes() - d.getTimezoneOffset());
+                fechaAsignada = d.toISOString().split('T')[0];
+            }
+            document.getElementById('feVenFecha').value = fechaAsignada;
+
             document.getElementById('feVenObs').value = t.observaciones_fe || '';
             abrirModal('modalFEVenta');
         }
@@ -660,7 +673,7 @@ const API_URL = '/api';
                     let pct = totalDias > 0 ? (diasTrans / totalDias) * 100 : 0;
                     if(pct < 0) pct = 0; if(pct > 100) pct = 100;
                     let colorBarra = pct < 75 ? '#3b82f6' : (pct < 100 ? '#f59e0b' : '#ef4444');
-                    let timeline = `<div style="font-size: 0.75rem; color:#64748b;">Del ${fIni.toLocaleDateString()} al ${fFin.toLocaleDateString()}</div>
+                    let timeline = `<div style="font-size: 0.75rem; color:#64748b;">Del ${fIni.toLocaleDateString('es-PE', {timeZone: 'UTC'})} al ${fFin.toLocaleDateString('es-PE', {timeZone: 'UTC'})}</div>
                                     <div class="progress-bar-bg"><div class="progress-bar-fill" style="width:${pct}%; background-color:${colorBarra};"></div></div>`;
 
                     return { tipo: 'Alquiler', obj: a, id_unico: a.id_contrato, num: a.numero_contrato, cli: a.cliente, eq: `${a.nombre_equipo} (${a.marca})`, accs: a.accesorios, f1: a.fecha_inicio, estFin: parseFloat(a.tarifa_total)>0?pagoStr:'Sin Costeo', logistico, timeline };
@@ -677,8 +690,8 @@ const API_URL = '/api';
                     else if (mTotal === 0) { pagoStr = 'Sin Costeo'; }
 
                     let logistico = v.estado === 'Entregado' ? 'Concretado' : 'En proceso';
-                    let timeline = `<div style="font-size: 0.75rem; color:#10b981; font-weight:bold;">FV Generada: ${new Date(v.fecha_creacion).toLocaleDateString()}</div>`;
-                    if (logistico === 'Concretado') timeline += `<div style="font-size: 0.75rem; color:#64748b;">Entregado: ${new Date(v.fecha_entrega).toLocaleDateString()}</div>`;
+                    let timeline = `<div style="font-size: 0.75rem; color:#10b981; font-weight:bold;">FV Generada: ${new Date(v.fecha_creacion).toLocaleDateString('es-PE', {timeZone: 'UTC'})}</div>`;
+                    if (logistico === 'Concretado') timeline += `<div style="font-size: 0.75rem; color:#64748b;">Entregado: ${new Date(v.fecha_entrega).toLocaleDateString('es-PE', {timeZone: 'UTC'})}</div>`;
 
                     return { tipo: 'Venta', obj: v, id_unico: v.id_fv, num: v.numero_fv, cli: v.cliente, eq: `${v.equipo_nombre} (${v.marca})`, accs: v.accesorios, f1: v.fecha_creacion, estFin: pagoStr, logistico, timeline };
                 })
@@ -742,7 +755,7 @@ const API_URL = '/api';
                 html = `
                     <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px; border-radius:4px; border:1px solid #e2e8f0;">
                         <div><strong>FAE N°:</strong> ${t.numero_contrato}</div>
-                        <div><strong>Inicio:</strong> ${new Date(t.fecha_inicio).toLocaleDateString('es-PE')}</div>
+                        <div><strong>Inicio:</strong> ${new Date(t.fecha_inicio).toLocaleDateString('es-PE', {timeZone: 'UTC'})}</div>
                     </div>
                     <div style="margin-top:15px; display:flex; gap:10px;">
                         <div style="flex:1;"><strong>Cliente:</strong> ${t.cliente}</div>
@@ -763,7 +776,7 @@ const API_URL = '/api';
                 html = `
                     <div style="display:flex; justify-content:space-between; background:#f8fafc; padding:10px; border-radius:4px; border:1px solid #e2e8f0;">
                         <div><strong>FV N°:</strong> ${t.numero_fv}</div>
-                        <div><strong>Fecha:</strong> ${new Date(t.fecha_creacion).toLocaleDateString('es-PE')}</div>
+                        <div><strong>Fecha:</strong> ${new Date(t.fecha_creacion).toLocaleDateString('es-PE', {timeZone: 'UTC'})}</div>
                     </div>
                     <div style="margin-top:15px; display:flex; gap:10px;">
                         <div style="flex:1;"><strong>Cliente:</strong> ${t.cliente}</div>
@@ -980,7 +993,7 @@ function imprimirFPComercial() {
                 const t = dataAlquileres.find(a => a.id_contrato === itemSeleccionado.id);
                 docNum = t.numero_contrato; cli = t.cliente; eq = `${t.nombre_equipo} (${t.marca})`;
                 cant = parseInt(document.getElementById('fpAlqDias').value || 1); cUni = parseFloat(document.getElementById('fpAlqCostoDia').value || 0);
-                periodoStr = `Del ${new Date(t.fecha_inicio).toLocaleDateString()} al ${t.fecha_devolucion_real ? new Date(t.fecha_devolucion_real).toLocaleDateString() : 'En curso'} (${cant} Días)`;
+                periodoStr = `Del ${new Date(t.fecha_inicio).toLocaleDateString('es-PE', {timeZone: 'UTC'})} al ${t.fecha_devolucion_real ? new Date(t.fecha_devolucion_real).toLocaleDateString('es-PE', {timeZone: 'UTC'}) : 'En curso'} (${cant} Días)`;
                 tipoCalc = `Tarifa por día de alquiler (${sim} ${cUni.toFixed(2)} x ${cant} días)`;
                 valGtia = `* El depósito de garantía de ${sim} ${parseFloat(document.getElementById('fpAlqGarantia').value||0).toFixed(2)} está sujeto a condiciones de devolución.`;
                 
@@ -1144,12 +1157,12 @@ function imprimirFPComercial() {
                 
                 if (tipoDoc === 'FAE') {
                     titulo = `FICHA DE ARRENDAMIENTO Y ENTREGA (FAE)`;
-                    contenidoEspecifico = `<strong>Inicio del Alquiler:</strong> ${new Date(t.fecha_inicio).toLocaleDateString('es-PE')}<br><strong>Fin Tentativo:</strong> ${new Date(t.fecha_fin).toLocaleDateString('es-PE')}<br><br><strong>Observaciones de Salida:</strong><br><i>${t.notas_observaciones || t.observaciones_fae || 'Ninguna'}</i>`;
+                    contenidoEspecifico = `<strong>Inicio del Alquiler:</strong> ${new Date(t.fecha_inicio).toLocaleDateString('es-PE', {timeZone: 'UTC'})}<br><strong>Fin Tentativo:</strong> ${new Date(t.fecha_fin).toLocaleDateString('es-PE', {timeZone: 'UTC'})}<br><br><strong>Observaciones de Salida:</strong><br><i>${t.notas_observaciones || t.observaciones_fae || 'Ninguna'}</i>`;
                     fotosArray = t.fotos_fae || [];
                 } else {
                     titulo = `FICHA DE ARRENDAMIENTO DE RECEPCIÓN (FAR)`;
-                    const fechaInicioFmt = t.fecha_inicio ? new Date(t.fecha_inicio).toLocaleDateString('es-PE') : 'N/A';
-                    const fechaReal = document.getElementById('farFechaReal').value ? new Date(document.getElementById('farFechaReal').value).toLocaleDateString('es-PE') : 'Pendiente';
+                    const fechaInicioFmt = t.fecha_inicio ? new Date(t.fecha_inicio).toLocaleDateString('es-PE', {timeZone: 'UTC'}) : 'N/A';
+                    const fechaReal = document.getElementById('farFechaReal').value ? new Date(document.getElementById('farFechaReal').value).toLocaleDateString('es-PE', {timeZone: 'UTC'}) : 'Pendiente';
                     const totalDiasCalc = document.getElementById('farDiasTexto').innerText || 'N/A';
                     const obs = document.getElementById('farObservaciones').value || 'Ninguna';
 
@@ -1183,11 +1196,11 @@ function imprimirFPComercial() {
                 
                 if (tipoDoc === 'FV') {
                     titulo = `FICHA DE VENTA Y ORDEN (FV)`;
-                    contenidoEspecifico = `<strong>Fecha Orden:</strong> ${new Date(t.fecha_creacion).toLocaleDateString('es-PE')}<br><strong>Observaciones:</strong><br> ${t.observaciones || 'Ninguna'}`;
+                    contenidoEspecifico = `<strong>Fecha Orden:</strong> ${new Date(t.fecha_creacion).toLocaleDateString('es-PE', {timeZone: 'UTC'})}<br><strong>Observaciones:</strong><br> ${t.observaciones || 'Ninguna'}`;
                     fotosArray = [];
                 } else {
                     titulo = `FICHA DE ENTREGA DEFINITIVA DE VENTA (FE)`;
-                    const fechaReal = document.getElementById('feVenFecha').value ? new Date(document.getElementById('feVenFecha').value).toLocaleDateString('es-PE') : 'Pendiente';
+                    const fechaReal = document.getElementById('feVenFecha').value ? new Date(document.getElementById('feVenFecha').value).toLocaleDateString('es-PE', {timeZone: 'UTC'}) : 'Pendiente';
                     const obs = document.getElementById('feVenObs').value || 'Ninguna';
                     contenidoEspecifico = `<strong>Fecha de Entrega Física:</strong> ${fechaReal}<br><strong>Condiciones de Entrega:</strong><br><i>${obs}</i>`;
                     fotosArray = t.fotos_fe || [];
