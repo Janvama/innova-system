@@ -799,13 +799,17 @@
             
             // Extraer la data actual de la OTM (para no borrar diagnóstico, repuestos, actividades antiguas)
             let otmActual = ticketFotosOTMSeleccionado.otm_data || {};
-            if(!otmActual.fotos) otmActual.fotos = [];
-            
-            // Añadir las nuevas fotos
-            otmActual.fotos.push(...nuevasFotosOTMMovil);
             
             try {
-                // Hacemos un PUT a la ruta de OTM que ya usas en Mantenimiento Web
+                // 1. Descargar las fotos existentes en el servidor para no borrarlas
+                const resFotos = await fetch(`${API_URL}/tickets/${ticketFotosOTMSeleccionado.id_ticket}/fotos`);
+                const dataFotos = await resFotos.json();
+                
+                // 2. Unir el historial fotográfico con las fotos nuevas
+                otmActual.fotos = dataFotos.fotos_otm || [];
+                otmActual.fotos.push(...nuevasFotosOTMMovil);
+                
+                // 3. Guardar la OTM actualizada
                 const req = await fetch(`${API_URL}/tickets/${ticketFotosOTMSeleccionado.id_ticket}/otm`, { 
                     method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(otmActual) 
                 });
