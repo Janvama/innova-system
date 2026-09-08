@@ -641,6 +641,222 @@ app.put('/api/comercial/fv/:id/fp', async (req, res) => {
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
 
+// =====================================================================
+// 📦 MÓDULO DE INVENTARIOS Y RENDICIÓN DE GASTOS
+// =====================================================================
+
+// 1. Obtener Categorías (Para cargar tus listas desplegables 1, 2 y 3)
+app.get('/api/inventario/categorias', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM categorias_inventario ORDER BY categoria_1, categoria_2, categoria_3");
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 2. Obtener Proveedores (Para el campo 10)
+app.get('/api/inventario/proveedores', async (req, res) => {
+    try {
+        const result = await pool.query("SELECT * FROM proveedores ORDER BY razon_social");
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 3. Crear un nuevo Artículo en el Catálogo Maestro
+// 3. Crear un nuevo Artículo en el Catálogo Maestro
+app.post('/api/inventario/articulos', async (req, res) => {
+    // Añadimos 'tecnologia' a la desestructuración
+    const { codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia } = req.body;
+    try {
+        const query = `
+            INSERT INTO articulos (codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id_articulo;
+        `;
+        const result = await pool.query(query, [codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia]);
+        res.json({ mensaje: 'Artículo creado en el catálogo', id_articulo: result.rows[0].id_articulo });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 4. Obtener Buscador de Inventario (¡Con cálculo matemático automático de stock!)
+app.get('/api/inventario/articulos', async (req, res) => {
+    try {
+        // Hacemos un cruce (JOIN) entre el catálogo, las categorías, proveedores y el Kárdex
+        const query = `
+            SELECT a.*, c.categoria_1, c.categoria_2, c.categoria_3, p.razon_social AS proveedor_nombre,
+                   COALESCE(SUM(CASE WHEN k.tipo_movimiento = 'ENTRADA' THEN k.cantidad ELSE 0 END), 0) AS cantidad_comprada,
+                   COALESCE(SUM(CASE WHEN k.tipo_movimiento = 'SALIDA' THEN k.cantidad ELSE 0 END), 0) AS cantidad_usada,
+                   COALESCE(SUM(CASE WHEN k.tipo_movimiento = 'ENTRADA' THEN k.cantidad ELSE -k.cantidad END), 0) AS cantidad_actual
+            FROM articulos a
+            LEFT JOIN categorias_inventario c ON a.id_categoria = c.id_categoria
+            LEFT JOIN proveedores p ON a.id_proveedor = p.id_proveedor
+            LEFT JOIN kardex_movimientos k ON a.id_articulo = k.id_articulo
+            GROUP BY a.id_articulo, c.categoria_1, c.categoria_2, c.categoria_3, p.razon_social
+            ORDER BY a.nombre_articulo;
+        `;
+        const result = await pool.query(query);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 5. Guardar Rendición de Gastos (El Cerebro Automatizado)
+app.post('/api/inventario/rendicion', async (req, res) => {
+    const { numero_rendicion, id_empleado, monto_asignado, detalles } = req.body;
+    // La pantalla web enviará los "detalles" como una lista de lo comprado
+    
+    try {
+        await pool.query('BEGIN'); // INICIO DE TRANSACCIÓN SEGURA (Si falla algo, no guarda datos a medias)
+        
+        let monto_gastado = 0;
+        detalles.forEach(d => monto_gastado += parseFloat(d.subtotal));
+        const saldo_balance = parseFloat(monto_asignado) - monto_gastado;
+
+        // 1. Guardar la Cabecera (El resumen de la hoja de rendición)
+        const resRendicion = await pool.query(
+            `INSERT INTO rendicion_gastos (numero_rendicion, id_empleado, monto_asignado, monto_gastado, saldo_balance, estado) 
+             VALUES ($1, $2, $3, $4, $5, 'Aprobada') RETURNING id_rendicion;`,
+            [numero_rendicion, id_empleado, monto_asignado, monto_gastado, saldo_balance]
+        );
+        const idRendicion = resRendicion.rows[0].id_rendicion;
+
+        let monto_finanzas_otros = 0;
+        let descripcion_finanzas = `Rendición ${numero_rendicion}: `;
+
+        // 2. Leer cada artículo comprado en el formulario
+        for (let det of detalles) {
+            await pool.query(
+                `INSERT INTO rendicion_detalle (id_rendicion, tipo_gasto, descripcion_gasto, id_articulo, cantidad, costo_unitario, subtotal, id_proveedor) 
+                 VALUES ($1, $2, $3, $4, $5, $6, $7, $8);`,
+                [idRendicion, det.tipo_gasto, det.descripcion_gasto, det.id_articulo || null, det.cantidad, det.costo_unitario, det.subtotal, det.id_proveedor || null]
+            );
+
+            if (det.tipo_gasto === 'INVENTARIO' && det.id_articulo) {
+                // A. Si es un repuesto, inyectarlo como "ENTRADA" en el Kárdex para sumar stock físico
+                await pool.query(
+                    `INSERT INTO kardex_movimientos (id_articulo, tipo_movimiento, cantidad, id_empleado, referencia_documento, observaciones) 
+                     VALUES ($1, 'ENTRADA', $2, $3, $4, $5);`,
+                    [det.id_articulo, det.cantidad, id_empleado, numero_rendicion, 'Compra ingresada por Rendición']
+                );
+                
+                // OPCIONAL: Si deseas que el artículo maestro actualice su "último proveedor" y "último costo" 
+                await pool.query(
+                    `UPDATE articulos SET id_proveedor = $1, costo_unitario = $2 WHERE id_articulo = $3;`,
+                    [det.id_proveedor || null, det.costo_unitario, det.id_articulo]
+                );
+            } else {
+                // B. Si es pasaje, comida o viático, sumarlo para la contabilidad
+                monto_finanzas_otros += parseFloat(det.subtotal);
+                descripcion_finanzas += `${det.descripcion_gasto} (S/${det.subtotal}), `;
+            }
+        }
+
+        // 3. PUENTE A FINANZAS: Los gastos de movilidad se van automáticos al Módulo Financiero
+        if (monto_finanzas_otros > 0) {
+            await pool.query(
+                `INSERT INTO egresos_operativos (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, moneda, tc) 
+                 VALUES ('Logística/Movilidad', $1, $2, 'Caja Chica', 'Rendición', $3, 'PEN', 1.00);`,
+                [descripcion_finanzas, monto_finanzas_otros, numero_rendicion]
+            );
+        }
+
+        await pool.query('COMMIT'); // FIN DE TRANSACCIÓN: Todo se guardó perfectamente
+        res.json({ mensaje: 'Rendición procesada: Stock actualizado y Finanzas cuadradas.' });
+        
+    } catch (err) {
+        await pool.query('ROLLBACK'); // Si ocurre un error, bloquea el proceso para no duplicar ni alterar saldos
+        console.error("Error en rendición:", err.message);
+        res.status(500).json({ error: 'Error interno al procesar la rendición' });
+    }
+});
+
+// 6. Crear Nueva Categoría
+app.post('/api/inventario/categorias', async (req, res) => {
+    const { categoria_1, categoria_2, categoria_3 } = req.body;
+    try {
+        await pool.query("INSERT INTO categorias_inventario (categoria_1, categoria_2, categoria_3) VALUES ($1, $2, $3)", [categoria_1, categoria_2, categoria_3]);
+        res.json({ mensaje: 'Categoría guardada' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 7. Crear Nuevo Proveedor
+app.post('/api/inventario/proveedores', async (req, res) => {
+    const { razon_social, direccion, telefonos, link_ubicacion } = req.body;
+    try {
+        await pool.query("INSERT INTO proveedores (razon_social, direccion, telefonos, link_ubicacion) VALUES ($1, $2, $3, $4)", [razon_social, direccion, telefonos, link_ubicacion]);
+        res.json({ mensaje: 'Proveedor guardado' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 8. Editar Categoría
+app.put('/api/inventario/categorias/:id', async (req, res) => {
+    const { categoria_1, categoria_2, categoria_3 } = req.body;
+    try {
+        await pool.query(
+            "UPDATE categorias_inventario SET categoria_1=$1, categoria_2=$2, categoria_3=$3 WHERE id_categoria=$4", 
+            [categoria_1, categoria_2, categoria_3, req.params.id]
+        );
+        res.json({ mensaje: 'Categoría actualizada' });
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// 9. Eliminar Categoría (Con protección de dependencias)
+app.delete('/api/inventario/categorias/:id', async (req, res) => {
+    try {
+        await pool.query("DELETE FROM categorias_inventario WHERE id_categoria=$1", [req.params.id]);
+        res.json({ mensaje: 'Categoría eliminada' });
+    } catch (err) { 
+        // Si PostgreSQL arroja error de llave foránea (23503), es porque hay repuestos usando esta categoría
+        res.status(400).json({ error: 'No se puede eliminar porque hay artículos usando esta categoría.' }); 
+    }
+});
+
+// 10. Obtener Historial de Rendiciones (Con desglose de gastos)
+app.get('/api/inventario/rendiciones', async (req, res) => {
+    try {
+        const query = `
+            SELECT r.id_rendicion, r.numero_rendicion, r.monto_asignado, r.monto_gastado, r.saldo_balance, r.estado, r.fecha_registro,
+                   e.nombre_completo AS empleado_nombre,
+                   (
+                       SELECT json_agg(json_build_object(
+                           'tipo_gasto', d.tipo_gasto,
+                           'descripcion_gasto', d.descripcion_gasto,
+                           'articulo_nombre', a.nombre_articulo,
+                           'cantidad', d.cantidad,
+                           'costo_unitario', d.costo_unitario,
+                           'subtotal', d.subtotal
+                       ))
+                       FROM rendicion_detalle d
+                       LEFT JOIN articulos a ON d.id_articulo = a.id_articulo
+                       WHERE d.id_rendicion = r.id_rendicion
+                   ) as detalles
+            FROM rendicion_gastos r
+            LEFT JOIN empleados e ON r.id_empleado = e.id_empleado
+            ORDER BY r.fecha_registro DESC;
+        `;
+        const result = await pool.query(query);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+
+// 11. Editar Artículo del Catálogo Maestro
+app.put('/api/inventario/articulos/:id', async (req, res) => {
+    const { codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia } = req.body;
+    try {
+        const query = `
+            UPDATE articulos 
+            SET codigo_articulo = $1, nombre_articulo = $2, id_categoria = $3, caracteristicas = $4, 
+                uso_equipo = $5, procedencia = $6, id_proveedor = $7, costo_unitario = $8, 
+                url_foto_articulo = $9, tecnologia = $10
+            WHERE id_articulo = $11
+        `;
+        await pool.query(query, [codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia, req.params.id]);
+        res.json({ mensaje: 'Artículo actualizado exitosamente' });
+    } catch (err) {
+        // Si PostgreSQL arroja error 23505, es porque intentó usar un código que ya le pertenece a otro repuesto
+        if (err.code === '23505') res.status(400).json({ error: 'El código de artículo ya existe en otro registro.' });
+        else res.status(500).json({ error: err.message });
+    }
+});
+
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
