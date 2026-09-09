@@ -197,20 +197,22 @@ app.delete('/api/tickets/:id', async (req, res) => { await pool.query('DELETE FR
 app.put('/api/tickets/:id/otm', async (req, res) => {
     const { id } = req.params;
     const { numero_fr, id_empleado, otm_data, repuestos_utilizados } = req.body; 
-    // repuestos_utilizados ahora será un array exacto: [{ id_articulo, cantidad, descripcion }]
 
     try {
         await pool.query('BEGIN'); // Iniciamos la transacción segura
 
-        // 1. Guardar el texto y estado de la OTM en el ticket
+        // 1. Evaluar si la OTM se está cerrando (si tiene fecha de término)
+        const estadoActualizado = otm_data.fecha_termino ? 'OTM finalizado' : 'OTM en proceso';
+
+        // 2. Guardar la OTM y actualizar el estado general del ticket
         await pool.query(
-            'UPDATE tickets_servicio SET otm_data = $1 WHERE id_ticket = $2',
-            [JSON.stringify(otm_data), id]
+            'UPDATE tickets_servicio SET otm_data = $1, estado_equipo = $2 WHERE id_ticket = $3',
+            [JSON.stringify(otm_data), estadoActualizado, id]
         );
 
-        // 2. Sincronización inteligente con el Kárdex (Inventario)
+        // 3. Sincronización inteligente con el Kárdex (Inventario)
         if (repuestos_utilizados && Array.isArray(repuestos_utilizados)) {
-            // A. Limpiar las salidas previas vinculadas a esta FR exacta para evitar duplicados si se edita la OTM
+            // A. Limpiar las salidas previas vinculadas a esta FR exacta
             await pool.query(
                 `DELETE FROM kardex_movimientos 
                  WHERE referencia_documento = $1 AND tipo_movimiento = 'SALIDA' AND observaciones = 'Consumo en OTM'`,
@@ -230,7 +232,7 @@ app.put('/api/tickets/:id/otm', async (req, res) => {
         }
 
         await pool.query('COMMIT');
-        res.json({ message: 'OTM guardada y stock actualizado correctamente.' });
+        res.json({ message: 'OTM guardada, estado actualizado y stock sincronizado.' });
     } catch (err) {
         await pool.query('ROLLBACK');
         console.error("Error al guardar OTM:", err.message);

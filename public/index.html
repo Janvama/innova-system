@@ -535,6 +535,9 @@ function iniciarAplicacion() {
     cargarPlantillas(); 
     cargarTickets();
     cargarInventarioParaOTM(); // NUEVA LÍNEA
+
+    // NUEVO: Auto-actualización silenciosa de la tabla de registros cada 10 segundos
+    // setInterval(() => cargarTickets(true), 10000);
 }
 
         async function cargarInventarioParaOTM() {
@@ -1123,7 +1126,7 @@ function comprimirImagen(archivo, maxWidth, maxHeight, quality, callback) {
     fotosFRGlobal = []; 
     renderFotosFR(); 
     cambiarPlantilla(); 
-    cargarTickets(); 
+    cargarTickets(true); 
     alert('FR creada exitosamente.');
 });
 
@@ -1262,7 +1265,7 @@ async function guardarFP() {
 
     alert(fpData.pagado ? '¡El pago se ha registrado exitosamente en Mantenimiento y Finanzas!' : '¡Factura Proforma guardada/actualizada!'); 
     cerrarModalFP(); 
-    cargarTickets(); 
+    cargarTickets(true); 
 }
 
         function imprimirFP() { 
@@ -1360,7 +1363,7 @@ async function guardarFP() {
 
             await fetch(`${API_URL}/tickets/${otmActualId}/otm`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
             alert('¡OTM guardada y stock sincronizado exitosamente!'); 
-            cerrarModalOTM(); cargarTickets(); 
+            cerrarModalOTM(); cargarTickets(true); 
         }
         
         function generarReporteOTM(idTicket) { 
@@ -1465,7 +1468,9 @@ async function guardarFP() {
                 headers: { 'Content-Type': 'application/json' }, 
                 body: JSON.stringify({ fecha_entrega, observaciones, usuario_entrega: usuarioActual.nombre_completo }) 
             }); 
-            alert('¡Ficha de Entrega guardada/actualizada exitosamente!'); cerrarModalEntrega(); cargarTickets(); 
+            alert('¡Ficha de Entrega guardada/actualizada exitosamente!'); 
+            cerrarModalEntrega(); 
+            cargarTickets(true); 
         }
 
         function imprimirFichaEntrega() { 
