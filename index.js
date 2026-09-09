@@ -193,15 +193,49 @@ app.get('/api/tickets/:id/fotos', async (req, res) => {
 
 app.delete('/api/tickets/:id', async (req, res) => { await pool.query('DELETE FROM tickets_servicio WHERE id_ticket = $1', [req.params.id]); res.json({ success: true }); });
 
+// Ruta para Guardar/Actualizar la OTM y sincronizar con Inventario
 app.put('/api/tickets/:id/otm', async (req, res) => {
+    const { id } = req.params;
+    const { numero_fr, id_empleado, otm_data, repuestos_utilizados } = req.body; 
+    // repuestos_utilizados ahora será un array exacto: [{ id_articulo, cantidad, descripcion }]
+
     try {
-        const { id } = req.params; const otmData = req.body;
-        const tk = await pool.query('SELECT estado_equipo FROM tickets_servicio WHERE id_ticket = $1', [id]);
-        let nEst = tk.rows[0].estado_equipo;
-        if (nEst !== 'Entregado') { if (otmData.fecha_termino && otmData.fecha_termino.trim() !== '') nEst = 'OTM finalizado'; else nEst = 'OTM en proceso'; }
-        await pool.query("UPDATE tickets_servicio SET otm_data = $1, estado_equipo = $2 WHERE id_ticket = $3", [otmData, nEst, id]);
-        res.json({ success: true });
-    } catch (e) { res.status(500).send(e.message); }
+        await pool.query('BEGIN'); // Iniciamos la transacción segura
+
+        // 1. Guardar el texto y estado de la OTM en el ticket
+        await pool.query(
+            'UPDATE tickets_servicio SET otm_data = $1 WHERE id_ticket = $2',
+            [JSON.stringify(otm_data), id]
+        );
+
+        // 2. Sincronización inteligente con el Kárdex (Inventario)
+        if (repuestos_utilizados && Array.isArray(repuestos_utilizados)) {
+            // A. Limpiar las salidas previas vinculadas a esta FR exacta para evitar duplicados si se edita la OTM
+            await pool.query(
+                `DELETE FROM kardex_movimientos 
+                 WHERE referencia_documento = $1 AND tipo_movimiento = 'SALIDA' AND observaciones = 'Consumo en OTM'`,
+                [numero_fr]
+            );
+
+            // B. Insertar los consumos actualizados
+            for (let rep of repuestos_utilizados) {
+                if (rep.id_articulo) {
+                    await pool.query(
+                        `INSERT INTO kardex_movimientos (id_articulo, tipo_movimiento, cantidad, id_empleado, referencia_documento, observaciones) 
+                         VALUES ($1, 'SALIDA', $2, $3, $4, 'Consumo en OTM');`,
+                        [rep.id_articulo, rep.cantidad, id_empleado, numero_fr]
+                    );
+                }
+            }
+        }
+
+        await pool.query('COMMIT');
+        res.json({ message: 'OTM guardada y stock actualizado correctamente.' });
+    } catch (err) {
+        await pool.query('ROLLBACK');
+        console.error("Error al guardar OTM:", err.message);
+        res.status(500).json({ error: 'Error interno al sincronizar OTM y Kárdex' });
+    }
 });
 
 app.put('/api/tickets/:id/entrega', async (req, res) => {
@@ -663,15 +697,15 @@ app.get('/api/inventario/proveedores', async (req, res) => {
 
 // 3. Crear un nuevo Artículo en el Catálogo Maestro
 // 3. Crear un nuevo Artículo en el Catálogo Maestro
+// 3. Crear un nuevo Artículo en el Catálogo Maestro
 app.post('/api/inventario/articulos', async (req, res) => {
-    // Añadimos 'tecnologia' a la desestructuración
-    const { codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia } = req.body;
+    const { codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia, url_compra, info_tecnica } = req.body;
     try {
         const query = `
-            INSERT INTO articulos (codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia) 
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10) RETURNING id_articulo;
+            INSERT INTO articulos (codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia, url_compra, info_tecnica) 
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12) RETURNING id_articulo;
         `;
-        const result = await pool.query(query, [codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia]);
+        const result = await pool.query(query, [codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia, url_compra, info_tecnica]);
         res.json({ mensaje: 'Artículo creado en el catálogo', id_articulo: result.rows[0].id_articulo });
     } catch (err) { res.status(500).json({ error: err.message }); }
 });
@@ -698,18 +732,18 @@ app.get('/api/inventario/articulos', async (req, res) => {
 });
 
 // 5. Guardar Rendición de Gastos (El Cerebro Automatizado)
+// 5. Guardar Rendición de Gastos (El Cerebro Automatizado y Puente a Finanzas)
 app.post('/api/inventario/rendicion', async (req, res) => {
     const { numero_rendicion, id_empleado, monto_asignado, detalles } = req.body;
-    // La pantalla web enviará los "detalles" como una lista de lo comprado
     
     try {
-        await pool.query('BEGIN'); // INICIO DE TRANSACCIÓN SEGURA (Si falla algo, no guarda datos a medias)
+        await pool.query('BEGIN'); 
         
         let monto_gastado = 0;
         detalles.forEach(d => monto_gastado += parseFloat(d.subtotal));
         const saldo_balance = parseFloat(monto_asignado) - monto_gastado;
 
-        // 1. Guardar la Cabecera (El resumen de la hoja de rendición)
+        // 1. Guardar la Cabecera
         const resRendicion = await pool.query(
             `INSERT INTO rendicion_gastos (numero_rendicion, id_empleado, monto_asignado, monto_gastado, saldo_balance, estado) 
              VALUES ($1, $2, $3, $4, $5, 'Aprobada') RETURNING id_rendicion;`,
@@ -717,10 +751,13 @@ app.post('/api/inventario/rendicion', async (req, res) => {
         );
         const idRendicion = resRendicion.rows[0].id_rendicion;
 
-        let monto_finanzas_otros = 0;
-        let descripcion_finanzas = `Rendición ${numero_rendicion}: `;
+        // Variables para clasificar el dinero enviado a Finanzas
+        let monto_inventario = 0;
+        let monto_movilidad = 0;
+        let descripcion_inventario = `Logística (Rendición ${numero_rendicion}): `;
+        let descripcion_movilidad = `Movilidad/Otros (Rendición ${numero_rendicion}): `;
 
-        // 2. Leer cada artículo comprado en el formulario
+        // 2. Leer cada artículo comprado
         for (let det of detalles) {
             await pool.query(
                 `INSERT INTO rendicion_detalle (id_rendicion, tipo_gasto, descripcion_gasto, id_articulo, cantidad, costo_unitario, subtotal, id_proveedor) 
@@ -729,39 +766,54 @@ app.post('/api/inventario/rendicion', async (req, res) => {
             );
 
             if (det.tipo_gasto === 'INVENTARIO' && det.id_articulo) {
-                // A. Si es un repuesto, inyectarlo como "ENTRADA" en el Kárdex para sumar stock físico
+                // A. Kárdex: Suma Stock
                 await pool.query(
                     `INSERT INTO kardex_movimientos (id_articulo, tipo_movimiento, cantidad, id_empleado, referencia_documento, observaciones) 
                      VALUES ($1, 'ENTRADA', $2, $3, $4, $5);`,
                     [det.id_articulo, det.cantidad, id_empleado, numero_rendicion, 'Compra ingresada por Rendición']
                 );
                 
-                // OPCIONAL: Si deseas que el artículo maestro actualice su "último proveedor" y "último costo" 
+                // Actualiza Catálogo (opcional)
                 await pool.query(
                     `UPDATE articulos SET id_proveedor = $1, costo_unitario = $2 WHERE id_articulo = $3;`,
                     [det.id_proveedor || null, det.costo_unitario, det.id_articulo]
                 );
+                
+                // Sumamos dinero de inventario para Finanzas
+                monto_inventario += parseFloat(det.subtotal);
+                descripcion_inventario += `${det.descripcion_gasto} (S/${det.subtotal}), `;
             } else {
-                // B. Si es pasaje, comida o viático, sumarlo para la contabilidad
-                monto_finanzas_otros += parseFloat(det.subtotal);
-                descripcion_finanzas += `${det.descripcion_gasto} (S/${det.subtotal}), `;
+                // Sumamos dinero de movilidad para Finanzas
+                monto_movilidad += parseFloat(det.subtotal);
+                descripcion_movilidad += `${det.descripcion_gasto} (S/${det.subtotal}), `;
             }
         }
 
-        // 3. PUENTE A FINANZAS: Los gastos de movilidad se van automáticos al Módulo Financiero
-        if (monto_finanzas_otros > 0) {
+        // 3. PUENTE A FINANZAS: Enviar los Egreso separados por categoría
+        
+        // A. Si se gastó en Logística/Repuestos
+        if (monto_inventario > 0) {
             await pool.query(
-                `INSERT INTO egresos_operativos (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, moneda, tc) 
-                 VALUES ('Logística/Movilidad', $1, $2, 'Caja Chica', 'Rendición', $3, 'PEN', 1.00);`,
-                [descripcion_finanzas, monto_finanzas_otros, numero_rendicion]
+                `INSERT INTO egresos_operativos (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, moneda, tc, fecha_egreso) 
+                 VALUES ('COMPRA REPUESTOS', $1, $2, 'EFECTIVO', 'Rendición', $3, 'PEN', 1.00, CURRENT_TIMESTAMP);`,
+                [descripcion_inventario, monto_inventario, numero_rendicion]
             );
         }
 
-        await pool.query('COMMIT'); // FIN DE TRANSACCIÓN: Todo se guardó perfectamente
+        // B. Si se gastó en Pasajes o Viáticos
+        if (monto_movilidad > 0) {
+            await pool.query(
+                `INSERT INTO egresos_operativos (categoria, descripcion_detalle, monto_total, metodo_pago, tipo_comprobante, nro_comprobante, moneda, tc, fecha_egreso) 
+                 VALUES ('OTROS', $1, $2, 'EFECTIVO', 'Rendición', $3, 'PEN', 1.00, CURRENT_TIMESTAMP);`,
+                [descripcion_movilidad, monto_movilidad, numero_rendicion]
+            );
+        }
+
+        await pool.query('COMMIT'); 
         res.json({ mensaje: 'Rendición procesada: Stock actualizado y Finanzas cuadradas.' });
         
     } catch (err) {
-        await pool.query('ROLLBACK'); // Si ocurre un error, bloquea el proceso para no duplicar ni alterar saldos
+        await pool.query('ROLLBACK'); 
         console.error("Error en rendición:", err.message);
         res.status(500).json({ error: 'Error interno al procesar la rendición' });
     }
@@ -838,20 +890,20 @@ app.get('/api/inventario/rendiciones', async (req, res) => {
 
 
 // 11. Editar Artículo del Catálogo Maestro
+// 11. Editar Artículo del Catálogo Maestro
 app.put('/api/inventario/articulos/:id', async (req, res) => {
-    const { codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia } = req.body;
+    const { codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia, url_compra, info_tecnica } = req.body;
     try {
         const query = `
             UPDATE articulos 
             SET codigo_articulo = $1, nombre_articulo = $2, id_categoria = $3, caracteristicas = $4, 
                 uso_equipo = $5, procedencia = $6, id_proveedor = $7, costo_unitario = $8, 
-                url_foto_articulo = $9, tecnologia = $10
-            WHERE id_articulo = $11
+                url_foto_articulo = $9, tecnologia = $10, url_compra = $11, info_tecnica = $12
+            WHERE id_articulo = $13
         `;
-        await pool.query(query, [codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia, req.params.id]);
+        await pool.query(query, [codigo_articulo, nombre_articulo, id_categoria, caracteristicas, uso_equipo, procedencia, id_proveedor, costo_unitario, url_foto_articulo, tecnologia, url_compra, info_tecnica, req.params.id]);
         res.json({ mensaje: 'Artículo actualizado exitosamente' });
     } catch (err) {
-        // Si PostgreSQL arroja error 23505, es porque intentó usar un código que ya le pertenece a otro repuesto
         if (err.code === '23505') res.status(400).json({ error: 'El código de artículo ya existe en otro registro.' });
         else res.status(500).json({ error: err.message });
     }

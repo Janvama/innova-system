@@ -220,15 +220,24 @@
                         </select>
                     </div>
                 </div>
+
                 <div class="form-row">
                     <div class="form-col"><label>Características / Especificaciones:</label><input type="text" id="artCaract"></div>
                     <div class="form-col"><label>Uso o Equipo destinado:</label><input type="text" id="artUso"></div>
                 </div>
+
+                <div class="form-row">
+                    <div class="form-col"><label>Link de Compra Web (Opcional):</label><input type="text" id="artUrlCompra" placeholder="https://..."></div>
+                    <div class="form-col"><label>Info Técnica / Datasheet (Opcional):</label><input type="text" id="artInfoTecnica" placeholder="Link a PDF o documento"></div>
+                </div>
+
+
                 <div class="form-row">
                     <div class="form-col"><label>Proveedor Origen:</label><select id="artProv"></select></div>
                     <div class="form-col"><label>Costo Unitario Ref. (S/):</label><input type="number" step="0.01" id="artCosto"></div>
                     <div class="form-col"><label>URL Foto (Opcional):</label><input type="text" id="artFoto"></div>
                 </div>
+
                 <button type="submit" class="btn-accion btn-blue" style="width: 100%; margin-top: 10px;">💾 Guardar Artículo en Catálogo</button>
             </form>
         </div>
@@ -355,6 +364,12 @@
                     <div class="form-col"><label>Características / Especificaciones:</label><input type="text" id="editArtCaract"></div>
                     <div class="form-col"><label>Uso o Equipo destinado:</label><input type="text" id="editArtUso"></div>
                 </div>
+
+                <div class="form-row">
+                    <div class="form-col"><label>Link de Compra Web (Opcional):</label><input type="text" id="editArtUrlCompra"></div>
+                    <div class="form-col"><label>Info Técnica / Datasheet (Opcional):</label><input type="text" id="editArtInfoTecnica"></div>
+                </div>
+
                 <div class="form-row">
                     <div class="form-col"><label>Proveedor Origen:</label><select id="editArtProv"></select></div>
                     <div class="form-col"><label>Costo Unitario Ref (S/):</label><input type="number" step="0.01" id="editArtCosto"></div>
@@ -725,7 +740,9 @@ async function cargarDatosMaestros() {
                     id_proveedor: document.getElementById('artProv').value || null,
                     costo_unitario: document.getElementById('artCosto').value || 0,
                     url_foto_articulo: document.getElementById('artFoto').value,
-                    tecnologia: document.getElementById('artTecnologia').value
+                    tecnologia: document.getElementById('artTecnologia').value,
+                    url_compra: document.getElementById('artUrlCompra').value,
+                    info_tecnica: document.getElementById('artInfoTecnica').value
                 };
 
                 const req = await fetch(`${API_URL}/inventario/articulos`, { method: 'POST', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });
@@ -761,6 +778,8 @@ async function cargarDatosMaestros() {
             document.getElementById('editArtUso').value = a.uso_equipo || '';
             document.getElementById('editArtCosto').value = a.costo_unitario || 0;
             document.getElementById('editArtFoto').value = a.url_foto_articulo || '';
+            document.getElementById('editArtUrlCompra').value = a.url_compra || '';
+            document.getElementById('editArtInfoTecnica').value = a.info_tecnica || '';
             
             let opcProv = '<option value="">Ninguno / Genérico</option>';
             listaProveedores.forEach(p => { opcProv += `<option value="${p.id_proveedor}">${p.razon_social}</option>`; });
@@ -855,7 +874,9 @@ async function cargarDatosMaestros() {
                     id_proveedor: document.getElementById('editArtProv').value || null,
                     costo_unitario: document.getElementById('editArtCosto').value || 0,
                     url_foto_articulo: document.getElementById('editArtFoto').value,
-                    tecnologia: document.getElementById('editArtTecnologia').value
+                    tecnologia: document.getElementById('editArtTecnologia').value,
+                    url_compra: document.getElementById('editArtUrlCompra').value,
+                    info_tecnica: document.getElementById('editArtInfoTecnica').value
                 };
 
                 const req = await fetch(`${API_URL}/inventario/articulos/${idActual}`, { method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) });

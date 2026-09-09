@@ -314,7 +314,39 @@
                 </div>
                 <div class="otm-box">
                     <h3>2. Cierre de Operación</h3>
-                    <label>Repuestos Utilizados:</label><textarea id="otmRepuestos" rows="2"></textarea>
+                    
+                    <label style="color: #10b981; margin-top: 10px;">📦 Repuestos Utilizados (Descuenta de Stock):</label>
+                    
+                    <!-- Lista de repuestos siempre a la vista -->
+                    <div id="listaRepuestosOTM" style="max-height: 120px; overflow-y: auto; margin-bottom: 5px;"></div>
+                    
+                    <!-- Botón para desplegar el buscador -->
+                    <button type="button" id="btnAbrirBuscadorOTM" class="btn-secondary" onclick="toggleBuscadorOTM()" style="margin-top: 5px; margin-bottom: 15px; width: 100%; border: 1px dashed #10b981; background: #ecfdf5; color: #065f46;">🔍 + Buscar y Añadir Repuesto</button>
+                    
+                    <!-- Buscador oculto por defecto -->
+                    <div id="bloqueBuscadorRepuestosOTM" style="display: none; background: #f8fafc; padding: 10px; border: 1px dashed #10b981; border-radius: 6px; margin-bottom: 15px;">
+                        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px;">
+                            <strong style="color:#10b981; font-size: 0.85rem;">Buscador de Catálogo</strong>
+                            <button type="button" onclick="toggleBuscadorOTM()" style="background: none; border: none; color: #ef4444; font-size: 1rem; cursor: pointer;">✕</button>
+                        </div>
+                        <div style="display:flex; gap:3px; margin-bottom:5px;">
+                            <select id="otmCat1" onchange="cambioOtmCat1()" style="flex:1; padding:4px; font-size:0.75rem;"><option value="">Cat 1</option></select>
+                            <select id="otmCat2" onchange="cambioOtmCat2()" style="flex:1; padding:4px; font-size:0.75rem;"><option value="">Cat 2</option></select>
+                            <select id="otmCat3" onchange="filtrarArticulosOtm()" style="flex:1; padding:4px; font-size:0.75rem;"><option value="">Cat 3</option></select>
+                        </div>
+                        <div style="position: relative;">
+                            <input type="text" id="otmBusqArt" placeholder="🔍 Escribe código o componente..." onkeyup="filtrarArticulosOtm()" style="width:100%; padding:6px; margin-bottom:5px; border: 1px solid #10b981; font-size:0.8rem;">
+                            <select id="otmSelArticulo" onblur="this.size=1; this.style.position='static';" onclick="this.size=1; this.style.position='static';" style="width:100%; padding:6px; font-size:0.85rem; margin-bottom:5px;"></select>
+                        </div>
+                        <div style="display:flex; gap:5px; align-items: center;">
+                            <label style="margin:0;">Cant:</label>
+                            <input type="number" id="otmCantArticulo" value="1" min="1" style="width:60px; padding:6px;">
+                            <button type="button" class="btn-success" onclick="agregarRepuestoOTM()" style="margin:0; padding:6px 15px; width:100%;">➕ Añadir a la OTM</button>
+                        </div>
+                    </div>
+
+                    <div id="listaRepuestosOTM" style="max-height: 120px; overflow-y: auto; margin-bottom: 15px;"></div>
+
                     <label>Resultado Final:</label><textarea id="otmResultado" rows="2"></textarea>
                     <label>Fecha Término:</label><input type="datetime-local" id="otmFechaTermino">
                 </div>
@@ -502,10 +534,30 @@ function iniciarAplicacion() {
     cargarClientes(); 
     cargarPlantillas(); 
     cargarTickets();
+    cargarInventarioParaOTM(); // NUEVA LÍNEA
 }
 
-        let accesoriosCargadosTemporalmente = []; let ticketsCargados = []; let fotosFRGlobal = []; 
-        let otmActualId = null; let actividadesGlobal = []; let fotosGlobal = []; let entregaActualId = null; let fpActualId = null;
+        async function cargarInventarioParaOTM() {
+            try {
+                const resCat = await fetch(`${API_URL}/inventario/categorias`);
+                listaCategoriasInv = await resCat.json();
+                const resArt = await fetch(`${API_URL}/inventario/articulos`);
+                listaArticulosInv = await resArt.json();
+            } catch (e) { console.error("Error cargando inventario:", e); }
+        }
+
+
+        let accesoriosCargadosTemporalmente = []; 
+        let ticketsCargados = []; 
+        let fotosFRGlobal = []; 
+        let otmActualId = null; 
+        let actividadesGlobal = [];
+        let listaCategoriasInv = []; 
+        let listaArticulosInv = []; 
+        let repuestosOtmGlobal = [];
+        let fotosGlobal = []; 
+        let entregaActualId = null; 
+        let fpActualId = null;
         let editActionData = null; 
 
         const encabezadoEmpresaHTML = `<div style="text-align: center; margin-bottom: 25px; border-bottom: 2px solid #0f172a; padding-bottom: 15px;"><h1 style="margin: 0; font-size: 24px; color: #0f172a;">INNOVA Electronics SAC.</h1><p style="margin: 8px 0 0 0; font-size: 13px; color: #475569; line-height: 1.5;"><strong>RUC:</strong> 20522316556 &nbsp;|&nbsp; <strong>Teléfonos:</strong> 986629193 / 987740312<br>administracion@innovaelectronicsperu.com &nbsp;|&nbsp; gerencia@innovaelectronicsperu.com<br>Calle Andalucia Mz.E Lt.25 Urb. La Capilla. La Molina. Lima. &nbsp;|&nbsp; <strong>Código Postal:</strong> 15024</p></div>`;
@@ -1224,32 +1276,33 @@ async function guardarFP() {
             const estaPagado = document.getElementById('fpPagado').checked; const selloPago = estaPagado ? `<div style="color: #166534; font-weight: bold; font-size: 20px; border: 3px solid #166534; padding: 10px; text-align: center; margin-top: 15px; border-radius: 8px; transform: rotate(-5deg); width: fit-content; margin-left: auto; margin-right: auto;">CANCELADO / PAGADO</div>` : ''; let htmlDescuento = descPct > 0 ? `<tr><td>Descuento Promocional en Servicio (${descPct}%)</td><td style="text-align: right; color: #dc2626;">- ${simboloMoneda} ${montoDescuento.toFixed(2)}</td></tr>` : ''; let htmlRepuestosCosto = cRepuestos > 0 ? `<tr><td>Repuestos, Componentes y Materiales Utilizados</td><td style="text-align: right;">${simboloMoneda} ${cRepuestos.toFixed(2)}</td></tr>` : ''; const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; const ventana = window.open('', '_blank', 'width=800,height=900'); ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>Proforma - ${t.numero_fr}</title><style>@page { size: A4 portrait; margin: 1.5cm; } body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; margin: 0; color: #333; line-height: 1.4; } .cabecera-titulo { text-align: center; font-size: 16px; font-weight: bold; color: #7c3aed; margin-top: 5px; margin-bottom: 10px;} .fr-box { border: 2px solid #0f172a; padding: 5px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; margin-top: 10px; margin-bottom: 20px; } .seccion { margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; } .seccion-titulo { background-color: #f1f5f9; font-weight: bold; padding: 8px 12px; border-bottom: 1px solid #cbd5e1; color: #0f172a; font-size: 13px; } .seccion-contenido { padding: 12px; } table.costos { width: 100%; border-collapse: collapse; margin-top: 10px; } table.costos th, table.costos td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; } table.costos th { background: #f8fafc; color: #0f172a; } table.costos tr.total-row th { background: #7c3aed; color: white; font-size: 15px; text-align: right; } table.costos tr.total-row td { background: #f3e8ff; font-weight: bold; font-size: 16px; color: #7c3aed; text-align: right; } .fila { display: flex; margin-bottom: 5px; } .etiq { font-weight: bold; width: 150px; color: #475569; } .val { flex: 1; }</style></head><body>${encabezadoEmpresaHTML}<div style="text-align: center;"><div class="cabecera-titulo">FACTURA PROFORMA (PRESUPUESTO TÉCNICO)</div><div class="fr-box">REF FR N° ${t.numero_fr}</div></div><div style="text-align: right; margin-bottom: 10px; font-weight: bold; color: #64748b;">Fecha de emisión: ${fechaHoy}</div><div class="seccion"><div class="seccion-titulo">📋 DATOS DEL CLIENTE Y EQUIPO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Cliente / Empresa:</div><div class="val"><strong>${t.cliente}</strong>${rucHtml}</div></div><div class="fila"><div class="etiq">Equipo:</div><div class="val">${t.marca} ${t.modelo}</div></div><div class="fila"><div class="etiq">Número de Serie:</div><div class="val">${t.numero_serie || 'No Especificado'}</div></div></div></div><div class="seccion"><div class="seccion-titulo">🛠️ INFORME TÉCNICO RESUMIDO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Falla Reportada:</div><div class="val"><i>${t.problema_reportado}</i></div></div><div class="fila"><div class="etiq">Diagnóstico Original:</div><div class="val">${otm.diagnostico || '-'}</div></div><div class="fila"><div class="etiq" style="color: #7c3aed;">Trabajo Realizado:</div><div class="val"><strong>${resumenTareas}</strong></div></div><div class="fila"><div class="etiq">Repuestos Usados:</div><div class="val">${otm.repuestos || 'No se requirieron repuestos.'}</div></div><div class="fila" style="margin-top: 10px;"><div class="etiq" style="color:#16a34a;">Estado Unidad:</div><div class="val"><strong>${otm.resultado || '-'}</strong></div></div></div></div><div class="seccion" style="border-color: #8b5cf6;"><div class="seccion-titulo" style="background-color: #f3e8ff; color: #6d28d9; border-bottom-color: #d8b4fe;">💰 DETALLE DE COSTOS Y FACTURACIÓN</div><div class="seccion-contenido"><table class="costos"><tr><th>Concepto de Servicio / Producto</th><th style="width: 160px; text-align: right;">Importe</th></tr><tr><td>Servicio de Reparación y Mano de Obra Técnica</td><td style="text-align: right;">${simboloMoneda} ${cReparacion.toFixed(2)}</td></tr>${htmlDescuento}${htmlRepuestosCosto}<tr><td style="text-align: right; font-weight: bold;">Subtotal Neto:</td><td style="text-align: right; font-weight: bold;">${simboloMoneda} ${subtotalNeto.toFixed(2)}</td></tr><tr><td style="text-align: right;">Impuesto de Ley (IGV ${igvPct}%):</td><td style="text-align: right;">${simboloMoneda} ${montoIGV.toFixed(2)}</td></tr><tr class="total-row"><th>TOTAL A PAGAR:</th><td>${simboloMoneda} ${totalPagar.toFixed(2)} ${txtTC}</td></tr></table>${selloPago}<p style="font-size: 11px; color: #64748b; margin-top: 15px; font-style: italic;">* Este documento es una proforma y detalla los costos incurridos en la Ficha de Recepción (FR) adjunta.</p></div></div><div style="margin-top: 60px; text-align: center; font-weight: bold; border-top: 1px solid #333; width: 250px; margin-left: auto; margin-right: auto; padding-top: 5px;">Administración - Innova Electronics SAC</div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); }
 
         // ================= MODALES OTM Y ENTREGA (FE) =================
-        async function abrirModalOTM(idTicket) { 
+        function abrirModalOTM(idTicket) { 
             otmActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
-
-            // 🚀 NUEVO: Traer fotos del servidor
-            const resFotos = await fetch(`${API_URL}/tickets/${idTicket}/fotos`);
-            const dataFotos = await resFotos.json();
-
             document.getElementById('otmHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} | <strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo} <br><strong style="color:red">Falla:</strong> ${t.problema_reportado}`; 
+            
             const otm = t.otm_data || {}; 
-            
-            document.getElementById('otmFechaInicio').value = formatoInputFecha(otm.fecha_inicio); 
-            document.getElementById('otmFechaTermino').value = formatoInputFecha(otm.fecha_termino); 
-            
+            document.getElementById('otmFechaInicio').value = otm.fecha_inicio || ''; 
+            document.getElementById('otmFechaTermino').value = otm.fecha_termino || ''; 
             document.getElementById('otmTecnico').value = otm.tecnico || ''; 
             document.getElementById('otmDiagnostico').value = otm.diagnostico || ''; 
-            document.getElementById('otmRepuestos').value = otm.repuestos || ''; 
             document.getElementById('otmResultado').value = otm.resultado || ''; 
-
+            document.getElementById('bloqueBuscadorRepuestosOTM').style.display = 'none'; 
+            document.getElementById('btnAbrirBuscadorOTM').style.display = 'block';
+            
             actividadesGlobal = otm.actividades || []; 
-            fotosGlobal = dataFotos.fotos_otm || []; 
-
+            fotosGlobal = otm.fotos || []; 
+            repuestosOtmGlobal = otm.repuestos_utilizados || []; // Carga repuestos estructurados
+            
             renderActividadesOTM(); 
             renderFotosOTM(); 
+            renderRepuestosOTM(); // Dibuja la tabla
+            inicializarFiltrosOTM(); // Enciende el buscador
+            
             document.getElementById('btnImprimirOTM').onclick = function() { generarReporteOTM(idTicket); };
             document.getElementById('modalOTM').style.display = 'flex'; 
         }
+
+
         function cerrarModalOTM() { document.getElementById('modalOTM').style.display = 'none'; }
         function agregarActividadOTM() { const texto = document.getElementById('otmTxtActividad').value.trim(); if(!texto) return alert("Escribe una actividad."); const fecha = new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}); actividadesGlobal.push({ fecha, texto }); document.getElementById('otmTxtActividad').value = ''; renderActividadesOTM(); }
         function renderActividadesOTM() { document.getElementById('listaActividadesOTM').innerHTML = actividadesGlobal.length ? actividadesGlobal.map(a => `<div class="actividad-item"><span class="actividad-fecha">🗓️ ${a.fecha}</span>${a.texto}</div>`).join('') : '<p style="color:gray; font-size:0.8rem;">No hay actividades registradas.</p>'; }
@@ -1285,18 +1338,29 @@ async function guardarFP() {
         }
         
         async function guardarOTM() { 
+            const t = ticketsCargados.find(ticket => ticket.id_ticket === otmActualId);
             const otmData = { 
-                fecha_inicio: formatoSalidaFecha(document.getElementById('otmFechaInicio').value), 
-                fecha_termino: formatoSalidaFecha(document.getElementById('otmFechaTermino').value), 
+                fecha_inicio: document.getElementById('otmFechaInicio').value, 
+                fecha_termino: document.getElementById('otmFechaTermino').value, 
                 tecnico: document.getElementById('otmTecnico').value, 
                 diagnostico: document.getElementById('otmDiagnostico').value, 
-                repuestos: document.getElementById('otmRepuestos').value, 
                 resultado: document.getElementById('otmResultado').value, 
                 actividades: actividadesGlobal, 
-                fotos: fotosGlobal 
+                fotos: fotosGlobal,
+                repuestos_utilizados: repuestosOtmGlobal
             }; 
-            await fetch(`${API_URL}/tickets/${otmActualId}/otm`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(otmData) }); 
-            alert('¡OTM guardada/actualizada exitosamente!'); cerrarModalOTM(); cargarTickets(); 
+            
+            // Paquete principal que viaja al servidor
+            const payload = {
+                numero_fr: t.numero_fr,
+                id_empleado: usuarioActual.id_empleado,
+                otm_data: otmData,
+                repuestos_utilizados: repuestosOtmGlobal // Envía el array para sincronizar Kárdex
+            };
+
+            await fetch(`${API_URL}/tickets/${otmActualId}/otm`, { method: 'PUT', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); 
+            alert('¡OTM guardada y stock sincronizado exitosamente!'); 
+            cerrarModalOTM(); cargarTickets(); 
         }
         
         function generarReporteOTM(idTicket) { 
@@ -1315,6 +1379,12 @@ async function guardarFP() {
     
     // Cálculo de páginas totales
     const totalPaginas = 1 + Math.ceil(fotos.length / 4);
+    
+// Atrapamos de forma segura los repuestos utilizados
+// Leemos correctamente desde "otm" (la data histórica) y no desde "t"
+    const repuestosTexto = otm.repuestos_utilizados && otm.repuestos_utilizados.length > 0 
+        ? otm.repuestos_utilizados.map(r => r.cantidad + 'x ' + (r.codigo ? '['+r.codigo+'] ' : '') + r.descripcion).join('<br>') 
+        : (otm.repuestos || 'Ninguno');
 
     // Página 1 (Datos de la OTM)
     let htmlPaginas = `
@@ -1325,7 +1395,8 @@ async function guardarFP() {
         <div class="box"><div class="tit">Falla Original Reportada</div><div class="cont"><i>${t.problema_reportado}</i></div></div>
         <div class="box"><div class="tit">Diagnóstico Técnico Especializado</div><div class="cont">${otm.diagnostico || '-'}</div></div>
         <div class="box"><div class="tit">Bitácora de Actividades Operativas</div><div class="cont">${acts}</div></div>
-        <div class="box"><div class="tit">Resultado Final y Repuestos</div><div class="cont">Repuestos Utilizados: ${otm.repuestos || '-'}<br>Estado / Resultado Final: <b>${otm.resultado || '-'}</b></div></div>
+        <div class="box"><div class="tit">Repuestos Utilizados (Almacén)</div><div class="cont" style="line-height:1.5;">${repuestosTexto}</div></div>
+        <div class="box"><div class="tit">Estado y Resultado Final</div><div class="cont"><b>${otm.resultado || '-'}</b></div></div>
         <div class="footer-pag">Página 1 de ${totalPaginas}</div>
     </div>`;
 
@@ -1488,7 +1559,149 @@ async function guardarFP() {
             if (!this.value.startsWith('FR')) {
                 this.value = 'FR';
             }
-        });        
+        }); 
+        
+        
+// ================= BUSCADOR INTELIGENTE DE REPUESTOS EN OTM =================
+        function inicializarFiltrosOTM() {
+            const cat1 = [...new Set(listaCategoriasInv.map(c => c.categoria_1))];
+            const sel1 = document.getElementById('otmCat1');
+            sel1.innerHTML = '<option value="">Cat 1 (Todas)</option>';
+            cat1.forEach(c => sel1.innerHTML += `<option value="${c}">${c}</option>`);
+            filtrarArticulosOtm();
+        }
+
+        function cambioOtmCat1() {
+            const val1 = document.getElementById('otmCat1').value;
+            const sel2 = document.getElementById('otmCat2');
+            sel2.innerHTML = '<option value="">Cat 2 (Todas)</option>';
+            document.getElementById('otmCat3').innerHTML = '<option value="">Cat 3 (Todas)</option>';
+            if(val1) {
+                const cat2F = [...new Set(listaCategoriasInv.filter(c => c.categoria_1 === val1).map(c => c.categoria_2))];
+                cat2F.forEach(c => sel2.innerHTML += `<option value="${c}">${c}</option>`);
+            }
+            filtrarArticulosOtm();
+        }
+
+        function cambioOtmCat2() {
+            const val1 = document.getElementById('otmCat1').value;
+            const val2 = document.getElementById('otmCat2').value;
+            const sel3 = document.getElementById('otmCat3');
+            sel3.innerHTML = '<option value="">Cat 3 (Todas)</option>';
+            if(val1 && val2) {
+                const cat3F = [...new Set(listaCategoriasInv.filter(c => c.categoria_1 === val1 && c.categoria_2 === val2).map(c => c.categoria_3))];
+                cat3F.forEach(c => sel3.innerHTML += `<option value="${c}">${c}</option>`);
+            }
+            filtrarArticulosOtm();
+        }
+
+        function filtrarArticulosOtm() {
+            const val1 = document.getElementById('otmCat1').value;
+            const val2 = document.getElementById('otmCat2').value;
+            const val3 = document.getElementById('otmCat3').value;
+            const texto = document.getElementById('otmBusqArt').value.toLowerCase();
+            const selArt = document.getElementById('otmSelArticulo');
+
+            let filtrados = listaArticulosInv;
+            if(val1) filtrados = filtrados.filter(a => a.categoria_1 === val1);
+            if(val2) filtrados = filtrados.filter(a => a.categoria_2 === val2);
+            if(val3) filtrados = filtrados.filter(a => a.categoria_3 === val3);
+
+            if(texto) {
+                filtrados = filtrados.filter(a => `${a.codigo_articulo} ${a.nombre_articulo} ${a.proveedor_nombre || ''}`.toLowerCase().includes(texto));
+            }
+
+            let opc = '<option value="">-- Seleccione un Repuesto --</option>';
+            filtrados.forEach(a => { opc += `<option value="${a.id_articulo}" data-nombre="${a.nombre_articulo}">[${a.codigo_articulo}] ${a.nombre_articulo} (Stock: ${a.cantidad_actual})</option>`; });
+            selArt.innerHTML = opc;
+
+            // Auto-despliegue flotante si hay texto
+            if (texto.length > 0) {
+                selArt.size = Math.min(6, selArt.options.length); 
+                selArt.style.position = 'absolute'; 
+                selArt.style.zIndex = '100';
+                selArt.style.boxShadow = '0 4px 6px rgba(0,0,0,0.2)';
+            } else {
+                selArt.size = 1; selArt.style.position = 'static';
+            }
+        }
+
+        function toggleBuscadorOTM() {
+            const bloque = document.getElementById('bloqueBuscadorRepuestosOTM');
+            const btn = document.getElementById('btnAbrirBuscadorOTM');
+            if (bloque.style.display === 'none') {
+                bloque.style.display = 'block';
+                btn.style.display = 'none';
+                document.getElementById('otmBusqArt').focus();
+            } else {
+                bloque.style.display = 'none';
+                btn.style.display = 'block';
+            }
+        }
+
+function agregarRepuestoOTM() {
+            const selArt = document.getElementById('otmSelArticulo');
+            const idArt = selArt.value;
+            const cant = parseInt(document.getElementById('otmCantArticulo').value);
+            
+            if(!idArt || cant < 1) return alert("Seleccione un repuesto y una cantidad válida.");
+            
+            // 1. Buscamos el artículo en el inventario para validar su stock y obtener su código
+            const articuloInv = listaArticulosInv.find(a => a.id_articulo == idArt);
+            if (!articuloInv) return alert("Error: No se encontró el repuesto en el inventario.");
+
+            const stockDisponible = parseInt(articuloInv.cantidad_actual) || 0;
+            const codigo = articuloInv.codigo_articulo;
+            const nombre = selArt.options[selArt.selectedIndex].getAttribute('data-nombre');
+            
+            const existe = repuestosOtmGlobal.find(r => r.id_articulo == idArt);
+            const cantidadActualEnOTM = existe ? existe.cantidad : 0;
+            
+            // 2. Limitador de Stock: Comparamos lo que ya pusimos + lo nuevo vs el stock total
+            if ((cantidadActualEnOTM + cant) > stockDisponible) {
+                return alert(`⚠️ STOCK INSUFICIENTE: Solo hay ${stockDisponible} unidades de [${codigo}] en el inventario.\n(Actualmente tienes ${cantidadActualEnOTM} en la OTM e intentas añadir ${cant} más).`);
+            }
+
+            // 3. Agregamos el código del repuesto al registro
+            if (existe) { 
+                existe.cantidad += cant; 
+                existe.codigo = codigo; // Aseguramos que tenga el código guardado
+            } else { 
+                repuestosOtmGlobal.push({ id_articulo: idArt, cantidad: cant, descripcion: nombre, codigo: codigo }); 
+            }
+            
+            document.getElementById('otmBusqArt').value = '';
+            document.getElementById('otmCantArticulo').value = '1';
+            filtrarArticulosOtm();
+            renderRepuestosOTM();
+            
+            toggleBuscadorOTM();
+        }
+
+// 1. Función global para eliminar el repuesto del arreglo
+        window.eliminarRepuestoOTM = function(index) {
+            repuestosOtmGlobal.splice(index, 1);
+            renderRepuestosOTM(); // Refresca la lista visual al instante
+        };
+
+        // 2. Función que dibuja la lista
+        function renderRepuestosOTM() {
+            const cont = document.getElementById('listaRepuestosOTM');
+            if (repuestosOtmGlobal.length === 0) {
+                cont.innerHTML = '<p style="color:gray; font-size:0.8rem; margin:0;">Sin repuestos asignados.</p>';
+                return;
+            }
+            cont.innerHTML = repuestosOtmGlobal.map((r, i) => {
+                const txtCodigo = r.codigo ? `[${r.codigo}] ` : '';
+                return `
+                <div style="display:flex; justify-content:space-between; align-items:center; background:white; padding:6px; border:1px solid #cbd5e1; border-radius:4px; margin-bottom:4px; font-size:0.85rem;">
+                    <div><strong style="color:#10b981;">${r.cantidad}x</strong> ${txtCodigo}${r.descripcion}</div>
+                    <button type="button" onclick="eliminarRepuestoOTM(${i})" style="background:#ef4444; color:white; border:none; border-radius:4px; padding:4px 10px; cursor:pointer; font-weight:bold;">✕</button>
+                </div>
+                `;
+            }).join('');
+        }
+
 
     </script>
 </body>
