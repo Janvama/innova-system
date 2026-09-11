@@ -176,6 +176,10 @@
                 <input type="url" id="provLink" placeholder="https://maps.google.com/...">
                 <button type="submit" class="btn-accion btn-dark" style="width: 100%; margin-top: 10px;">💾 Guardar Proveedor</button>
             </form>
+            <details style="margin-top: 15px;">
+                <summary>Ver / Gestionar Proveedores Registrados</summary>
+                <ul id="listaProveedoresUI" class="lista-maestros"></ul>
+            </details>
         </div>
     </div>
 
@@ -380,6 +384,140 @@
         </div>
     </div>
 
+
+    <!-- MODAL EDICIÓN DE PROVEEDOR -->
+    <div id="modalEditProveedor" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; border-top: 5px solid #eab308;">
+            <span class="close-modal" onclick="cerrarModal('modalEditProveedor')">×</span>
+            <h2 style="color: #854d0e;">✏️ Editar Proveedor</h2>
+            <form id="formEditProveedor">
+                <input type="hidden" id="editProvId">
+                <label>Razón Social / Nombre de Tienda:</label>
+                <input type="text" id="editProvNombre" required>
+                <div class="form-row">
+                    <div class="form-col"><label>Dirección:</label><input type="text" id="editProvDir"></div>
+                    <div class="form-col"><label>Teléfonos:</label><input type="text" id="editProvTel"></div>
+                </div>
+                <label>Link de Ubicación (Google Maps):</label>
+                <input type="url" id="editProvLink">
+                <button type="submit" class="btn-accion btn-green" style="width: 100%; margin-top: 15px;">💾 Guardar Cambios</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL VISOR DE PROVEEDOR (MAPA INTERACTIVO) -->
+    <div id="modalVisorProveedor" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px; border-top: 5px solid #3b82f6;">
+            <span class="close-modal" onclick="cerrarModal('modalVisorProveedor')">×</span>
+            <h2 id="visorProvNombre" style="color: #1e3a8a; margin-top: 0;">Cargando...</h2>
+            <div style="background: #f8fafc; padding: 10px; border-radius: 6px; margin-bottom: 15px; border: 1px solid #cbd5e1;">
+                <p style="margin-bottom: 5px;">📞 <strong>Teléfonos:</strong> <span id="visorProvTel"></span></p>
+                <p style="margin-bottom: 0;">📍 <strong>Dirección:</strong> <span id="visorProvDir"></span></p>
+            </div>
+            <div style="border: 1px solid #cbd5e1; border-radius: 6px; overflow: hidden; background: #e2e8f0;">
+                <iframe id="visorProvMapa" width="100%" height="300" frameborder="0" style="border:0;" allowfullscreen loading="lazy"></iframe>
+            </div>
+        </div>
+    </div>
+
+
+
+<!-- Visor de Fotos Integrado (Lightbox) -->
+<!-- Visor de Fotos Integrado (Lightbox) Mejorado -->
+<div id="modalVisorFoto" class="modal-overlay" style="display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(15, 23, 42, 0.93); z-index: 9999; justify-content: center; align-items: center;">
+    
+    <!-- Contenedor que abraza exactamente a la foto -->
+    <div style="position: relative; display: inline-block; max-width: 80%; max-height: 85vh;">
+        
+        <!-- Botón "X" anclado a la esquina de la foto -->
+        <span onclick="cerrarVisorFoto()" style="position: absolute; top: -15px; right: -15px; font-size: 24px; color: white; background: #ef4444; width: 35px; height: 35px; display: flex; justify-content: center; align-items: center; border-radius: 50%; cursor: pointer; font-weight: bold; box-shadow: 0 4px 10px rgba(0,0,0,0.5); z-index: 10001;">&times;</span>
+        
+        <!-- Imagen -->
+        <img id="imagenVisor" src="" style="display: block; max-width: 100%; max-height: 85vh; object-fit: contain; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.9); background: white;">
+    </div>
+</div>
+
+
+<!-- FICHA MAESTRA DEL ARTÍCULO (PANTALLA COMPLETA) -->
+    <div id="modalFichaArticulo" class="modal-overlay" style="z-index: 1050; background: #0f172a;">
+        <div class="modal-content" style="width: 95%; max-width: 1200px; height: 90vh; display: flex; flex-direction: column; padding: 0; overflow: hidden; border-radius: 10px;">
+            
+            <!-- Cabecera -->
+            <div style="background: #1e1b4b; color: white; padding: 20px; display: flex; justify-content: space-between; align-items: center;">
+                <div>
+                    <h2 style="margin: 0; color: white; border: none; font-size: 1.5rem;" id="fichaTitulo">Cargando...</h2>
+                    <p style="margin: 5px 0 0 0; color: #a5b4fc;" id="fichaCategorias">Cat 1 > Cat 2 > Cat 3</p>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <button class="btn-accion" onclick="imprimirFichaArticulo()" style="background: #4f46e5;">🖨️ Imprimir Ficha</button>
+                    <button class="btn-accion" onclick="cerrarModal('modalFichaArticulo')" style="background: #ef4444;">❌ Cerrar</button>
+                </div>
+            </div>
+
+            <!-- Cuerpo de la Ficha -->
+            <div style="display: flex; flex: 1; overflow-y: auto; background: #f8fafc;">
+                
+                <!-- Columna Izquierda (Foto y Datos) -->
+                <div style="flex: 1; padding: 20px; border-right: 1px solid #cbd5e1;">
+                    <div style="text-align: center; background: white; padding: 10px; border: 1px solid #e2e8f0; border-radius: 8px; margin-bottom: 20px;">
+                        <img id="fichaFoto" src="" style="max-width: 100%; height: 250px; object-fit: contain; cursor: pointer;" onclick="abrirVisorFoto(this.src)" title="Clic para ampliar">
+                    </div>
+                    
+                    <h3 style="color: #334155; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">Especificaciones Técnicas</h3>
+                    <p><strong>Descripción / Características:</strong> <span id="fichaDesc"></span></p>
+                    <p><strong>Uso / Equipo Destinado:</strong> <span id="fichaUso"></span></p>
+                    <p><strong>Tecnología:</strong> <span id="fichaTec"></span></p>
+                    <p><strong>Procedencia:</strong> <span id="fichaProc"></span></p>
+                    
+                    <div style="margin-top: 20px; display: flex; gap: 10px;">
+                        <a id="fichaLinkCompra" href="#" target="_blank" class="btn-accion" style="background: #f97316; text-decoration: none; display: none;">🛒 Enlace de Compra</a>
+                        <a id="fichaLinkTecnico" href="#" target="_blank" class="btn-accion" style="background: #0ea5e9; text-decoration: none; display: none;">📄 Datasheet / Info</a>
+                    </div>
+                </div>
+
+                <!-- Columna Derecha (Stock y Proveedores) -->
+                <div style="flex: 1; padding: 20px;">
+                    
+                    <div style="display: flex; gap: 10px; margin-bottom: 20px;">
+                        <div style="flex: 1; background: #dcfce3; padding: 15px; border-radius: 8px; border: 1px solid #86efac; text-align: center;">
+                            <span style="font-size: 0.85rem; color: #166534; font-weight: bold;">STOCK ACTUAL</span><br>
+                            <span id="fichaStockAct" style="font-size: 2rem; color: #15803d; font-weight: bold;">0</span>
+                        </div>
+                        <div style="flex: 1; background: #e0f2fe; padding: 15px; border-radius: 8px; border: 1px solid #7dd3fc; text-align: center;">
+                            <span style="font-size: 0.85rem; color: #0369a1; font-weight: bold;">Total Compradas</span><br>
+                            <span id="fichaStockComp" style="font-size: 1.5rem; color: #0284c7; font-weight: bold;">0</span>
+                        </div>
+                        <div style="flex: 1; background: #fee2e2; padding: 15px; border-radius: 8px; border: 1px solid #fca5a5; text-align: center;">
+                            <span style="font-size: 0.85rem; color: #991b1b; font-weight: bold;">Total Usadas</span><br>
+                            <span id="fichaStockUsad" style="font-size: 1.5rem; color: #b91c1c; font-weight: bold;">0</span>
+                        </div>
+                    </div>
+
+                    <h3 style="color: #334155; border-bottom: 2px solid #e2e8f0; padding-bottom: 5px; margin-bottom: 15px;">Red de Proveedores y Costos</h3>
+                    <div id="fichaListaProveedores" style="display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px;">
+                        <!-- Botones de proveedores inyectados por JS -->
+                    </div>
+
+                    <!-- Panel de Mapa y Detalles de Proveedor -->
+                    <div id="fichaMapaProveedor" style="display: none; background: white; border: 1px solid #cbd5e1; border-radius: 8px; padding: 15px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        <div style="display: flex; justify-content: space-between; align-items:flex-start; margin-bottom: 10px;">
+                            <div>
+                                <strong id="mapaProvNombre" style="font-size: 1.1rem; color: #0f172a;">Nombre</strong><br>
+                                📞 <span id="mapaProvTel"></span><br>
+                                📍 <span id="mapaProvDir"></span>
+                            </div>
+                            <a id="mapaProvLink" href="#" target="_blank" class="btn-accion btn-dark" style="text-decoration:none;">Abrir App Maps</a>
+                        </div>
+                        <!-- iframe para incrustar mapa dinámico de Google -->
+                        <iframe id="mapaIframe" width="100%" height="220" frameborder="0" style="border:0; border-radius:6px;" allowfullscreen></iframe>
+                    </div>
+
+                </div>
+            </div>
+        </div>
+    </div>
+
+
     <script>
         const API_URL = '/api'; 
         let usuarioActual = null;
@@ -418,6 +556,78 @@
         function cerrarModal(id) { 
             document.getElementById(id).style.display = 'none'; 
         }
+
+
+// ================= GESTIÓN DE PROVEEDORES (VER Y EDITAR) =================
+        function renderListaProveedores() {
+            const ul = document.getElementById('listaProveedoresUI');
+            if(!ul) return;
+            ul.innerHTML = '';
+            listaProveedores.forEach(p => {
+                ul.innerHTML += `
+                    <li>
+                        <span><strong>${p.razon_social}</strong><br><small style="color:#64748b;">${p.telefonos || 'Sin teléfono'}</small></span>
+                        <div>
+                            <button type="button" class="btn-accion btn-blue" style="padding:4px 8px; font-size:0.75rem;" onclick="abrirVisorProveedor(${p.id_proveedor})">👁️ Ver Ubicación</button>
+                            <button type="button" class="btn-edit-mini" onclick="abrirEditProveedor(${p.id_proveedor})">✏️</button>
+                        </div>
+                    </li>
+                `;
+            });
+        }
+
+        function abrirVisorProveedor(id) {
+            const p = listaProveedores.find(x => x.id_proveedor === id);
+            if (!p) return;
+            
+            document.getElementById('visorProvNombre').innerText = p.razon_social;
+            document.getElementById('visorProvTel').innerText = p.telefonos || 'No especificado';
+            document.getElementById('visorProvDir').innerText = p.direccion || 'No especificada';
+            
+            // Genera el mapa dinámico embebido buscando la dirección exacta o el nombre de la empresa
+            const direccionCodificada = encodeURIComponent(`${p.direccion || p.razon_social}, Perú`);
+            document.getElementById('visorProvMapa').src = `https://maps.google.com/maps?q=${direccionCodificada}&output=embed`;
+            
+            abrirModal('modalVisorProveedor');
+        }
+
+        function abrirEditProveedor(id) {
+            const p = listaProveedores.find(x => x.id_proveedor === id);
+            if (!p) return;
+            
+            document.getElementById('editProvId').value = p.id_proveedor;
+            document.getElementById('editProvNombre').value = p.razon_social;
+            document.getElementById('editProvDir').value = p.direccion || '';
+            document.getElementById('editProvTel').value = p.telefonos || '';
+            document.getElementById('editProvLink').value = p.link_ubicacion || '';
+            
+            abrirModal('modalEditProveedor');
+        }
+
+        document.getElementById('formEditProveedor').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = document.getElementById('editProvId').value;
+            const data = {
+                razon_social: document.getElementById('editProvNombre').value,
+                direccion: document.getElementById('editProvDir').value,
+                telefonos: document.getElementById('editProvTel').value,
+                link_ubicacion: document.getElementById('editProvLink').value
+            };
+            
+            try {
+                const res = await fetch(`${API_URL}/inventario/proveedores/${id}`, { 
+                    method: 'PUT', headers: {'Content-Type': 'application/json'}, body: JSON.stringify(data) 
+                });
+                if(res.ok) {
+                    alert("✅ Proveedor actualizado correctamente.");
+                    cerrarModal('modalEditProveedor');
+                    await cargarDatosMaestros();
+                } else {
+                    const err = await res.json(); alert(`Error: ${err.error}`);
+                }
+            } catch(e) { alert("Error de conexión al actualizar proveedor."); }
+        });
+
 
 
 // ================= INTELIGENCIA DE CATEGORÍAS EN CASCADA =================
@@ -560,6 +770,7 @@ async function cargarDatosMaestros() {
                 // 3. Proveedores
                 const resProv = await fetch(`${API_URL}/inventario/proveedores`);
                 listaProveedores = await resProv.json();
+                if (typeof renderListaProveedores === 'function') renderListaProveedores();
                 const selProv = document.getElementById('artProv');
                 if (selProv) {
                     selProv.innerHTML = '<option value="">Ninguno / Genérico</option>';
@@ -590,7 +801,7 @@ async function cargarDatosMaestros() {
             const tbody = document.getElementById('tablaInventario');
             tbody.innerHTML = '';
             listaArticulos.forEach(a => {
-                let fotoHTML = a.url_foto_articulo ? `<img src="${a.url_foto_articulo}" style="width:50px; height:50px; object-fit:cover; border-radius:4px;">` : '📷 N/A';
+                let fotoHTML = a.url_foto_articulo ? `<img src="${a.url_foto_articulo}" onclick="abrirVisorFoto('${a.url_foto_articulo}')" style="width:50px; height:50px; object-fit:cover; border-radius:4px; cursor:pointer; transition:transform 0.2s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'" title="Clic para ampliar">` : '📷 N/A';
                 let stockReal = parseInt(a.cantidad_actual);
                 let badgeStock = stockReal <= 5 ? `<span class="badge-stock-bajo">${stockReal}</span>` : `<span class="badge-stock">${stockReal}</span>`;
                 
@@ -605,6 +816,7 @@ async function cargarDatosMaestros() {
                         <td style="text-align:center; font-size:1.1rem;">${badgeStock}</td>
                         <td>S/ ${parseFloat(a.costo_unitario).toFixed(2)}</td>
                         <td style="text-align:center;">
+                            <button class="btn-accion" onclick="abrirFichaArticulo(${a.id_articulo})" title="Ver Ficha Completa" style="background:#3b82f6; color:white; padding:4px 8px; border:none; border-radius:4px; font-size:0.8rem; cursor:pointer;">👁️</button>
                             <button class="btn-accion" onclick="abrirModalEditArticulo(${a.id_articulo})" title="Editar Datos" style="background:#eab308; color:white; padding:4px 8px; border:none; border-radius:4px; font-size:0.8rem; cursor:pointer;">✏️</button>
                         </td>
                     </tr>
@@ -916,16 +1128,26 @@ tr.innerHTML = `
                     </select>
                 </td>
                 <!-- NUEVO: Agregamos position: relative; al TD para que la lista flote correctamente -->
+                <!-- NUEVO: Celda con Buscador Colapsable -->
                 <td id="celdaDesc_${filasGasto}" style="position: relative;">
-                    <div id="filtrosRen_${filasGasto}" style="display:flex; gap:3px; margin-bottom:5px;">
-                        <select class="ren-cat1" onchange="cambioRenCat1(${filasGasto})" style="flex:1; padding:4px; font-size:0.75rem;"><option value="">Cat 1</option></select>
-                        <select class="ren-cat2" onchange="cambioRenCat2(${filasGasto})" style="flex:1; padding:4px; font-size:0.75rem;"><option value="">Cat 2</option></select>
-                        <select class="ren-cat3" onchange="filtrarArticulosFila(${filasGasto})" style="flex:1; padding:4px; font-size:0.75rem;"><option value="">Cat 3</option></select>
-                    </div>
-                    <input type="text" class="ren-busq-art" placeholder="🔍 Escribe código, nombre o proveedor..." onkeyup="filtrarArticulosFila(${filasGasto})" style="margin-bottom:5px; font-size:0.8rem; padding:6px; width:100%; border:1px solid #3b82f6;">
                     
-                    <!-- NUEVO: Agregamos onblur y onclick para que la caja se cierre automáticamente al salir o elegir -->
-                    <select class="ren-articulo" onchange="verificarNuevoArticulo(this)" onblur="this.size=1; this.style.position='static';" onclick="this.size=1; this.style.position='static';"></select>
+                    <!-- Botón Desplegable -->
+                    <button type="button" id="btnToggleBusq_${filasGasto}" class="btn-accion" style="background:#f1f5f9; color:#475569; width:100%; margin-bottom:5px; border: 1px dashed #cbd5e1; font-size:0.75rem; transition: background 0.3s;" onclick="toggleBuscador(${filasGasto})">
+                        🔍 Búsqueda Inteligente / Filtros ▼
+                    </button>
+                    
+                    <!-- Contenedor Oculto por defecto -->
+                    <div id="contenedorBuscador_${filasGasto}" style="display: none; background:#f8fafc; padding:8px; border:1px solid #cbd5e1; border-radius:4px; margin-bottom:5px; box-shadow: 0 4px 6px rgba(0,0,0,0.05);">
+                        <div id="filtrosRen_${filasGasto}" style="display:flex; gap:3px; margin-bottom:5px;">
+                            <select class="ren-cat1" onchange="cambioRenCat1(${filasGasto})" style="flex:1; padding:4px; font-size:0.75rem;"><option value="">Cat 1</option></select>
+                            <select class="ren-cat2" onchange="cambioRenCat2(${filasGasto})" style="flex:1; padding:4px; font-size:0.75rem;"><option value="">Cat 2</option></select>
+                            <select class="ren-cat3" onchange="filtrarArticulosFila(${filasGasto})" style="flex:1; padding:4px; font-size:0.75rem;"><option value="">Cat 3</option></select>
+                        </div>
+                        <input type="text" class="ren-busq-art" placeholder="🔍 Escribe código, nombre o proveedor..." onkeyup="filtrarArticulosFila(${filasGasto})" style="margin-bottom:0; font-size:0.8rem; padding:6px; width:100%; border:1px solid #3b82f6;">
+                    </div>
+                    
+                    <!-- Se añadió el idFila al verificarNuevoArticulo para que sepa qué caja cerrar -->
+                    <select class="ren-articulo" onchange="verificarNuevoArticulo(this, ${filasGasto})" onblur="this.size=1; this.style.position='static';" onclick="this.size=1; this.style.position='static';"></select>
                     <input type="text" class="ren-desc" placeholder="Descripción del Gasto" style="display:none;">
                 </td>
                 <td>
@@ -970,24 +1192,29 @@ tr.innerHTML = `
         }
 
 
-
         function cambiarTipoGasto(idFila) {
             const tr = document.getElementById(`filaGasto_${idFila}`);
             const tipo = tr.querySelector('.ren-tipo').value;
             const selArt = tr.querySelector('.ren-articulo');
-            const divFiltros = tr.querySelector(`#filtrosRen_${idFila}`);
-            const inpBusq = tr.querySelector('.ren-busq-art');
+            const btnToggle = tr.querySelector(`#btnToggleBusq_${idFila}`);
+            const contBuscador = tr.querySelector(`#contenedorBuscador_${idFila}`);
             const inpDesc = tr.querySelector('.ren-desc');
             
             if(tipo === 'INVENTARIO') {
                 selArt.style.display = 'block';
-                divFiltros.style.display = 'flex';
-                inpBusq.style.display = 'block'; // Muestra el buscador
+                btnToggle.style.display = 'block';
+                // El buscador inicia siempre oculto para mantener el orden
+                contBuscador.style.display = 'none'; 
+                btnToggle.innerHTML = '🔍 Búsqueda Inteligente / Filtros ▼';
+                btnToggle.style.background = '#f1f5f9';
+                btnToggle.style.color = '#475569';
+                btnToggle.style.borderColor = '#cbd5e1';
+                
                 inpDesc.style.display = 'none';
             } else {
                 selArt.style.display = 'none';
-                divFiltros.style.display = 'none';
-                inpBusq.style.display = 'none'; // Oculta el buscador
+                btnToggle.style.display = 'none';
+                contBuscador.style.display = 'none';
                 inpDesc.style.display = 'block';
             }
         }
@@ -1140,7 +1367,7 @@ function filtrarArticulosFila(idFila) {
 
 
 
-        function verificarNuevoArticulo(selectObj) {
+        function verificarNuevoArticulo(selectObj, idFila) {
             // Restauramos el diseño a un desplegable normal cerrado
             selectObj.size = 1;
             selectObj.style.position = 'static';
@@ -1149,6 +1376,31 @@ function filtrarArticulosFila(idFila) {
                 alert("Se abrirá la ventana para crear el artículo. Luego podrás seleccionarlo aquí mismo.");
                 abrirModal('modalArticulo');
                 selectObj.value = ""; 
+            } else if (selectObj.value !== '') {
+                // AUTO-CERRAR: Si elije un repuesto válido, el panel de búsqueda se oculta solo
+                const cont = document.getElementById(`contenedorBuscador_${idFila}`);
+                if (cont && cont.style.display === 'block') {
+                    toggleBuscador(idFila);
+                }
+            }
+        }
+
+        function toggleBuscador(idFila) {
+            const cont = document.getElementById(`contenedorBuscador_${idFila}`);
+            const btn = document.getElementById(`btnToggleBusq_${idFila}`);
+            
+            if(cont.style.display === 'none') {
+                cont.style.display = 'block';
+                btn.innerHTML = '❌ Ocultar Búsqueda Inteligente ▲';
+                btn.style.background = '#fee2e2';
+                btn.style.color = '#991b1b';
+                btn.style.borderColor = '#fca5a5';
+            } else {
+                cont.style.display = 'none';
+                btn.innerHTML = '🔍 Búsqueda Inteligente / Filtros ▼';
+                btn.style.background = '#f1f5f9';
+                btn.style.color = '#475569';
+                btn.style.borderColor = '#cbd5e1';
             }
         }
 
@@ -1588,10 +1840,192 @@ function renderTablaHistorialRen() {
             v.document.close();
         }
         
+        // ================= VISOR LIGHTBOX =================
+        function abrirVisorFoto(url) {
+            document.getElementById('imagenVisor').src = url;
+            document.getElementById('modalVisorFoto').style.display = 'flex';
+        }
 
+        function cerrarVisorFoto() {
+            document.getElementById('modalVisorFoto').style.display = 'none';
+            document.getElementById('imagenVisor').src = ''; // Limpiamos para liberar memoria
+        }
 
+        // Opcional: Cerrar el visor si el usuario hace clic fuera de la foto (en el fondo oscuro)
+        document.getElementById('modalVisorFoto').addEventListener('click', function(e) {
+            if (e.target === this) {
+                cerrarVisorFoto();
+            }
+        });
 
+// ================= FICHA MAESTRA DEL ARTÍCULO =================
+        let articuloFichaActual = null;
+
+        async function abrirFichaArticulo(idArticulo) {
+            const a = listaArticulos.find(x => x.id_articulo === idArticulo);
+            if (!a) return;
+            articuloFichaActual = a;
+
+            // 1. Llenar datos básicos
+            document.getElementById('fichaTitulo').innerText = `[${a.codigo_articulo}] ${a.nombre_articulo}`;
+            document.getElementById('fichaCategorias').innerText = `${a.categoria_1} > ${a.categoria_2} > ${a.categoria_3}`;
+            document.getElementById('fichaFoto').src = a.url_foto_articulo || 'https://via.placeholder.com/300x250?text=Sin+Imagen';
+            
+            document.getElementById('fichaDesc').innerText = a.caracteristicas || 'No especificadas';
+            document.getElementById('fichaUso').innerText = a.uso_equipo || 'General';
+            document.getElementById('fichaTec').innerText = a.tecnologia || 'No Aplica';
+            document.getElementById('fichaProc').innerText = a.procedencia || 'Nacional';
+
+            // 2. Botones de Enlace Web
+            const btnCompra = document.getElementById('fichaLinkCompra');
+            const btnTec = document.getElementById('fichaLinkTecnico');
+            btnCompra.style.display = a.url_compra ? 'inline-block' : 'none';
+            btnCompra.href = a.url_compra || '#';
+            btnTec.style.display = a.url_info_tecnica ? 'inline-block' : 'none';
+            btnTec.href = a.info_tecnica || '#';
+
+            // 3. Stock
+            document.getElementById('fichaStockAct').innerText = a.cantidad_actual;
+            document.getElementById('fichaStockComp').innerText = a.cantidad_comprada;
+            document.getElementById('fichaStockUsad').innerText = a.cantidad_usada;
+
+            // 4. Limpiar mapa
+            document.getElementById('fichaMapaProveedor').style.display = 'none';
+            document.getElementById('fichaListaProveedores').innerHTML = 'Cargando proveedores...';
+
+            abrirModal('modalFichaArticulo');
+
+            // 5. Descargar Historial de Proveedores
+            try {
+                const res = await fetch(`${API_URL}/inventario/articulos/${idArticulo}/proveedores`);
+                const provHistoricos = await res.json();
+                
+                // Armar lista combinando el proveedor principal actual (si existe) y los históricos
+                let listaRender = [];
+                if (a.id_proveedor) {
+                    listaRender.push({
+                        id_proveedor: a.id_proveedor,
+                        razon_social: a.proveedor_nombre,
+                        ultimo_precio: a.costo_unitario,
+                        es_principal: true
+                    });
+                }
+                
+                provHistoricos.forEach(ph => {
+                    if (!listaRender.find(x => x.id_proveedor === ph.id_proveedor)) {
+                        listaRender.push({ ...ph, es_principal: false });
+                    }
+                });
+
+                const contProv = document.getElementById('fichaListaProveedores');
+                if (listaRender.length === 0) {
+                    contProv.innerHTML = '<p style="color:gray;">No hay proveedores registrados.</p>';
+                    return;
+                }
+
+                contProv.innerHTML = listaRender.map(p => {
+                    const badge = p.es_principal ? '<span style="background:#f59e0b; color:white; font-size:0.7rem; padding:2px 6px; border-radius:10px; margin-left:10px;">⭐ Principal</span>' : '';
+                    return `
+                    <button type="button" onclick="mostrarMapaProveedor(${p.id_proveedor})" style="display:flex; justify-content:space-between; align-items:center; width:100%; padding:12px; background:white; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer; text-align:left; transition:background 0.2s;" onmouseover="this.style.background='#f1f5f9'" onmouseout="this.style.background='white'">
+                        <div><strong>${p.razon_social}</strong> ${badge}</div>
+                        <div style="font-weight:bold; color:#16a34a;">S/ ${parseFloat(p.ultimo_precio).toFixed(2)}</div>
+                    </button>`;
+                }).join('');
+
+            } catch (e) {
+                document.getElementById('fichaListaProveedores').innerHTML = 'Error al cargar proveedores.';
+            }
+        }
+
+        // ================= MAPA DINÁMICO =================
+        function mostrarMapaProveedor(idProveedor) {
+            const p = listaProveedores.find(x => x.id_proveedor === idProveedor);
+            if (!p) return;
+
+            document.getElementById('mapaProvNombre').innerText = p.razon_social;
+            document.getElementById('mapaProvTel').innerText = p.telefonos || 'Sin teléfono';
+            document.getElementById('mapaProvDir').innerText = p.direccion || 'Sin dirección';
+            
+            const btnLink = document.getElementById('mapaProvLink');
+            if (p.link_ubicacion) {
+                btnLink.style.display = 'inline-block';
+                btnLink.href = p.link_ubicacion;
+            } else {
+                btnLink.style.display = 'none';
+            }
+
+            // Generar mapa embebido de Google basado en la dirección (sin necesidad de API Key)
+            const direccionCodificada = encodeURIComponent(`${p.direccion || p.razon_social}, Perú`);
+            document.getElementById('mapaIframe').src = `https://maps.google.com/maps?q=${direccionCodificada}&output=embed`;
+            
+            document.getElementById('fichaMapaProveedor').style.display = 'block';
+        }
+
+        // ================= IMPRESIÓN DE LA FICHA =================
+        function imprimirFichaArticulo() {
+            if (!articuloFichaActual) return;
+            const a = articuloFichaActual;
+            const urlFoto = a.url_foto_articulo || '';
+            const tagImg = urlFoto ? `<img src="${urlFoto}" style="max-width:300px; max-height:300px; border:1px solid #ccc; border-radius:8px;">` : 'Sin imagen';
+
+            const v = window.open('', '_blank');
+            v.document.write(`
+            <!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <title>Ficha - ${a.codigo_articulo}</title>
+                <style>
+                    body { font-family: Arial, sans-serif; font-size: 14px; margin: 40px; color: #333; }
+                    .header { text-align: center; border-bottom: 2px solid #0f172a; padding-bottom: 20px; margin-bottom: 20px; }
+                    h1 { margin: 0; color: #0f172a; font-size: 24px; }
+                    h2 { margin: 5px 0 0 0; color: #475569; font-size: 16px; }
+                    .grid { display: flex; gap: 30px; }
+                    .col-img { flex: 1; text-align: center; }
+                    .col-datos { flex: 2; }
+                    .campo { margin-bottom: 10px; border-bottom: 1px dashed #cbd5e1; padding-bottom: 5px; }
+                    .etiqueta { font-weight: bold; color: #64748b; display: inline-block; width: 180px; }
+                    .stock-box { display: flex; gap: 15px; margin-top: 20px; }
+                    .s-item { padding: 10px; border: 1px solid #000; text-align: center; flex: 1; border-radius: 4px; }
+                </style>
+            </head>
+            <body>
+                <div class="header">
+                    <h1>INNOVA ELECTRONICS S.A.C.</h1>
+                    <h2>FICHA TÉCNICA DE COMPONENTE / REPUESTO</h2>
+                </div>
+                
+                <div class="grid">
+                    <div class="col-img">${tagImg}</div>
+                    <div class="col-datos">
+                        <div class="campo"><span class="etiqueta">Código de Artículo:</span> <strong>${a.codigo_articulo}</strong></div>
+                        <div class="campo"><span class="etiqueta">Nombre:</span> <strong>${a.nombre_articulo}</strong></div>
+                        <div class="campo"><span class="etiqueta">Clasificación:</span> ${a.categoria_1} > ${a.categoria_2} > ${a.categoria_3}</div>
+                        <div class="campo"><span class="etiqueta">Características:</span> ${a.caracteristicas || '-'}</div>
+                        <div class="campo"><span class="etiqueta">Uso / Destino:</span> ${a.uso_equipo || '-'}</div>
+                        <div class="campo"><span class="etiqueta">Tecnología:</span> ${a.tecnologia || '-'}</div>
+                        <div class="campo"><span class="etiqueta">Procedencia:</span> ${a.procedencia || '-'}</div>
+                        <div class="campo"><span class="etiqueta">Proveedor Principal:</span> ${a.proveedor_nombre || 'No asignado'}</div>
+                        <div class="campo"><span class="etiqueta">Costo Referencial:</span> S/ ${parseFloat(a.costo_unitario).toFixed(2)}</div>
+                    </div>
+                </div>
+
+                <div class="stock-box">
+                    <div class="s-item"><strong>STOCK ACTUAL</strong><br><span style="font-size:24px;">${a.cantidad_actual}</span></div>
+                    <div class="s-item">Total Compradas<br><span style="font-size:20px;">${a.cantidad_comprada}</span></div>
+                    <div class="s-item">Total Usadas<br><span style="font-size:20px;">${a.cantidad_usada}</span></div>
+                </div>
+                
+                <div style="margin-top:50px; font-size:11px; text-align:center; color:gray;">
+                    Documento generado el ${new Date().toLocaleString('es-PE')}
+                </div>
+                <script>window.onload=function(){ window.print(); }<\/script>
+            </body>
+            </html>
+            `);
+            v.document.close();
+        }
 
     </script>
+
 </body>
 </html>

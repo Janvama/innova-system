@@ -912,5 +912,38 @@ app.put('/api/inventario/articulos/:id', async (req, res) => {
 });
 
 
+// 12. Obtener Historial de Proveedores y Precios por Artículo
+app.get('/api/inventario/articulos/:id/proveedores', async (req, res) => {
+    try {
+        // Busca todas las compras previas de este artículo y obtiene el último precio pagado a cada proveedor
+        const query = `
+            SELECT p.id_proveedor, p.razon_social, p.direccion, p.telefonos, p.link_ubicacion, 
+                   MAX(d.costo_unitario) as ultimo_precio
+            FROM rendicion_detalle d
+            JOIN rendicion_gastos r ON d.id_rendicion = r.id_rendicion
+            JOIN proveedores p ON d.id_proveedor = p.id_proveedor
+            WHERE d.id_articulo = $1 AND d.tipo_gasto = 'INVENTARIO'
+            GROUP BY p.id_proveedor, p.razon_social, p.direccion, p.telefonos, p.link_ubicacion
+        `;
+        const result = await pool.query(query, [req.params.id]);
+        res.json(result.rows);
+    } catch (err) { res.status(500).json({ error: err.message }); }
+});
+
+// Actualizar Proveedor Existente
+app.put('/api/inventario/proveedores/:id', async (req, res) => {
+    const { razon_social, direccion, telefonos, link_ubicacion } = req.body;
+    try {
+        await pool.query(
+            'UPDATE proveedores SET razon_social = $1, direccion = $2, telefonos = $3, link_ubicacion = $4 WHERE id_proveedor = $5',
+            [razon_social, direccion, telefonos, link_ubicacion, req.params.id]
+        );
+        res.json({ mensaje: 'Proveedor actualizado exitosamente' });
+    } catch (err) { 
+        res.status(500).json({ error: err.message }); 
+    }
+});
+
+
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));
