@@ -108,6 +108,7 @@
         </div>
     </div>
 
+
     <div id="appDashboard">
 <div class="nav-menu" style="margin-bottom: 20px; display: flex; gap: 10px;">
     <a href="index.html" class="active" style="text-decoration: none; background: #2563eb; color: white; padding: 8px 15px; border-radius: 4px; font-weight: bold; font-size: 0.9rem;">🛠️ Módulo Mantenimiento</a>
@@ -130,104 +131,25 @@
             </div>
         </header>
 
-        <div class="grid-container">
-            <div>
-                <div id="panelAdminEmpleados" class="card" style="background-color: #f0fdf4; border: 1px solid #bbf7d0;">
-                    <h2>👥 (ADMIN) Registrar Empleado / Técnico</h2>
-                    <form id="formEmpleado">
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="nombreEmpleado" placeholder="Nombre completo" required style="flex: 2;">
-                            <select id="rolEmpleado" required style="flex: 1;">
-                                <option value="Técnico">Técnico</option>
-                                <option value="Administración">Administración</option>
-                            </select>
-                        </div>
-                        <div style="display: flex; gap: 10px; align-items: center;">
-                            <input type="password" id="passEmpleado" placeholder="Crear Contraseña" required style="flex: 2;">
-                            <button type="submit" class="btn-success" style="flex: 1; margin: 0;">Guardar</button>
-                        </div>
-                    </form>
-                    <details><summary>Ver / Gestionar Trabajadores</summary><ul id="listaEmpleadosUI" class="lista-maestros"></ul></details>
-                </div>
-
-                <div class="card">
-                    <h2>1. Registrar Nuevo Cliente</h2>
-                    <form id="formCliente">
-                        <input type="text" id="nombreCliente" placeholder="Nombre / Empresa" required>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="telefonoCliente" placeholder="Teléfono" style="flex: 1;">
-                            <input type="text" id="rucCliente" placeholder="RUC (Opcional)" style="flex: 1;">
-                        </div>
-                        <button type="submit">Guardar Cliente</button>
-                    </form>
-                    <details id="detallesAdminClientes"><summary>Ver / Gestionar Clientes</summary><ul id="listaClientesUI" class="lista-maestros"></ul></details>
-                </div>
-
-                <div class="card">
-                    <h2>2. Nueva Ficha de Recepción (FR)</h2>
-                    <form id="formFR">
-                        <label>Trabajador que recibe el equipo:</label>
-                        <select id="selectEmpleado" required></select>
-                        <label>Cliente:</label>
-                        <select id="selectCliente" required></select>
-                        <label>N° Ficha de Recepción (FR):</label>
-                        <input type="text" id="numFR" value="FR" required>
-                        <label>Plantilla / Tipo de Equipo:</label>
-                        <div style="display: flex; gap: 10px;">
-                            <select id="plantillaEquipo" required onchange="cambiarPlantilla()" style="flex: 2;">
-                                <option value="generico">-- Genérico / Otro Equipo --</option>
-                            </select>
-                            <!-- Este campo solo aparecerá cuando sea Genérico -->
-                            <input type="text" id="nombreEquipoGenerico" maxlength="30" placeholder="Nombre Equipo" style="flex: 1; display: none;">
-                        </div>
-                        <label>Marca y Modelo:</label>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="marcaEquipo" maxlength="20" placeholder="Marca" required>
-                            <input type="text" id="modeloEquipo" placeholder="Modelo" required>
-                        </div>
-                        <label>N° de Serie:</label>
-                        <input type="text" id="serieEquipo">
-                        <label>Accesorios e Inspección:</label>
-                        <div id="contenedorAccesorios"></div>
-                        <label>Problema Reportado:</label>
-                        <textarea id="problema" rows="2" required></textarea>
-                        
-                        <div style="border: 1px dashed #cbd5e1; padding: 10px; border-radius: 6px; background: #f8fafc; margin-top: 5px;">
-                            <label style="margin-top: 0;">Evidencia Fotográfica de Recepción (Opcional):</label>
-                            <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
-                                <input type="file" id="frFotoFile" accept="image/*" style="width: 200px; padding: 5px;">
-                                <input type="text" id="frFotoDesc" placeholder="Descripción de la foto..." style="flex:1; padding: 5px;">
-                                <button type="button" class="btn-secondary" onclick="agregarFotoFR()" style="margin:0;">Añadir Foto</button>
-                            </div>
-                            <div id="galeriaFotosFR" class="foto-galeria"></div>
-                        </div>
-
-                        <button type="submit" style="margin-top: 15px;">Generar Ficha de Recepción (FR)</button>
-                    </form>
-                </div>
+<!-- BOTONES DE ACCIÓN PRINCIPAL (PANEL SUPERIOR) -->
+        <div class="card" style="display: flex; gap: 10px; flex-wrap: wrap; align-items: center; justify-content: space-between; border-top: 4px solid #2563eb;">
+            <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+                <button class="btn-accion" style="background-color: #3b82f6; padding: 10px 15px; font-size: 0.95rem;" onclick="abrirModal('modalNuevaFR')">＋ Nueva FR</button>
+                <button class="btn-accion" style="background-color: #10b981; padding: 10px 15px; font-size: 0.95rem;" onclick="abrirModal('modalNuevoCliente')">👤 Registrar Cliente</button>
                 
-                <div id="panelAdminPlantillas" class="card" style="border: 2px solid #cbd5e1; background-color: #f8fafc;">
-                    <h2>⚙️ (ADMIN) Configuración: Crear Nueva Plantilla</h2>
-                    <form id="formPlantilla">
-                        <input type="text" id="nomPlantilla" placeholder="Nombre de la Plantilla" required>
-                        <div style="display: flex; gap: 10px;">
-                            <input type="text" id="marcaPlantilla" placeholder="Marca por defecto">
-                            <input type="text" id="modeloPlantilla" placeholder="Modelo por defecto">
-                        </div>
-                        <textarea id="listaAccesoriosNuevos" rows="3" placeholder="Lista de accesorios (Uno por línea)" required></textarea>
-                        <button type="submit" class="btn-secondary">Guardar Plantilla</button>
-                    </form>
-                    <details><summary>Ver / Gestionar Plantillas</summary><ul id="listaPlantillasUI" class="lista-maestros"></ul></details>
-                </div>
+                <!-- Este botón de Plantillas ahora es público para los técnicos -->
+                <button class="btn-accion" style="background-color: #8b5cf6; padding: 10px 15px; font-size: 0.95rem;" onclick="abrirModal('modalAdminPlantillas')">⚙️ Plantillas</button>
+                
+                <!-- Este botón queda exclusivo para Administración -->
+                <button id="btnAdminEmpleados" class="btn-accion" style="background-color: #6366f1; padding: 10px 15px; font-size: 0.95rem; display: none;" onclick="abrirModal('modalAdminEmpleados')">👥 Empleados</button>
             </div>
+            <button class="btn-secondary" onclick="cargarTickets(true)" style="margin:0; padding: 10px 15px; font-size: 0.95rem;">🔄 Actualizar Tabla</button>
+        </div>
 
-            <div>
-                <div class="card">
-                    <h2 style="display: flex; justify-content: space-between; align-items: center;">
-                        Panel de Control y Búsqueda
-                        <button class="btn-secondary" onclick="cargarTickets(true)" style="margin:0; padding: 5px 10px;">🔄 Actualizar</button>
-                    </h2>
-                    
+        <!-- PANEL DE CONTROL Y TABLA A TODO ANCHO -->
+        <div class="card">
+            <h2 style="margin-top: 0;">Panel de Control y Búsqueda</h2>
+                   
                     <div class="filter-bar">
                         <div class="filter-group" style="flex: 2;">
                             <label>Buscar Cliente, Equipo o N° FR:</label>
@@ -279,6 +201,105 @@
             </div>
         </div>
     </div>
+
+  <!-- MODAL NUEVA FR -->
+    <div id="modalNuevaFR" class="modal-overlay">
+        <div class="modal-content" style="max-width: 600px; border-top: 5px solid #3b82f6;">
+            <span class="close-modal" onclick="cerrarModal('modalNuevaFR')">×</span>
+            <h2 style="color: #1e3a8a; margin-bottom: 15px;">📝 Nueva Ficha de Recepción (FR)</h2>
+            <form id="formFR">
+                <label>Trabajador que recibe el equipo:</label><select id="selectEmpleado" required></select>
+                <label>Cliente:</label><select id="selectCliente" required></select>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;"><label>N° Ficha (FR):</label><input type="text" id="numFR" value="FR" required></div>
+                    <div style="flex: 2;">
+                        <label>Plantilla / Tipo de Equipo:</label>
+                        <select id="plantillaEquipo" required onchange="cambiarPlantilla()">
+                            <option value="generico">-- Genérico / Otro Equipo --</option>
+                        </select>
+                        <input type="text" id="nombreEquipoGenerico" maxlength="30" placeholder="Nombre Equipo" style="display: none; margin-top: 5px;">
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px;">
+                    <div style="flex: 1;"><label>Marca:</label><input type="text" id="marcaEquipo" maxlength="20" required></div>
+                    <div style="flex: 1;"><label>Modelo:</label><input type="text" id="modeloEquipo" required></div>
+                    <div style="flex: 1;"><label>N° de Serie:</label><input type="text" id="serieEquipo"></div>
+                </div>
+                <label>Accesorios e Inspección:</label>
+                <div id="contenedorAccesorios"></div>
+                <label>Problema Reportado:</label>
+                <textarea id="problema" rows="2" required></textarea>
+                
+                <div style="border: 1px dashed #cbd5e1; padding: 10px; border-radius: 6px; background: #f8fafc; margin-top: 10px;">
+                    <label style="margin-top: 0; color: #3b82f6;">📸 Evidencia Fotográfica (Opcional):</label>
+                    <div style="display: flex; gap: 10px; align-items: center; margin-top: 5px;">
+                        <input type="file" id="frFotoFile" accept="image/*" style="flex: 1; padding: 5px;">
+                        <input type="text" id="frFotoDesc" placeholder="Descripción de la foto..." style="flex: 1; padding: 5px;">
+                        <button type="button" class="btn-secondary" onclick="agregarFotoFR()" style="margin:0;">Añadir Foto</button>
+                    </div>
+                    <div id="galeriaFotosFR" class="foto-galeria"></div>
+                </div>
+                <button type="submit" style="background-color: #3b82f6; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer;">Generar Ficha de Recepción (FR)</button>
+            </form>
+        </div>
+    </div>
+
+    <!-- MODAL NUEVO CLIENTE -->
+    <div id="modalNuevoCliente" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; border-top: 5px solid #10b981;">
+            <span class="close-modal" onclick="cerrarModal('modalNuevoCliente')">×</span>
+            <h2 style="color: #047857; margin-bottom: 15px;">👤 Registrar Nuevo Cliente</h2>
+            <form id="formCliente">
+                <input type="text" id="nombreCliente" placeholder="Nombre / Empresa" required>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="telefonoCliente" placeholder="Teléfono" style="flex: 1;">
+                    <input type="text" id="rucCliente" placeholder="RUC (Opcional)" style="flex: 1;">
+                </div>
+                <button type="submit" style="background-color: #10b981; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer;">Guardar Cliente</button>
+            </form>
+            <details id="detallesAdminClientes" style="margin-top: 15px;"><summary>Ver / Gestionar Clientes (Admin)</summary><ul id="listaClientesUI" class="lista-maestros"></ul></details>
+        </div>
+    </div>
+
+    <!-- MODAL ADMIN EMPLEADOS -->
+    <div id="modalAdminEmpleados" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; border-top: 5px solid #6366f1;">
+            <span class="close-modal" onclick="cerrarModal('modalAdminEmpleados')">×</span>
+            <h2 style="color: #4338ca; margin-bottom: 15px;">👥 Registrar Empleado / Técnico</h2>
+            <form id="formEmpleado">
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="nombreEmpleado" placeholder="Nombre completo" required style="flex: 2;">
+                    <select id="rolEmpleado" required style="flex: 1;">
+                        <option value="Técnico">Técnico</option>
+                        <option value="Administración">Administración</option>
+                    </select>
+                </div>
+                <div style="display: flex; gap: 10px; align-items: center;">
+                    <input type="password" id="passEmpleado" placeholder="Crear Contraseña" required style="flex: 2;">
+                    <button type="submit" style="background-color: #6366f1; color: white; border: none; padding: 10px; border-radius: 4px; font-weight: bold; flex: 1; cursor: pointer;">Guardar</button>
+                </div>
+            </form>
+            <details style="margin-top: 15px;"><summary>Ver / Gestionar Trabajadores</summary><ul id="listaEmpleadosUI" class="lista-maestros"></ul></details>
+        </div>
+    </div>
+
+    <!-- MODAL ADMIN PLANTILLAS -->
+    <div id="modalAdminPlantillas" class="modal-overlay">
+        <div class="modal-content" style="max-width: 500px; border-top: 5px solid #8b5cf6;">
+            <span class="close-modal" onclick="cerrarModal('modalAdminPlantillas')">×</span>
+            <h2 style="color: #6d28d9; margin-bottom: 15px;">⚙️ Configuración: Crear Nueva Plantilla</h2>
+            <form id="formPlantilla">
+                <input type="text" id="nomPlantilla" placeholder="Nombre de la Plantilla" required>
+                <div style="display: flex; gap: 10px;">
+                    <input type="text" id="marcaPlantilla" placeholder="Marca por defecto">
+                    <input type="text" id="modeloPlantilla" placeholder="Modelo por defecto">
+                </div>
+                <textarea id="listaAccesoriosNuevos" rows="3" placeholder="Lista de accesorios (Uno por línea)" required></textarea>
+                <button type="submit" style="background-color: #8b5cf6; color: white; border: none; padding: 12px; border-radius: 4px; font-weight: bold; width: 100%; margin-top: 15px; cursor: pointer;">Guardar Plantilla</button>
+            </form>
+            <details style="margin-top: 15px;"><summary>Ver / Gestionar Plantillas</summary><ul id="listaPlantillasUI" class="lista-maestros"></ul></details>
+        </div>
+    </div>  
 
     <div id="modalVerFR" class="modal-overlay">
         <div class="modal-content" style="max-width: 600px;">
@@ -473,6 +494,9 @@
         const API_URL = '/api'; 
         let usuarioActual = null; 
 
+        function abrirModal(id) { document.getElementById(id).style.display = 'flex'; }
+        function cerrarModal(id) { document.getElementById(id).style.display = 'none'; }
+
         // ================= SOLUCIÓN DEFINITIVA DE ZONAS HORARIAS =================
         function formatoInputFecha(fechaISO) {
             if (!fechaISO) return '';
@@ -514,19 +538,21 @@ function iniciarAplicacion() {
     document.getElementById('userDisplayNombre').innerText = usuarioActual.nombre_completo; 
     document.getElementById('userDisplayRol').innerText = usuarioActual.rol;
     
-    // ⛔ RESTRICCIONES PARA TÉCNICOS ⛔
-    if(usuarioActual.rol !== 'Administración') {
-        // 1. Ocultar paneles de configuración de mantenimiento
-        document.getElementById('panelAdminEmpleados').style.display = 'none';
-        document.getElementById('panelAdminPlantillas').style.display = 'none';
-        document.getElementById('detallesAdminClientes').style.display = 'none';
-        
-        // 2. Ocultar ÚNICAMENTE el acceso al Módulo de Finanzas
-        const btnFinanzas = document.getElementById('btnMenuFinanzas');
-        if (btnFinanzas) btnFinanzas.style.display = 'none';
-        
-        // Nota: El botón Comercial NO se oculta, el técnico podrá ingresar y 
-        // allá se aplicarán sus propias restricciones operativas.
+    // ⛔ NUEVAS RESTRICCIONES EXACTAS ⛔
+    const btnFinanzas = document.getElementById('btnMenuFinanzas');
+    const btnEmpleados = document.getElementById('btnAdminEmpleados');
+    const detallesClientes = document.getElementById('detallesAdminClientes'); // Lista dentro del modal clientes
+    
+    if(usuarioActual.rol === 'Administración') {
+        // Acceso Total
+        if(btnFinanzas) btnFinanzas.style.display = 'inline-block';
+        if(btnEmpleados) btnEmpleados.style.display = 'inline-block';
+        if(detallesClientes) detallesClientes.style.display = 'block';
+    } else {
+        // Restricción para Técnicos: Solo bloqueamos Finanzas y Empleados
+        if(btnFinanzas) btnFinanzas.style.display = 'none';
+        if(btnEmpleados) btnEmpleados.style.display = 'none';
+        if(detallesClientes) detallesClientes.style.display = 'block'; // Permitimos ver/editar clientes
     }
     
     // Encendido de datos
@@ -1128,11 +1154,47 @@ function comprimirImagen(archivo, maxWidth, maxHeight, quality, callback) {
     cambiarPlantilla(); 
     cargarTickets(true); 
     alert('FR creada exitosamente.');
+    cerrarModal('modalNuevaFR');
 });
 
-        document.getElementById('formCliente').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/clientes`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_completo: document.getElementById('nombreCliente').value, telefono: document.getElementById('telefonoCliente').value, ruc: document.getElementById('rucCliente').value }) }); document.getElementById('formCliente').reset(); cargarClientes(); });
-        document.getElementById('formEmpleado').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/empleados`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_completo: document.getElementById('nombreEmpleado').value, rol: document.getElementById('rolEmpleado').value, password: document.getElementById('passEmpleado').value }) }); document.getElementById('formEmpleado').reset(); cargarEmpleados(); });
-        document.getElementById('formPlantilla').addEventListener('submit', async (e) => { e.preventDefault(); await fetch(`${API_URL}/plantillas`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre_plantilla: document.getElementById('nomPlantilla').value, marca_defecto: document.getElementById('marcaPlantilla').value, modelo_defecto: document.getElementById('modeloPlantilla').value, accesorios: document.getElementById('listaAccesoriosNuevos').value.split('\n') })}); document.getElementById('formPlantilla').reset(); cargarPlantillas(); });
+        document.getElementById('formCliente').addEventListener('submit', async (e) => { 
+            e.preventDefault(); await fetch(`${API_URL}/clientes`, 
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ 
+                nombre_completo: document.getElementById('nombreCliente').value, 
+                telefono: document.getElementById('telefonoCliente').value, 
+                ruc: document.getElementById('rucCliente').value }) }); 
+                document.getElementById('formCliente').reset(); 
+                cargarClientes(); 
+                cerrarModal('modalNuevoCliente');
+            });
+
+        document.getElementById('formEmpleado').addEventListener('submit', async (e) => { 
+            e.preventDefault(); await fetch(`${API_URL}/empleados`, 
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ 
+                nombre_completo: document.getElementById('nombreEmpleado').value, 
+                rol: document.getElementById('rolEmpleado').value, 
+                password: document.getElementById('passEmpleado').value }) }); 
+                document.getElementById('formEmpleado').reset(); 
+                cargarEmpleados(); 
+                cerrarModal('modalAdminEmpleados');
+            });
+
+        document.getElementById('formPlantilla').addEventListener('submit', async (e) => { 
+            e.preventDefault(); await fetch(`${API_URL}/plantillas`, 
+            { method: 'POST', headers: { 'Content-Type': 'application/json' }, 
+            body: JSON.stringify({ 
+                nombre_plantilla: document.getElementById('nomPlantilla').value, 
+                marca_defecto: document.getElementById('marcaPlantilla').value, 
+                modelo_defecto: document.getElementById('modeloPlantilla').value, 
+                accesorios: document.getElementById('listaAccesoriosNuevos').value.split('\n') })}); 
+            document.getElementById('formPlantilla').reset(); 
+            cargarPlantillas(); 
+            cerrarModal('modalAdminPlantillas');
+        });
+
+
         async function eliminarTicket(id) { if (confirm('⚠️ ¿Eliminar Ficha de Recepción y todo su historial? No se puede deshacer.')) { await fetch(`${API_URL}/tickets/${id}`, { method: 'DELETE' }); cargarTickets(); } }
 
         // ================= MODAL FACTURA PROFORMA (FP) =================
