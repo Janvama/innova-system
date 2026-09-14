@@ -1,3 +1,4 @@
+require('dotenv').config();
 const express = require('express');
 const { Pool } = require('pg');
 const cors = require('cors');
@@ -944,6 +945,40 @@ app.put('/api/inventario/proveedores/:id', async (req, res) => {
     }
 });
 
+
+// ====== INTEGRACIÓN DE IA GEMINI ======
+const { GoogleGenerativeAI } = require("@google/generative-ai");
+
+// Inicializar Gemini (Reemplaza con tu API KEY real)
+const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY);
+
+app.post('/api/ai/resumen-otm', async (req, res) => {
+    try {
+        const { falla, diagnostico, resultado, actividades } = req.body;
+        
+        const prompt = `Eres un ingeniero técnico de una empresa de electrónica geofísica. Escribe un resumen extremadamente sucinto del siguiente servicio técnico para colocarlo en la Factura Proforma del cliente. 
+        REGLAS ESTRICTAS:
+        - Usa únicamente viñetas (asteriscos).
+        - No incluyas saludos ni despedidas, ve directo al grano.
+        - Integra y resume la información a continuación:
+        
+        Falla reportada: ${falla}
+        Diagnóstico técnico: ${diagnostico}
+        Bitácora de actividades: ${actividades}
+        Resultado final y pruebas: ${resultado}`;
+        
+        // Usamos el modelo rápido y eficiente para texto
+        const model = genAI.getGenerativeModel({ model: "gemini-3.1-flash-lite" });
+        const result = await model.generateContent(prompt);
+        const response = await result.response;
+        
+        res.json({ resumen: response.text() });
+    } catch (error) {
+        console.error("Error en la API de Gemini:", error);
+        res.status(500).json({ error: "Error generando el resumen con IA." });
+    }
+});
+// ======================================
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => console.log(`Servidor corriendo en el puerto ${PORT}`));

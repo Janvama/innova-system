@@ -438,8 +438,11 @@
                 </div>
 
                 <div style="margin-bottom: 15px;">
-                    <label style="color: #0f172a; font-size: 0.85rem; font-weight: bold;">Resumen de Actividad Técnica (Visible en Proforma):</label>
-                    <textarea id="fpResumenTareas" rows="2" style="border-color: #8b5cf6;" placeholder="Ej: Mantenimiento correctivo..."></textarea>
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 5px;">
+                        <label style="color: #0f172a; font-size: 0.85rem; font-weight: bold; margin: 0;">Resumen de Actividad Técnica (Visible en Proforma):</label>
+                        <button type="button" onclick="generarResumenIA()" style="background-color: #8b5cf6; color: white; border: none; padding: 4px 10px; border-radius: 4px; font-size: 0.75rem; font-weight: bold; cursor: pointer; box-shadow: 0 2px 4px rgba(0,0,0,0.1);">✨ Auto-resumir con IA</button>
+                    </div>
+                    <textarea id="fpResumenTareas" rows="4" style="border-color: #8b5cf6;" placeholder="Ej: Mantenimiento correctivo..."></textarea>
                 </div>
 
                 <div style="background: #f8fafc; padding: 15px; border-radius: 6px; border: 1px solid #cbd5e1; margin-bottom: 15px;">
@@ -470,9 +473,10 @@
                             <label style="color: #0f172a;">Costo Reparación / Mano Obra:</label>
                             <input type="number" step="0.01" id="fpCostoReparacion" placeholder="0.00" required style="border-color: #8b5cf6;">
                         </div>
-                        <div style="flex:1;">
+                <div style="flex:1;">
                             <label style="color: #0f172a;">Costo Repuestos (Opcional):</label>
-                            <input type="number" step="0.01" id="fpCostoRepuestos" placeholder="0.00" style="border-color: #8b5cf6;">
+                            <input type="number" step="0.01" id="fpCostoRepuestos" placeholder="0.00" style="border-color: #8b5cf6; margin-bottom: 2px;">
+                            <small style="color: #ef4444; font-size: 0.7rem; font-weight: bold; display: block;">* Monto expresado en Soles (PEN)</small>
                         </div>
                     </div>
                 </div>
@@ -1199,23 +1203,109 @@ function comprimirImagen(archivo, maxWidth, maxHeight, quality, callback) {
 
         // ================= MODAL FACTURA PROFORMA (FP) =================
         function abrirModalFP(idTicket) { 
-            fpActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
-            const otm = t.otm_data || {}; const fp = t.fp_data || {}; 
+            fpActualId = idTicket; 
+            const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
+            const otm = t.otm_data || {}; 
+            const fp = t.fp_data || {}; 
+            
             document.getElementById('fpHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} &nbsp;|&nbsp; <strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo} <small>(S/N: ${t.numero_serie || 'N/A'})</small>`; 
             document.getElementById('fpFalla').innerText = t.problema_reportado || 'No reportado'; 
             document.getElementById('fpDiag').innerText = otm.diagnostico || 'Pendiente de diagnóstico'; 
-            document.getElementById('fpRep').innerText = otm.repuestos || 'Ningún repuesto reportado'; 
+            
+            // --- NUEVA LÓGICA: DETALLE Y SUMATORIA DE REPUESTOS ---
+            let htmlRepuestos = '';
+            let sumaCostoRepuestos = 0;
+
+            if (otm.repuestos_utilizados && otm.repuestos_utilizados.length > 0) {
+                htmlRepuestos = otm.repuestos_utilizados.map(r => {
+                    // Buscar el repuesto en el inventario para obtener su costo/precio
+                    const articuloInv = listaArticulosInv.find(a => a.id_articulo == r.id_articulo);
+                    // Tomamos el costo_unitario (o 0 si no existe)
+                    const costoUni = articuloInv ? parseFloat(articuloInv.costo_unitario || 0) : 0;
+                    sumaCostoRepuestos += (costoUni * r.cantidad);
+                    
+                    return `${r.cantidad}x [${r.codigo || ''}] ${r.descripcion}`;
+                }).join('<br>');
+            } else {
+                htmlRepuestos = otm.repuestos || 'Ningún repuesto reportado';
+            }
+
+            document.getElementById('fpRep').innerHTML = htmlRepuestos; 
             document.getElementById('fpRes').innerText = otm.resultado || 'Sin estado final registrado'; 
             
             let fpFechaStr = formatoInputFecha(fp.fecha_fp);
             if(!fpFechaStr) { fpFechaStr = formatoInputFecha(new Date().toISOString()); }
             document.getElementById('fpFecha').value = fpFechaStr;
             
-            document.getElementById('fpResumenTareas').value = fp.resumen_tareas || ''; document.getElementById('fpCostoReparacion').value = fp.costo_reparacion || ''; document.getElementById('fpCostoRepuestos').value = fp.costo_repuestos || ''; document.getElementById('fpMoneda').value = fp.moneda || 'PEN'; document.getElementById('fpTC').value = fp.tc || ''; document.getElementById('fpIGV').value = fp.igv !== undefined ? fp.igv : 18; document.getElementById('fpDescuento').value = fp.descuento || 0; document.getElementById('fpPagado').checked = (t.estado_pago === 'Pagado'); 
+            document.getElementById('fpResumenTareas').value = fp.resumen_tareas || ''; 
+            document.getElementById('fpCostoReparacion').value = fp.costo_reparacion || ''; 
+            
+            // --- INYECCIÓN AUTOMÁTICA DEL COSTO DE REPUESTOS ---
+            let costoRepGuardado = fp.costo_repuestos;
+            // Si es la primera vez que se abre (no hay guardado previo) y hay repuestos, ponemos la sumatoria automática
+            if ((costoRepGuardado === undefined || costoRepGuardado === null || costoRepGuardado === '') && sumaCostoRepuestos > 0) {
+                document.getElementById('fpCostoRepuestos').value = sumaCostoRepuestos.toFixed(2);
+            } else {
+                // Si ya el administrador había escrito un monto manual, lo respetamos
+                document.getElementById('fpCostoRepuestos').value = costoRepGuardado || ''; 
+            }
+
+            document.getElementById('fpMoneda').value = fp.moneda || 'PEN'; 
+            document.getElementById('fpTC').value = fp.tc || ''; 
+            document.getElementById('fpIGV').value = fp.igv !== undefined ? fp.igv : 18; 
+            document.getElementById('fpDescuento').value = fp.descuento || 0; 
+            document.getElementById('fpPagado').checked = (t.estado_pago === 'Pagado'); 
+            
             document.getElementById('modalFP').style.display = 'flex'; 
         }
         
         function cerrarModalFP() { document.getElementById('modalFP').style.display = 'none'; }
+
+
+        async function generarResumenIA() {
+            const btn = document.querySelector('button[onclick="generarResumenIA()"]');
+            const txtArea = document.getElementById('fpResumenTareas');
+            
+            // Extraer la información actual de la FR y OTM
+            const t = ticketsCargados.find(ticket => ticket.id_ticket === fpActualId);
+            if (!t) return alert("Error: No se encontró el ticket activo.");
+            
+            const otm = t.otm_data || {};
+            const falla = t.problema_reportado || 'No reportado';
+            const diagnostico = otm.diagnostico || 'No registrado';
+            const resultado = otm.resultado || 'No registrado';
+            const actividades = otm.actividades ? otm.actividades.map(a => a.texto).join('. ') : 'Ninguna actividad listada';
+
+            // Cambiar el botón a estado de carga
+            btn.innerText = "⏳ Pensando...";
+            btn.disabled = true;
+            btn.style.backgroundColor = "#cbd5e1";
+
+            try {
+                // Enviar los datos al backend para que Gemini haga el resumen
+                const res = await fetch(`${API_URL}/ai/resumen-otm`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ falla, diagnostico, resultado, actividades })
+                });
+                
+                if (!res.ok) throw new Error("Error comunicándose con el servidor de IA");
+                const data = await res.json();
+                
+                // Inyectar la respuesta en el textarea (el admin podrá editarlo libremente)
+                txtArea.value = data.resumen.trim();
+                
+            } catch (error) {
+                alert("Ocurrió un problema al generar el resumen con IA. Por favor, revisa la conexión del servidor.");
+                console.error(error);
+            } finally {
+                // Restaurar el botón
+                btn.innerText = "✨ Auto-resumir con IA";
+                btn.disabled = false;
+                btn.style.backgroundColor = "#8b5cf6";
+            }
+        }
+
         
         // =======================================================================
 // 1. NUEVA FUNCIÓN: EL "DISPARADOR" FINANCIERO
@@ -1330,19 +1420,156 @@ async function guardarFP() {
     cargarTickets(true); 
 }
 
-        function imprimirFP() { 
+function imprimirFP() { 
             const t = ticketsCargados.find(ticket => ticket.id_ticket === fpActualId); if (!t) return; 
             const otm = t.otm_data || {}; 
-            const resumenTareas = document.getElementById('fpResumenTareas').value.trim() || 'No especificado.'; const cReparacion = parseFloat(document.getElementById('fpCostoReparacion').value || 0); const cRepuestos = parseFloat(document.getElementById('fpCostoRepuestos').value || 0); const moneda = document.getElementById('fpMoneda').value; const simboloMoneda = moneda === 'USD' ? '$' : 'S/'; const tcStr = document.getElementById('fpTC').value; const txtTC = (moneda === 'USD' && tcStr) ? `<br><small style="color:#64748b;">(T/C Referencial: S/ ${tcStr})</small>` : ''; const igvPct = parseFloat(document.getElementById('fpIGV').value || 0); const descPct = parseFloat(document.getElementById('fpDescuento').value || 0); const montoDescuento = cReparacion * (descPct / 100); const subtotalNeto = (cReparacion - montoDescuento) + cRepuestos; const montoIGV = subtotalNeto * (igvPct / 100); const totalPagar = subtotalNeto + montoIGV; 
+            
+            const resumenTareas = document.getElementById('fpResumenTareas').value.trim() || 'No especificado.'; 
+            const cReparacion = parseFloat(document.getElementById('fpCostoReparacion').value || 0); 
+            const cRepuestosBase = parseFloat(document.getElementById('fpCostoRepuestos').value || 0); // Este monto viene en Soles por defecto
+            
+            const moneda = document.getElementById('fpMoneda').value; 
+            const tcStr = document.getElementById('fpTC').value; 
+            const tc = parseFloat(tcStr) || 1;
+            
+            // --- CONVERSIÓN DE DIVISAS (Solo aplica a los repuestos si se elige USD) ---
+            let cRepuestosFinal = cRepuestosBase;
+            let notaConversion = '';
+            
+            if (moneda === 'USD' && tc > 1) {
+                cRepuestosFinal = cRepuestosBase / tc; // Convierte de Soles a Dólares
+                notaConversion = `<br><small style="color:#64748b; font-weight:normal;">(Repuestos convertidos de S/ ${cRepuestosBase.toFixed(2)} a USD con T/C ${tcStr})</small>`;
+            }
+
+            const simboloMoneda = moneda === 'USD' ? '$' : 'S/'; 
+            const txtTC = (moneda === 'USD' && tcStr) ? `<br><small style="color:#64748b;">(T/C Referencial: S/ ${tcStr})</small>` : ''; 
+            
+            const igvPct = parseFloat(document.getElementById('fpIGV').value || 0); 
+            const descPct = parseFloat(document.getElementById('fpDescuento').value || 0); 
+            
+            const montoDescuento = cReparacion * (descPct / 100); 
+            const subtotalNeto = (cReparacion - montoDescuento) + cRepuestosFinal; 
+            const montoIGV = subtotalNeto * (igvPct / 100); 
+            const totalPagar = subtotalNeto + montoIGV; 
+            
+            const repuestosTexto = otm.repuestos_utilizados && otm.repuestos_utilizados.length > 0 
+                ? otm.repuestos_utilizados.map(r => `${r.cantidad}x [${r.codigo || ''}] ${r.descripcion}`).join('<br>') 
+                : (otm.repuestos || 'No se requirieron repuestos.');
             
             const fpCruda = document.getElementById('fpFecha').value;
             const fechaHoy = fpCruda ? new Date(fpCruda).toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' }) : new Date().toLocaleString('es-PE'); 
             
-            const estaPagado = document.getElementById('fpPagado').checked; const selloPago = estaPagado ? `<div style="color: #166534; font-weight: bold; font-size: 20px; border: 3px solid #166534; padding: 10px; text-align: center; margin-top: 15px; border-radius: 8px; transform: rotate(-5deg); width: fit-content; margin-left: auto; margin-right: auto;">CANCELADO / PAGADO</div>` : ''; let htmlDescuento = descPct > 0 ? `<tr><td>Descuento Promocional en Servicio (${descPct}%)</td><td style="text-align: right; color: #dc2626;">- ${simboloMoneda} ${montoDescuento.toFixed(2)}</td></tr>` : ''; let htmlRepuestosCosto = cRepuestos > 0 ? `<tr><td>Repuestos, Componentes y Materiales Utilizados</td><td style="text-align: right;">${simboloMoneda} ${cRepuestos.toFixed(2)}</td></tr>` : ''; const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; const ventana = window.open('', '_blank', 'width=800,height=900'); ventana.document.write(`<!DOCTYPE html><html lang="es"><head><title>Proforma - ${t.numero_fr}</title><style>@page { size: A4 portrait; margin: 1.5cm; } body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; margin: 0; color: #333; line-height: 1.4; } .cabecera-titulo { text-align: center; font-size: 16px; font-weight: bold; color: #7c3aed; margin-top: 5px; margin-bottom: 10px;} .fr-box { border: 2px solid #0f172a; padding: 5px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; margin-top: 10px; margin-bottom: 20px; } .seccion { margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; } .seccion-titulo { background-color: #f1f5f9; font-weight: bold; padding: 8px 12px; border-bottom: 1px solid #cbd5e1; color: #0f172a; font-size: 13px; } .seccion-contenido { padding: 12px; } table.costos { width: 100%; border-collapse: collapse; margin-top: 10px; } table.costos th, table.costos td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; } table.costos th { background: #f8fafc; color: #0f172a; } table.costos tr.total-row th { background: #7c3aed; color: white; font-size: 15px; text-align: right; } table.costos tr.total-row td { background: #f3e8ff; font-weight: bold; font-size: 16px; color: #7c3aed; text-align: right; } .fila { display: flex; margin-bottom: 5px; } .etiq { font-weight: bold; width: 150px; color: #475569; } .val { flex: 1; }</style></head><body>${encabezadoEmpresaHTML}<div style="text-align: center;"><div class="cabecera-titulo">FACTURA PROFORMA (PRESUPUESTO TÉCNICO)</div><div class="fr-box">REF FR N° ${t.numero_fr}</div></div><div style="text-align: right; margin-bottom: 10px; font-weight: bold; color: #64748b;">Fecha de emisión: ${fechaHoy}</div><div class="seccion"><div class="seccion-titulo">📋 DATOS DEL CLIENTE Y EQUIPO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Cliente / Empresa:</div><div class="val"><strong>${t.cliente}</strong>${rucHtml}</div></div><div class="fila"><div class="etiq">Equipo:</div><div class="val">${t.marca} ${t.modelo}</div></div><div class="fila"><div class="etiq">Número de Serie:</div><div class="val">${t.numero_serie || 'No Especificado'}</div></div></div></div><div class="seccion"><div class="seccion-titulo">🛠️ INFORME TÉCNICO RESUMIDO</div><div class="seccion-contenido"><div class="fila"><div class="etiq">Falla Reportada:</div><div class="val"><i>${t.problema_reportado}</i></div></div><div class="fila"><div class="etiq">Diagnóstico Original:</div><div class="val">${otm.diagnostico || '-'}</div></div><div class="fila"><div class="etiq" style="color: #7c3aed;">Trabajo Realizado:</div><div class="val"><strong>${resumenTareas}</strong></div></div><div class="fila"><div class="etiq">Repuestos Usados:</div><div class="val">${otm.repuestos || 'No se requirieron repuestos.'}</div></div><div class="fila" style="margin-top: 10px;"><div class="etiq" style="color:#16a34a;">Estado Unidad:</div><div class="val"><strong>${otm.resultado || '-'}</strong></div></div></div></div><div class="seccion" style="border-color: #8b5cf6;"><div class="seccion-titulo" style="background-color: #f3e8ff; color: #6d28d9; border-bottom-color: #d8b4fe;">💰 DETALLE DE COSTOS Y FACTURACIÓN</div><div class="seccion-contenido"><table class="costos"><tr><th>Concepto de Servicio / Producto</th><th style="width: 160px; text-align: right;">Importe</th></tr><tr><td>Servicio de Reparación y Mano de Obra Técnica</td><td style="text-align: right;">${simboloMoneda} ${cReparacion.toFixed(2)}</td></tr>${htmlDescuento}${htmlRepuestosCosto}<tr><td style="text-align: right; font-weight: bold;">Subtotal Neto:</td><td style="text-align: right; font-weight: bold;">${simboloMoneda} ${subtotalNeto.toFixed(2)}</td></tr><tr><td style="text-align: right;">Impuesto de Ley (IGV ${igvPct}%):</td><td style="text-align: right;">${simboloMoneda} ${montoIGV.toFixed(2)}</td></tr><tr class="total-row"><th>TOTAL A PAGAR:</th><td>${simboloMoneda} ${totalPagar.toFixed(2)} ${txtTC}</td></tr></table>${selloPago}<p style="font-size: 11px; color: #64748b; margin-top: 15px; font-style: italic;">* Este documento es una proforma y detalla los costos incurridos en la Ficha de Recepción (FR) adjunta.</p></div></div><div style="margin-top: 60px; text-align: center; font-weight: bold; border-top: 1px solid #333; width: 250px; margin-left: auto; margin-right: auto; padding-top: 5px;">Administración - Innova Electronics SAC</div><script>window.onload=function(){window.print();}<\/script></body></html>`); ventana.document.close(); }
+            const estaPagado = document.getElementById('fpPagado').checked; 
+            const selloPago = estaPagado ? `<div style="color: #166534; font-weight: bold; font-size: 20px; border: 3px solid #166534; padding: 10px; text-align: center; margin-top: 15px; border-radius: 8px; transform: rotate(-5deg); width: fit-content; margin-left: auto; margin-right: auto;">CANCELADO / PAGADO</div>` : ''; 
+            
+            const htmlDescuento = descPct > 0 ? `<tr><td>Descuento Promocional en Servicio (${descPct}%)</td><td style="text-align: right; color: #dc2626;">- ${simboloMoneda} ${montoDescuento.toFixed(2)}</td></tr>` : ''; 
+            const htmlRepuestosCosto = cRepuestosFinal > 0 ? `<tr><td>Repuestos, Componentes y Materiales Utilizados ${notaConversion}</td><td style="text-align: right;">${simboloMoneda} ${cRepuestosFinal.toFixed(2)}</td></tr>` : ''; 
+            const rucHtml = t.ruc_cliente ? ` - <strong>RUC:</strong> ${t.ruc_cliente}` : ''; 
+            
+            const htmlCompleto = `
+            <div class="hoja-a4">
+                ${encabezadoEmpresaHTML}
+                <div style="text-align: center;">
+                    <div class="cabecera-titulo">FACTURA PROFORMA (PRESUPUESTO TÉCNICO)</div>
+                    <div class="fr-box">REF FR N° ${t.numero_fr}</div>
+                </div>
+                
+                <div style="text-align: right; margin-bottom: 10px; font-weight: bold; color: #64748b;">Fecha de emisión: ${fechaHoy}</div>
+                
+                <div class="seccion">
+                    <div class="seccion-titulo">📋 DATOS DEL CLIENTE Y EQUIPO</div>
+                    <div class="seccion-contenido">
+                        <div class="fila"><div class="etiq">Cliente / Empresa:</div><div class="val"><strong>${t.cliente}</strong>${rucHtml}</div></div>
+                        <div class="fila"><div class="etiq">Equipo:</div><div class="val">${t.marca} ${t.modelo}</div></div>
+                        <div class="fila"><div class="etiq">Número de Serie:</div><div class="val">${t.numero_serie || 'No Especificado'}</div></div>
+                    </div>
+                </div>
+                
+                <div class="seccion">
+                    <div class="seccion-titulo">🛠️ INFORME TÉCNICO RESUMIDO</div>
+                    <div class="seccion-contenido">
+                        <div class="fila"><div class="etiq">Falla Reportada:</div><div class="val"><i>${t.problema_reportado}</i></div></div>
+                        <div class="fila"><div class="etiq">Diagnóstico Original:</div><div class="val">${otm.diagnostico || '-'}</div></div>
+                        <div class="fila"><div class="etiq" style="color: #7c3aed;">Trabajo Realizado:</div><div class="val"><strong>${resumenTareas}</strong></div></div>
+                        <div class="fila"><div class="etiq">Repuestos Usados:</div><div class="val">${repuestosTexto}</div></div>
+                        <div class="fila" style="margin-top: 10px;"><div class="etiq" style="color:#16a34a;">Estado Unidad:</div><div class="val"><strong>${otm.resultado || '-'}</strong></div></div>
+                    </div>
+                </div>
+                
+                <div class="seccion" style="border-color: #8b5cf6;">
+                    <div class="seccion-titulo" style="background-color: #f3e8ff; color: #6d28d9; border-bottom-color: #d8b4fe;">💰 DETALLE DE COSTOS Y FACTURACIÓN</div>
+                    <div class="seccion-contenido">
+                        <table class="costos">
+                            <tr><th>Concepto de Servicio / Producto</th><th style="width: 160px; text-align: right;">Importe</th></tr>
+                            <tr><td>Servicio de Reparación y Mano de Obra Técnica</td><td style="text-align: right;">${simboloMoneda} ${cReparacion.toFixed(2)}</td></tr>
+                            ${htmlDescuento}
+                            ${htmlRepuestosCosto}
+                            <tr><td style="text-align: right; font-weight: bold;">Subtotal Neto:</td><td style="text-align: right; font-weight: bold;">${simboloMoneda} ${subtotalNeto.toFixed(2)}</td></tr>
+                            <tr><td style="text-align: right;">Impuesto de Ley (IGV ${igvPct}%):</td><td style="text-align: right;">${simboloMoneda} ${montoIGV.toFixed(2)}</td></tr>
+                            <tr class="total-row"><th>TOTAL A PAGAR:</th><td>${simboloMoneda} ${totalPagar.toFixed(2)} ${txtTC}</td></tr>
+                        </table>
+                        ${selloPago}
+                        <p style="font-size: 11px; color: #64748b; margin-top: 15px; font-style: italic;">* Este documento es una proforma y detalla los costos incurridos en la Ficha de Recepción (FR) adjunta.</p>
+                    </div>
+                </div>
+                
+                <div class="firma-caja">Administración - Innova Electronics SAC</div>
+            </div>`;
+
+            const ventana = window.open('', '_blank', 'width=800,height=900'); 
+            ventana.document.write(`<!DOCTYPE html>
+            <html lang="es">
+            <head>
+                <title>Proforma - ${t.numero_fr}</title>
+                <style>
+                    /* Diseño web que emula la hoja física, expandible si hay mucho texto */
+                    body { font-family: 'Segoe UI', Arial, sans-serif; font-size: 13px; margin: 0; background: #525659; }
+                    .hoja-a4 { width: 21cm; min-height: 29.7cm; padding: 1.5cm; margin: 1cm auto; background: white; box-sizing: border-box; box-shadow: 0 0 10px rgba(0,0,0,0.5); position: relative; }
+                    
+                    /* Reglas exclusivas para cuando el documento entra a la impresora real */
+                    @media print { 
+                        @page { size: A4 portrait; margin: 1cm; }
+                        body { background: white; margin: 0; } 
+                        .hoja-a4 { margin: 0; padding: 0; box-shadow: none; width: auto; min-height: auto; } 
+                        
+                        /* Evita que un cuadro o tabla se parta por la mitad entre la página 1 y 2 */
+                        .seccion, table.costos, .firma-caja { page-break-inside: avoid; } 
+                    }
+                    
+                    .cabecera-titulo { text-align: center; font-size: 16px; font-weight: bold; color: #7c3aed; margin-top: 5px; margin-bottom: 10px;} 
+                    .fr-box { border: 2px solid #0f172a; padding: 5px 15px; font-size: 16px; font-weight: bold; border-radius: 6px; display: inline-block; margin-top: 10px; margin-bottom: 20px; } 
+                    .seccion { margin-bottom: 20px; border: 1px solid #cbd5e1; border-radius: 4px; overflow: hidden; } 
+                    .seccion-titulo { background-color: #f1f5f9; font-weight: bold; padding: 8px 12px; border-bottom: 1px solid #cbd5e1; color: #0f172a; font-size: 13px; } 
+                    .seccion-contenido { padding: 12px; } 
+                    table.costos { width: 100%; border-collapse: collapse; margin-top: 10px; } 
+                    table.costos th, table.costos td { border: 1px solid #cbd5e1; padding: 10px; text-align: left; } 
+                    table.costos th { background: #f8fafc; color: #0f172a; } 
+                    table.costos tr.total-row th { background: #7c3aed; color: white; font-size: 15px; text-align: right; } 
+                    table.costos tr.total-row td { background: #f3e8ff; font-weight: bold; font-size: 16px; color: #7c3aed; text-align: right; } 
+                    .fila { display: flex; margin-bottom: 5px; } 
+                    .etiq { font-weight: bold; width: 150px; color: #475569; } 
+                    .val { flex: 1; }
+                    .firma-caja { margin-top: 40px; text-align: center; font-weight: bold; border-top: 1px solid #333; width: 250px; margin-left: auto; margin-right: auto; padding-top: 5px; }
+                </style>
+            </head>
+            <body>
+                ${htmlCompleto}
+                <script>window.onload=function(){ setTimeout(() => window.print(), 500); }<\/script>
+            </body>
+            </html>`); 
+            ventana.document.close(); 
+        }
+
 
         // ================= MODALES OTM Y ENTREGA (FE) =================
-        function abrirModalOTM(idTicket) { 
-            otmActualId = idTicket; const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
+async function abrirModalOTM(idTicket) { 
+            otmActualId = idTicket; 
+            const t = ticketsCargados.find(ticket => ticket.id_ticket === idTicket); 
+            
+            // 1. Descargamos las fotos específicas de esta OTM desde la base de datos
+            const resFotos = await fetch(`${API_URL}/tickets/${idTicket}/fotos`);
+            const dataFotos = await resFotos.json();
+            
             document.getElementById('otmHeader').innerHTML = `<strong>FR N°:</strong> ${t.numero_fr} | <strong>Cliente:</strong> ${t.cliente} <br><strong>Equipo:</strong> ${t.marca} ${t.modelo} <br><strong style="color:red">Falla:</strong> ${t.problema_reportado}`; 
             
             const otm = t.otm_data || {}; 
@@ -1355,22 +1582,70 @@ async function guardarFP() {
             document.getElementById('btnAbrirBuscadorOTM').style.display = 'block';
             
             actividadesGlobal = otm.actividades || []; 
-            fotosGlobal = otm.fotos || []; 
-            repuestosOtmGlobal = otm.repuestos_utilizados || []; // Carga repuestos estructurados
+            // 2. Inyectamos las fotos recién descargadas al arreglo global
+            fotosGlobal = dataFotos.fotos_otm || []; 
+            repuestosOtmGlobal = otm.repuestos_utilizados || []; 
             
             renderActividadesOTM(); 
             renderFotosOTM(); 
-            renderRepuestosOTM(); // Dibuja la tabla
-            inicializarFiltrosOTM(); // Enciende el buscador
+            renderRepuestosOTM(); 
+            inicializarFiltrosOTM(); 
             
             document.getElementById('btnImprimirOTM').onclick = function() { generarReporteOTM(idTicket); };
             document.getElementById('modalOTM').style.display = 'flex'; 
         }
 
 
-        function cerrarModalOTM() { document.getElementById('modalOTM').style.display = 'none'; }
-        function agregarActividadOTM() { const texto = document.getElementById('otmTxtActividad').value.trim(); if(!texto) return alert("Escribe una actividad."); const fecha = new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}); actividadesGlobal.push({ fecha, texto }); document.getElementById('otmTxtActividad').value = ''; renderActividadesOTM(); }
-        function renderActividadesOTM() { document.getElementById('listaActividadesOTM').innerHTML = actividadesGlobal.length ? actividadesGlobal.map(a => `<div class="actividad-item"><span class="actividad-fecha">🗓️ ${a.fecha}</span>${a.texto}</div>`).join('') : '<p style="color:gray; font-size:0.8rem;">No hay actividades registradas.</p>'; }
+    function cerrarModalOTM() { 
+        document.getElementById('modalOTM').style.display = 'none'; 
+    }
+
+    function agregarActividadOTM() { 
+            const texto = document.getElementById('otmTxtActividad').value.trim(); 
+        if(!texto) return alert("Escribe una actividad."); 
+        const fecha = new Date().toLocaleString('es-PE', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit'}); 
+        actividadesGlobal.push({ fecha, texto }); 
+        document.getElementById('otmTxtActividad').value = ''; 
+        renderActividadesOTM(); 
+    }
+
+
+    function renderActividadesOTM() { 
+            const cont = document.getElementById('listaActividadesOTM');
+            if (actividadesGlobal.length === 0) {
+                cont.innerHTML = '<p style="color:gray; font-size:0.8rem; margin:0;">No hay actividades registradas.</p>';
+                return;
+            }
+            cont.innerHTML = actividadesGlobal.map((a, i) => `
+                <div class="actividad-item" style="display: flex; justify-content: space-between; align-items: flex-start; padding: 10px; border-left: 4px solid #10b981; margin-bottom: 8px; font-size: 0.85rem; border-radius: 4px; background: #f1f5f9;">
+                    <div style="flex: 1; padding-right: 10px;">
+                        <span class="actividad-fecha" style="font-weight: bold; color: #0369a1; margin-bottom: 4px; display: block; font-size: 0.75rem;">🗓️ ${a.fecha}</span>
+                        ${a.texto}
+                    </div>
+                    <div style="display: flex; gap: 5px;">
+                        <button type="button" onclick="editarActividadOTM(${i})" style="background:#eab308; color:white; border:none; border-radius:4px; padding:3px 8px; font-size:0.75rem; cursor:pointer;" title="Editar">✏️</button>
+                        <button type="button" onclick="eliminarActividadOTM(${i})" style="background:#ef4444; color:white; border:none; border-radius:4px; padding:3px 8px; font-size:0.75rem; cursor:pointer;" title="Eliminar">✕</button>
+                    </div>
+                </div>
+            `).join(''); 
+        }
+
+        window.editarActividadOTM = function(index) {
+            const textoActual = actividadesGlobal[index].texto;
+            const nuevoTexto = prompt("✏️ Editar la actividad seleccionada:", textoActual);
+            
+            if (nuevoTexto !== null && nuevoTexto.trim() !== "") {
+                actividadesGlobal[index].texto = nuevoTexto.trim();
+                renderActividadesOTM(); // Actualiza la vista al instante
+            }
+        };
+
+        window.eliminarActividadOTM = function(index) {
+            if (confirm("🗑️ ¿Estás seguro de eliminar esta actividad de la bitácora?")) {
+                actividadesGlobal.splice(index, 1);
+                renderActividadesOTM(); // Actualiza la vista al instante
+            }
+        };
         
         
        function agregarFotoOTM() { 
